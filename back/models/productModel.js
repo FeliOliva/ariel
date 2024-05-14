@@ -3,7 +3,8 @@ const queriesProducts = require("../querys/queriesProducts");
 
 const getAllProducts = async () => {
   try {
-    const [rows] = await db.query(queriesProducts.getAllProducts);
+    const query = queriesProducts.getAllProducts;
+    const [rows] = await db.query(query);
     return rows;
   } catch (err) {
     throw err;

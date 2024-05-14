@@ -12,8 +12,18 @@ app.use(express.urlencoded({ extended: true }));
 
 const RoutesProductos = require("../back/routes/productosRoutes");
 const RoutesClientes = require("../back/routes/clientesRoutes");
+const RoutesCategorias = require("../back/routes/categoriasRoutes");
+const RoutesSubCategorias = require("../back/routes/subCategoriasRoutes");
+const RoutesMarcas = require("../back/routes/marcasRoutes");
 
-app.use("/", RoutesProductos, RoutesClientes);
+app.use(
+  "/",
+  RoutesProductos,
+  RoutesClientes,
+  RoutesCategorias,
+  RoutesSubCategorias,
+  RoutesMarcas
+);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
