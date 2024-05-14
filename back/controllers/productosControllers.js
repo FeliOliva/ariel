@@ -46,8 +46,16 @@ const upProduct = async (req, res) => {
 };
 const updateProducts = async (req, res) => {
   try {
-    const { nombre, cantidad, marca_id, categoria_id,precio, ID } = req.body;
-    const products = await productModel.updateProducts(nombre, cantidad, marca_id, categoria_id,precio, ID);
+    const { nombre, cantidad, marca_id, categoria_id, precio, ID } = req.body;
+    const products = await productModel.updateProducts(
+      nombre,
+      cantidad,
+      marca_id,
+      categoria_id,
+      precio,
+      ID
+    );
+    res.status(200).json({ message: "Producto actualizado correctamente" });
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -58,5 +66,5 @@ module.exports = {
   addProduct,
   dropProduct,
   upProduct,
-  updateProducts
+  updateProducts,
 };

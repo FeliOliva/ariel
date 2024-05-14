@@ -11,8 +11,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const RoutesProductos = require("../back/routes/productosRoutes");
+const RoutesClientes = require("../back/routes/clientesRoutes");
 
-app.use("/", RoutesProductos);
+app.use("/", RoutesProductos, RoutesClientes);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);

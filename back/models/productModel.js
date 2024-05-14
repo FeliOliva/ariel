@@ -1,6 +1,5 @@
 const db = require("../database");
 const queriesProducts = require("../querys/queriesProducts");
-const queries = require("../querys/queriesProducts");
 
 const getAllProducts = async () => {
   try {
@@ -13,7 +12,7 @@ const getAllProducts = async () => {
 
 const addProduct = async (nombre, cantidad, marca_id, categoria_id, precio) => {
   try {
-    const query = queries.addProduct;
+    const query = queriesProducts.addProduct;
     await db.query(query, [nombre, cantidad, marca_id, categoria_id, precio]);
   } catch (err) {
     throw err;
@@ -22,7 +21,7 @@ const addProduct = async (nombre, cantidad, marca_id, categoria_id, precio) => {
 
 const dropProduct = async (ID) => {
   try {
-    const query = queries.dropProduct;
+    const query = queriesProducts.dropProduct;
     await db.query(query, [ID]);
   } catch (err) {
     throw err;
@@ -31,7 +30,7 @@ const dropProduct = async (ID) => {
 
 const upProduct = async (ID) => {
   try {
-    const query = queries.upProduct;
+    const query = queriesProducts.upProduct;
     await db.query(query, [ID]);
   } catch (err) {
     throw err;
@@ -46,7 +45,7 @@ const updateProducts = async (
   ID
 ) => {
   try {
-    const query = queries.updateProducts;
+    const query = queriesProducts.updateProducts;
     await db.query(query, [
       nombre,
       cantidad,
