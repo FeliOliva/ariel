@@ -16,6 +16,7 @@ const RoutesCategorias = require("../back/routes/categoriasRoutes");
 const RoutesSubCategorias = require("../back/routes/subCategoriasRoutes");
 const RoutesMarcas = require("../back/routes/marcasRoutes");
 const RoutesVentas = require("../back/routes/ventasRoutes");
+const RoutesZonas = require("../back/routes/zonasRoutes");
 
 app.use(
   "/",
@@ -24,7 +25,8 @@ app.use(
   RoutesCategorias,
   RoutesSubCategorias,
   RoutesMarcas,
-  RoutesVentas
+  RoutesVentas,
+  RoutesZonas
 );
 
 app.listen(PORT, () => {

@@ -64,6 +64,24 @@ const getVentasByClientes = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getVentasByZona = async (req, res) => {
+  try {
+    const zona_id = req.params.ID;
+    const ventas = await ventasModel.getVentasByZona(zona_id);
+    res.json(ventas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const getVentasByProducto = async (req, res) => {
+  try {
+    const producto_id = req.params.ID;
+    const ventas = await ventasModel.getVentasByProducto(producto_id);
+    res.json(ventas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllVentas,
   addVenta,
@@ -71,4 +89,6 @@ module.exports = {
   upVenta,
   updateVentas,
   getVentasByClientes,
+  getVentasByZona,
+  getVentasByProducto,
 };

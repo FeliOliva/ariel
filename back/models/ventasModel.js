@@ -51,6 +51,24 @@ const getVentasByClientes = async (cliente_id) => {
     throw err;
   }
 };
+const getVentasByZona = async (zona_id) => {
+  try {
+    const query = queriesVentas.getVentasByZona;
+    const [rows] = await db.query(query, [zona_id]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+const getVentasByProducto = async (producto_id) => {
+  try {
+    const query = queriesVentas.getVentasByProducto;
+    const [rows] = await db.query(query, [producto_id]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 
 module.exports = {
   getAllVentas,
@@ -59,4 +77,6 @@ module.exports = {
   upVenta,
   updateVentas,
   getVentasByClientes,
+  getVentasByZona,
+  getVentasByProducto,
 };
