@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
+import MenuLayout from "../components/MenuLayout";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -31,15 +32,18 @@ const Clientes = () => {
   ];
 
   return (
-    <div>
-      <h1>Lista de Clientes</h1>
-      <DataTable
-        columns={columns}
-        data={data}
-        progressPending={loading}
-        pagination
-      />
-    </div>
+    <MenuLayout>
+      <div>
+        <h1>Lista de Clientes</h1>
+        <DataTable
+          style={{ width: "100%" }}
+          columns={columns}
+          data={data}
+          progressPending={loading}
+          pagination
+        />
+      </div>
+    </MenuLayout>
   );
 };
 

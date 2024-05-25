@@ -1,0 +1,11 @@
+/* Estilos generales para la aplicación */
+.app {
+  display: flex;
+}
+
+.content {
+  margin-left: 256px; /* Deja espacio para el navbar */
+  padding: 20px;
+  width: calc(100% - 256px); /* Ajusta el ancho del contenido */
+  box-sizing: border-box;
+}
