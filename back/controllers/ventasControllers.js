@@ -10,9 +10,24 @@ const getAllVentas = async (req, res) => {
 };
 const addVenta = async (req, res) => {
   try {
-    const { producto_id, cantidad, cliente_id, zona_id } = req.body;
-    await ventasModel.addVenta(producto_id, cantidad, cliente_id, zona_id);
-    res.status(201).json({ message: "Venta agregada con exito" });
+    const { cliente_id, nroVenta, zona_id, pago, detalles } = req.body;
+    const ventaId = await ventasModel.addVenta(
+      cliente_id,
+      nroVenta,
+      zona_id,
+      pago
+    );
+    for (const detalle of detalles) {
+      await ventasModel.addDetalleVenta(
+        ventaId,
+        detalle.articulo_id,
+        detalle.costo,
+        detalle.cantidad,
+        detalle.precio_monotributista
+      );
+    }
+
+    res.status(201).json({ message: "Venta agregada con éxito" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Error al agregar la venta" });
@@ -82,6 +97,16 @@ const getVentasByProducto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const getVentaByID = async (req, res) => {
+  try {
+    const venta_id = req.params.ID;
+    const detalleVentas = await ventasModel.getVentaByID(venta_id);
+    res.json(detalleVentas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllVentas,
   addVenta,
@@ -91,4 +116,5 @@ module.exports = {
   getVentasByClientes,
   getVentasByZona,
   getVentasByProducto,
+  getVentaByID,
 };

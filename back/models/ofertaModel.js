@@ -70,11 +70,20 @@ const updateOferta = async (nombre, detalles, ID) => {
     throw err;
   }
 };
-
+const getOfertaById = async (oferta_id) => {
+  try {
+    const query = queriesOfertas.getOfertaById;
+    const [rows] = await db.query(query, [oferta_id]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllOfertas,
   addOferta,
   dropOferta,
   upOferta,
   updateOferta,
+  getOfertaById,
 };

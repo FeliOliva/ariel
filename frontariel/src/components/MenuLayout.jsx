@@ -27,7 +27,7 @@ const MenuLayout = ({ children }) => {
         navigate("/clientes");
         break;
       case "3":
-        navigate("/productos");
+        navigate("/Articulos");
         break;
       case "4":
         navigate("/Ventas");
@@ -60,7 +60,7 @@ const MenuLayout = ({ children }) => {
             {
               key: "3",
               icon: <UploadOutlined />,
-              label: "Productos",
+              label: "Articulos",
             },
             {
               key: "4",

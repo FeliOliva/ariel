@@ -20,4 +20,5 @@ module.exports = {
   upOferta: `UPDATE oferta SET estado = 1 WHERE id = ?;`,
   updateOferta: `UPDATE oferta SET nombre = ? WHERE id = ?;`,
   deleteDetallesOferta: `DELETE FROM detalle_oferta WHERE oferta_id = ?;`,
+  getOfertaById: `SELECT * FROM detalle_oferta WHERE oferta_id = ?;`,
 };

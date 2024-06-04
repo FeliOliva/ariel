@@ -10,7 +10,7 @@ const DetalleVentas = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/detalleventas");
+        const response = await axios.get("http://localhost:3000/ventas");
         setData(response.data);
       } catch (error) {
         console.error("Error fetching the data:", error);
@@ -23,10 +23,10 @@ const DetalleVentas = () => {
   }, []);
 
   const columns = [
-    { name: "ID", selector: (row) => row.ID, sortable: true },
+    { name: "Nro Venta", selector: (row) => row.nroVenta, sortable: true },
     { name: "Cliente", selector: (row) => row.nombre_cliente, sortable: true },
     {
-      name: "Producto",
+      name: "Articulo",
       selector: (row) => row.nombre_producto,
       sortable: true,
     },

@@ -3,14 +3,14 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 
-const Productos = () => {
+const Articulos = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/productos");
+        const response = await axios.get("http://localhost:3000/articulos");
         setData(response.data);
       } catch (error) {
         console.error("Error fetching the data:", error);
@@ -23,16 +23,30 @@ const Productos = () => {
   }, []);
 
   const columns = [
-    { name: "ID", selector: (row) => row.ID, sortable: true },
-    { name: "Nombre", selector: (row) => row.nombre, sortable: true },
-    { name: "Cantidad", selector: (row) => row.cantidad, sortable: true },
-    { name: "Marca", selector: (row) => row.nombre_marca, sortable: true },
+    { name: "Codigo", selector: (row) => row.articulo_codigo, sortable: true },
+    { name: "Nombre", selector: (row) => row.articulo_nombre, sortable: true },
+    { name: "Stock", selector: (row) => row.articulo_stock, sortable: true },
+    { name: "Linea", selector: (row) => row.linea_nombre, sortable: true },
     {
-      name: "Categoría",
-      selector: (row) => row.nombre_categoria,
+      name: "SubLinea",
+      selector: (row) => row.sublinea_nombre,
       sortable: true,
     },
-    { name: "Precio", selector: (row) => row.precio, sortable: true },
+    {
+      name: "Costo",
+      selector: (row) => row.articulo_costo,
+      sortable: true,
+    },
+    {
+      name: "Precio monotributista",
+      selector: (row) => row.precio_monotributista,
+      sortable: true,
+    },
+    {
+      name: "Proveedor",
+      selector: (row) => row.proveedor_nombre,
+      sortable: true,
+    },
     { name: "Estado", selector: (row) => row.estado, sortable: true },
   ];
 
@@ -51,4 +65,4 @@ const Productos = () => {
   );
 };
 
-export default Productos;
+export default Articulos;

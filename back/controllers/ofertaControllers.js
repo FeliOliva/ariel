@@ -51,11 +51,20 @@ const updateOferta = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+const getOfertaById = async (req, res) => {
+  try {
+    const oferta_id = req.params.ID;
+    const oferta = await ofertaModel.getOfertaById(oferta_id);
+    res.json(oferta);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllOfertas,
   addOferta,
   dropOferta,
   upOferta,
   updateOferta,
+  getOfertaById,
 };

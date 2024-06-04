@@ -10,10 +10,37 @@ const getAllVentas = async () => {
     throw err;
   }
 };
-const addVenta = async (producto_id, cantidad, cliente_id, zona_id) => {
+const addVenta = async (cliente_id, nroVenta, zona_id, pago) => {
   try {
     const query = queriesVentas.addVenta;
-    await db.query(query, [producto_id, cantidad, cliente_id, zona_id]);
+    const [result] = await db.query(query, [
+      cliente_id,
+      nroVenta,
+      zona_id,
+      pago,
+    ]);
+    return result.insertId;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const addDetalleVenta = async (
+  venta_id,
+  articulo_id,
+  costo,
+  cantidad,
+  precio_monotributista
+) => {
+  try {
+    const query = queriesVentas.addDetalleVenta;
+    await db.query(query, [
+      venta_id,
+      articulo_id,
+      costo,
+      cantidad,
+      precio_monotributista,
+    ]);
   } catch (err) {
     throw err;
   }
@@ -69,7 +96,15 @@ const getVentasByProducto = async (producto_id) => {
     throw err;
   }
 };
-
+const getVentaByID = async (venta_id) => {
+  try {
+    const query = queriesVentas.getVentaByID;
+    const [rows] = await db.query(query, [venta_id]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllVentas,
   addVenta,
@@ -79,4 +114,6 @@ module.exports = {
   getVentasByClientes,
   getVentasByZona,
   getVentasByProducto,
+  addDetalleVenta,
+  getVentaByID,
 };

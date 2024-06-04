@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Clientes from "./Routes/Clientes";
-import Productos from "./Routes/Productos";
+import Articulos from "./Routes/Articulos";
 import Inicio from "./Routes/Inicio";
 import Ventas from "./Routes/Ventas";
 
@@ -10,7 +10,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Inicio />} />
       <Route path="/clientes" element={<Clientes />} />
-      <Route path="/productos" element={<Productos />} />
+      <Route path="/Articulos" element={<Articulos />} />
       <Route path="/Ventas" element={<Ventas />} />
     </Routes>
   );
