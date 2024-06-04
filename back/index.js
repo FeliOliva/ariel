@@ -10,25 +10,29 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const RoutesProductos = require("../back/routes/productosRoutes");
-const RoutesClientes = require("../back/routes/clientesRoutes");
-const RoutesCategorias = require("../back/routes/categoriasRoutes");
-const RoutesSubCategorias = require("../back/routes/subCategoriasRoutes");
-const RoutesMarcas = require("../back/routes/marcasRoutes");
-const RoutesVentas = require("../back/routes/ventasRoutes");
-const RoutesZonas = require("../back/routes/zonasRoutes");
-const RoutesDetalleVentas = require("../back/routes/detalleVentasRoutes");
+const RoutesArticulos = require("./routes/articulosRoutes");
+const RoutesClientes = require("./routes/clientesRoutes");
+const RoutesLineas = require("./routes/lineaRoutes");
+const RoutesSublineas = require("./routes/subLineaRoutes");
+const RoutesMarcas = require("./routes/marcasRoutes");
+const RoutesVentas = require("./routes/ventasRoutes");
+const RoutesZonas = require("./routes/zonasRoutes");
+const RoutesDetalleVentas = require("./routes/detalleVentasRoutes");
+const RoutesProveedores = require("./routes/proveedorRoutes");
+const RoutesOfertas = require("./routes/ofertasRoutes");
 
 app.use(
   "/",
-  RoutesProductos,
+  RoutesArticulos,
   RoutesClientes,
-  RoutesCategorias,
-  RoutesSubCategorias,
+  RoutesLineas,
+  RoutesSublineas,
   RoutesMarcas,
   RoutesVentas,
   RoutesZonas,
-  RoutesDetalleVentas
+  RoutesDetalleVentas,
+  RoutesProveedores,
+  RoutesOfertas
 );
 
 app.listen(PORT, () => {
