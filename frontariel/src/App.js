@@ -3,7 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import Clientes from "./Routes/Clientes";
 import Articulos from "./Routes/Articulos";
 import Inicio from "./Routes/Inicio";
-import Ventas from "./Routes/Ventas";
+import Venta from "./Routes/Ventas";
+import VentaDetalles from "./Routes/VentaDetalles";
 
 function App() {
   return (
@@ -11,7 +12,8 @@ function App() {
       <Route path="/" element={<Inicio />} />
       <Route path="/clientes" element={<Clientes />} />
       <Route path="/Articulos" element={<Articulos />} />
-      <Route path="/Ventas" element={<Ventas />} />
+      <Route path="/Ventas" element={<Venta />} />
+      <Route path="/venta/:id" element={<VentaDetalles />} />{" "}
     </Routes>
   );
 }

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
+import { Link } from "react-router-dom"; 
 import MenuLayout from "../components/MenuLayout";
 
-const DetalleVentas = () => {
+const Venta = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,31 +24,46 @@ const DetalleVentas = () => {
   }, []);
 
   const columns = [
-    { name: "Nro Venta", selector: (row) => row.nroVenta, sortable: true },
+    { name: "Nro Venta", selector: (row) => row.nro_venta, sortable: true },
     { name: "Cliente", selector: (row) => row.nombre_cliente, sortable: true },
+    { name: "Zona", selector: (row) => row.nombre_zona, sortable: true },
     {
-      name: "Articulo",
-      selector: (row) => row.nombre_producto,
+      name: "Pago",
+      selector: (row) => (row.pago ? "Sí" : "No"),
       sortable: true,
     },
-    { name: "Cantidad", selector: (row) => row.cantidad, sortable: true },
-    { name: "Precio", selector: (row) => row.precio, sortable: true },
-    { name: "Zona", selector: (row) => row.nombre_zona, sortable: true },
+    {
+      name: "Total Costo",
+      selector: (row) => row.total_costo,
+      sortable: true,
+    },
+    {
+      name: "Total Monotributista",
+      selector: (row) => row.total_monotributista,
+      sortable: true,
+    },
+    {
+      name: "Acciones",
+      cell: (row) => (
+        <Link to={`/venta/${row.id}`}>
+          <button>Detalle de Venta</button>
+        </Link>
+      ),
+    },
   ];
 
   return (
     <MenuLayout>
       <div>
-        <h1>Lista de Detalle de Ventas</h1>
-        <DataTable
-          columns={columns}
-          data={data}
-          progressPending={loading}
-          pagination
-        />
+        <h1>Lista de Ventas</h1>
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
+          <DataTable columns={columns} data={data} pagination />
+        )}
       </div>
     </MenuLayout>
   );
 };
 
-export default DetalleVentas;
+export default Venta;

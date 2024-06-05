@@ -1,22 +1,19 @@
 module.exports = {
   getAllVentas: `SELECT 
   v.id,
-  c.nombre AS nombre_cliente,
-  v.nroVenta,
-  v.estado,
+  v.estado, 
+  c.nombre AS nombre_cliente, 
+  v.nroVenta AS nro_venta,
+  z.nombre AS nombre_zona,
   v.pago,
-  dv.articulo_id,
-  dv.costo,
-  dv.cantidad,
-  dv.precio_monotributista
-FROM 
-  venta v
-JOIN 
-  cliente c ON v.cliente_id = c.id
-JOIN 
-  detalle_venta dv ON v.id = dv.venta_id
-ORDER BY 
-  v.id; 
+  SUM(d.costo * d.cantidad) AS total_costo,
+  SUM(d.precio_monotributista * d.cantidad) AS total_monotributista
+FROM venta v
+INNER JOIN cliente c ON v.cliente_id = c.id
+INNER JOIN zona z ON v.zona_id = z.id
+INNER JOIN detalle_venta d ON v.id = d.venta_id
+GROUP BY v.id, v.estado, c.nombre, v.nroVenta, z.nombre, v.pago
+ORDER BY v.id;
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, pago) VALUES (?, ?, ?, ?);`,
   addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista) VALUES (?, ?, ?, ?, ?);`,
@@ -41,11 +38,24 @@ ORDER BY
   JOIN Cliente c ON v.cliente_id = c.ID
   JOIN Zona z ON v.zona_id = z.ID
   WHERE p.ID = ?;`,
-  getVentaByID: `SELECT dv.id, dv.articulo_id, a.nombre AS nombre_articulo, dv.venta_id, dv.costo, dv.cantidad, dv.precio_monotributista, dv.fecha, c.nombre AS nombre_cliente
-  FROM detalle_venta dv
-  INNER JOIN articulo a ON dv.articulo_id = a.id
-  INNER JOIN venta v ON dv.venta_id = v.id
-  INNER JOIN cliente c ON v.cliente_id = c.id
-  WHERE dv.venta_id = ?;
+  getVentaByID: `SELECT 
+  dv.id, 
+  dv.articulo_id, 
+  a.nombre AS nombre_articulo, 
+  a.codigo_producto AS cod_articulo,
+  dv.venta_id, 
+  dv.costo, 
+  dv.cantidad, 
+  dv.precio_monotributista, 
+  dv.fecha, 
+  c.nombre AS nombre_cliente,
+  SUM(dv.costo * dv.cantidad) AS total_costo, -- Calcula el total de costo
+  SUM(dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista -- Calcula el total de precio monotributista
+FROM detalle_venta dv
+INNER JOIN articulo a ON dv.articulo_id = a.id
+INNER JOIN venta v ON dv.venta_id = v.id
+INNER JOIN cliente c ON v.cliente_id = c.id
+WHERE dv.venta_id = ?
+GROUP BY dv.id, dv.articulo_id, a.nombre, a.codigo_producto, dv.venta_id, dv.costo, dv.cantidad, dv.precio_monotributista, dv.fecha, c.nombre;
   `,
 };
