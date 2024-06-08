@@ -4,6 +4,7 @@ const getAllArticulos = async (req, res) => {
   try {
     const articulos = await articuloModel.getAllArticulos();
     res.json(articulos);
+    console.log(articulos);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

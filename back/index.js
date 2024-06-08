@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const PORT = process.env.PORT;
 // Habilita CORS para todas las rutas, con esta sentencia permite todo
-app.use(cors());
+// app.use(cors());
 // Middleware para parsear JSON y URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

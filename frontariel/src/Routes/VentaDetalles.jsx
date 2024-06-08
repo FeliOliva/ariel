@@ -8,7 +8,7 @@ const VentaDetalles = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  console.log(id);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -16,6 +16,7 @@ const VentaDetalles = () => {
           `http://localhost:3000/getVentaByID/${id}`
         );
         setData(response.data);
+        console.log(response.data);
       } catch (error) {
         console.error("Error fetching the data:", error);
       } finally {
@@ -27,17 +28,21 @@ const VentaDetalles = () => {
   }, [id]);
 
   const columns = [
-    { name: "Código", selector: "cod_articulo", sortable: true },
-    { name: "Descripción", selector: "nombre_articulo", sortable: true },
-    { name: "Unidades", selector: "cantidad", sortable: true },
+    { name: "Código", selector: (row) => row.cod_articulo, sortable: true },
+    {
+      name: "Descripción",
+      selector: (row) => row.nombre_articulo,
+      sortable: true,
+    },
+    { name: "Unidades", selector: (row) => row.cantidad, sortable: true },
     {
       name: "Precio Unitario",
-      selector: "precio_monotributista",
+      selector: (row) => row.precio_monotributista,
       sortable: true,
     },
     {
       name: "Importe",
-      selector: "total_precio_monotributista",
+      selector: (row) => row.total_precio_monotributista,
       sortable: true,
     },
   ];
