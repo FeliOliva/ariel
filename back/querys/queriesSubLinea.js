@@ -10,9 +10,5 @@ module.exports = {
   dropSubLinea: `UPDATE subLinea SET estado = 0 WHERE ID = ?`,
   upSubLinea: `UPDATE subLinea SET estado = 1 WHERE ID = ?`,
   updateSubLinea: `UPDATE subLinea SET nombre = ?, linea_id = ? WHERE ID = ?`,
-  getSublineaByLinea: `SELECT subLinea.*, linea.nombre AS linea_nombre 
-FROM subLinea 
-JOIN linea ON subLinea.linea_id = linea.id 
-WHERE subLinea.linea_id = ?;
-`,
+  getSublineaByLinea: `SELECT id, nombre FROM linea WHERE id = (SELECT linea_id FROM subLinea WHERE id = ?);`,
 };

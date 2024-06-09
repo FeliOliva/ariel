@@ -15,7 +15,7 @@ const Articulos = () => {
   const [precio_monotributista, setPrecioMonotributista] = useState(0);
   const [costo, setCosto] = useState(0);
   const [proveedorId, setProveedorId] = useState(null);
-  const [subLineaId, setSubLineaId] = useState(null);
+  const [subLineaId, setSubLineaId] = useState("");
   const [lineaId, setLineaId] = useState("");
   const [hasSublinea, setHasSublinea] = useState(false);
 
@@ -70,8 +70,15 @@ const Articulos = () => {
 
   const handleSubLineaSelect = async (selectedSubLineaId) => {
     try {
-      setSubLineaId(selectedSubLineaId);
+      setSubLineaId(selectedSubLineaId.value);
       setHasSublinea(true);
+      const fetchSubLinea = selectedSubLineaId.value;
+      const response = await axios.get(
+        `http://localhost:3000/getLineaBySublinea/${fetchSubLinea}`
+      );
+      const lineaID = response.data.id;
+      console.log(lineaID, lineaId);
+      setLineaId(parseInt(lineaID));
     } catch (error) {
       console.error("Error fetching sublinea details:", error);
     }
@@ -81,6 +88,9 @@ const Articulos = () => {
     setLineaId(selectedLineaId);
     setSubLineaId(null);
     setHasSublinea(false);
+    console.log(selectedLineaId);
+
+    // Otras acciones si es necesario
   };
 
   const columns = [
@@ -189,7 +199,7 @@ const Articulos = () => {
             label="Sublínea"
             labelKey="subLinea_nombre"
             valueKey="subLinea_id"
-            onSelect={handleSubLineaSelect}
+            onSelect={handleSubLineaSelect} // Pasamos el handler para la sublínea
             style={{ marginBottom: 10 }}
           />
         ) : (
@@ -198,10 +208,11 @@ const Articulos = () => {
             label="Línea"
             labelKey="nombre"
             valueKey="id"
-            onSelect={handleLineaSelect}
+            onSelect={handleLineaSelect} // Pasamos el handler para la línea
             style={{ marginBottom: 10 }}
           />
         )}
+
         <br />
         <Button onClick={handleAddArticulo} type="primary">
           Agregar

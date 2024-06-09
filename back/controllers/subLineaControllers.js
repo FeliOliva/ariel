@@ -49,11 +49,11 @@ const updateSubLinea = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-const getSublineaByLinea = async (req, res) => {
+const getLineaBySublinea = async (req, res) => {
   try {
-    const linea_id = req.params.linea_id;
-    const subLinea = await subLineaModels.getSublineaByLinea(linea_id);
-    res.json(subLinea);
+    const { linea_id } = req.params; // Cambiado de subLineaId a linea_id
+    const linea = await subLineaModels.getLineaBySublinea(linea_id); // Cambiado de subLineaId a linea_id
+    res.json(linea);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -65,5 +65,5 @@ module.exports = {
   dropSubLinea,
   upSubLinea,
   updateSubLinea,
-  getSublineaByLinea,
+  getLineaBySublinea,
 };

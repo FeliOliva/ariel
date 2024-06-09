@@ -7,6 +7,8 @@ router.post("/addSubLinea", subLineaControllers.addSubLinea);
 router.put("/dropSubLinea/:ID", subLineaControllers.dropSubLinea);
 router.put("/upSubLinea/:ID", subLineaControllers.upSubLinea);
 router.put("/updateSubLinea", subLineaControllers.updateSubLinea);
-router.get("/getSublineaByLinea/:linea_id", subLineaControllers.getSublineaByLinea);
-
+router.get(
+  "/getLineaBySublinea/:linea_id",
+  subLineaControllers.getLineaBySublinea
+);
 module.exports = router;
