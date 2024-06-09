@@ -18,7 +18,8 @@ const addArticulo = async (
   proveedor_id,
   precio_monotributista,
   costo,
-  subLinea_id
+  subLinea_id,
+  linea_id
 ) => {
   try {
     const query = queriesArticulos.addArticulo;
@@ -30,6 +31,7 @@ const addArticulo = async (
       precio_monotributista,
       costo,
       subLinea_id,
+      linea_id,
     ]);
   } catch (err) {
     throw err;

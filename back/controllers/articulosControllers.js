@@ -19,6 +19,7 @@ const addArticulo = async (req, res) => {
       precio_monotributista,
       costo,
       subLinea_id,
+      linea_id,
     } = req.body;
     await articuloModel.addArticulo(
       nombre,
@@ -27,7 +28,8 @@ const addArticulo = async (req, res) => {
       proveedor_id,
       precio_monotributista,
       costo,
-      subLinea_id
+      subLinea_id,
+      linea_id
     );
     res.status(201).json({ message: "Articulo agregado con éxito" });
   } catch (error) {

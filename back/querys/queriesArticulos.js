@@ -21,7 +21,7 @@ LEFT JOIN
 subLinea s ON a.subLinea_id = s.id
 LEFT JOIN 
 linea l ON s.linea_id = l.id;`,
-  addArticulo: `INSERT INTO articulo (nombre, stock, codigo_producto, proveedor_id, precio_monotributista, costo, fecha_actualizacion_costo, fecha_actualizacion_pm, fecha_actualizacion_po, subLinea_id) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW(), ?);`,
+  addArticulo: `INSERT INTO articulo (nombre, stock, codigo_producto, proveedor_id, precio_monotributista, costo, fecha_actualizacion_costo, fecha_actualizacion_pm, fecha_actualizacion_po, subLinea_id, linea_id) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW(), ?, ?);`,
   dropArticulo: `UPDATE articulo SET estado = 0 WHERE ID = ?;`,
   upArticulo: `UPDATE articulo SET estado = 1 WHERE ID = ?;`,
   updateArticulo: `UPDATE articulo SET nombre = ?, stock = ?, codigo_producto = ?, proveedor_id = ?, precio_monotributista = ?, costo = ?, subLinea_id = ? WHERE ID = ?;`,

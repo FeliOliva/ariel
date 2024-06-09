@@ -32,6 +32,9 @@ const MenuLayout = ({ children }) => {
       case "4":
         navigate("/Ventas");
         break;
+      case "5":
+        navigate("/Linea");
+        break;
       default:
         break;
     }
@@ -66,6 +69,11 @@ const MenuLayout = ({ children }) => {
               key: "4",
               icon: <UploadOutlined />,
               label: "Ventas",
+            },
+            {
+              key: "5",
+              icon: <UploadOutlined />,
+              label: "Linea",
             },
           ]}
         />

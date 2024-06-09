@@ -49,6 +49,15 @@ const updateSubLinea = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getSublineaByLinea = async (req, res) => {
+  try {
+    const linea_id = req.params.linea_id;
+    const subLinea = await subLineaModels.getSublineaByLinea(linea_id);
+    res.json(subLinea);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getAllSubLinea,
@@ -56,4 +65,5 @@ module.exports = {
   dropSubLinea,
   upSubLinea,
   updateSubLinea,
+  getSublineaByLinea,
 };

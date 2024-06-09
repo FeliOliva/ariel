@@ -1,44 +1,37 @@
 import React, { useState, useEffect } from "react";
-import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
+import { Autocomplete, TextField } from "@mui/material";
 import axios from "axios";
 
-const FetchComboBox = ({ url, label, labelKey, valueKey, open, onSelect }) => {
+const FetchComboBox = ({ url, label, labelKey, valueKey, onSelect }) => {
   const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   useEffect(() => {
-    if (open) {
-      const fetchData = async () => {
-        try {
-          const response = await axios.get(url);
-          setOptions(
-            response.data.map((item) => ({
-              label: item[labelKey],
-              value: item[valueKey],
-            }))
-          );
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchOptions = async () => {
+      try {
+        const response = await axios.get(url);
+        const formattedOptions = response.data.map((item) => ({
+          label: item[labelKey],
+          value: item[valueKey],
+        }));
+        setOptions(formattedOptions);
+      } catch (error) {
+        console.error("Error fetching options:", error);
+      }
+    };
 
-      fetchData();
-    }
-  }, [open, url, labelKey, valueKey]);
+    fetchOptions();
+  }, [url, labelKey, valueKey]);
 
   return (
     <Autocomplete
-      disablePortal
       options={options}
-      loading={loading}
-      sx={{ width: 300 }}
-      onChange={(_, value) => {
-        if (value) {
-          onSelect(value);
-        }
+      getOptionLabel={(option) => option.label}
+      isOptionEqualToValue={(option, value) => option.value === value.value}
+      value={selectedOption}
+      onChange={(event, newValue) => {
+        setSelectedOption(newValue);
+        onSelect(newValue);
       }}
       renderInput={(params) => <TextField {...params} label={label} />}
     />

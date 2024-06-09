@@ -44,7 +44,14 @@ const upClient = async (ID) => {
     throw err;
   }
 };
-const updateClients = async (nombre, apellido, direccion, email, telefono,ID) => {
+const updateClients = async (
+  nombre,
+  apellido,
+  direccion,
+  email,
+  telefono,
+  ID
+) => {
   try {
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
@@ -62,6 +69,15 @@ const updateClients = async (nombre, apellido, direccion, email, telefono,ID) =>
     throw err;
   }
 };
+const getClientsByID = async (ID) => {
+  try {
+    const query = queriesClients.getClientsByID;
+    const [rows] = await db.query(query, [ID]);
+    return rows[0]; 
+  } catch (err) {
+    throw err;
+  }
+};
 
 module.exports = {
   getAllClients,
@@ -69,4 +85,5 @@ module.exports = {
   dropClient,
   upClient,
   updateClients,
+  getClientsByID,
 };

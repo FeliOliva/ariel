@@ -69,11 +69,24 @@ const updateClients = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+const getClientsByID = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const client = await clientModels.getClientsByID(ID);
+    if (client) {
+      res.json(client);
+    } else {
+      res.status(404).json({ error: "Cliente no encontrado" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllClients,
   addClient,
   dropClient,
   upClient,
   updateClients,
+  getClientsByID,
 };

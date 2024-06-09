@@ -15,37 +15,37 @@ const Venta = () => {
   const [cantidad, setCantidad] = useState(1);
   const [articulos, setArticulos] = useState([]);
   const [open, setOpen] = useState(false);
-  const [nroVenta, setNroVenta] = useState(null);
+  const [nroVenta, setNroVenta] = useState("V001");
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/ventas");
+      setData(response.data);
+      if (response.data.length > 0) {
+        const lastSaleNumber =
+          response.data[response.data.length - 1].nro_venta;
+        const nextSaleNumber = parseInt(lastSaleNumber.substring(1)) + 1;
+        setNroVenta(`V${String(nextSaleNumber).padStart(3, "0")}`);
+      }
+    } catch (error) {
+      console.error("Error fetching the data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/ventas");
-        setData(response.data);
-        if (response.data.length > 0) {
-          const lastSaleNumber =
-            response.data[response.data.length - 1].nro_venta;
-          const nextSaleNumber = parseInt(lastSaleNumber.substring(1)) + 1;
-          setNroVenta(`VN${String(nextSaleNumber).padStart(3, "0")}`);
-        }
-      } catch (error) {
-        console.error("Error fetching the data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
   const handleAddArticulo = () => {
-    if (selectedArticulo && selectedCliente) {
+    if (selectedArticulo) {
       const newArticulo = {
-        articulo_id: selectedArticulo.id,
-        costo: selectedArticulo.articulo_costo,
-        cantidad: cantidad,
-        precio_monotributista: selectedArticulo.precio_monotributista,
-        zona_id: selectedCliente.zona_id, 
+        label: selectedArticulo.label,
+        value: selectedArticulo.value,
+        quantity: cantidad,
+        costo: 0,
+        precio_monotributista: 0,
       };
       setArticulos([...articulos, newArticulo]);
       setSelectedArticulo(null);
@@ -59,26 +59,33 @@ const Venta = () => {
 
   const handleSendVenta = async () => {
     if (selectedCliente && articulos.length > 0) {
-      const ventaData = {
-        cliente_id: selectedCliente.value,
-        nroVenta,
-        zona_id: selectedCliente.zona_id,
-        pago: 0,
-        detalles: articulos.map((articulo) => ({
-          articulo_id: articulo.articulo_id,
-          costo: articulo.costo,
-          cantidad: articulo.cantidad,
-          precio_monotributista: articulo.precio_monotributista,
-        })),
-      };
-
       try {
-        console.log(articulos, selectedCliente, ventaData);
+        const clienteResponse = await axios.get(
+          `http://localhost:3000/getClientsByID/${selectedCliente.value}`
+        );
+        const zonaId = clienteResponse.data.zona_id;
+
+        const ventaData = {
+          cliente_id: selectedCliente.value,
+          nroVenta,
+          zona_id: zonaId,
+          pago: 1,
+          detalles: articulos.map((articulo) => ({
+            articulo_id: articulo.value,
+            costo: articulo.costo,
+            cantidad: articulo.quantity,
+            precio_monotributista: articulo.precio_monotributista,
+          })),
+        };
+
         await axios.post("http://localhost:3000/addVenta", ventaData);
         setArticulos([]);
         setSelectedCliente(null);
+        setSelectedArticulo(null);
+        setCantidad(1);
         setOpen(false);
         alert("Venta registrada con éxito");
+        fetchData();
       } catch (error) {
         console.error("Error sending venta:", error);
         alert("Error al registrar la venta");
@@ -136,7 +143,6 @@ const Venta = () => {
           label="Seleccione los articulos"
           labelKey="articulo_nombre"
           valueKey="id"
-          open={open}
           onSelect={setSelectedArticulo}
         />
         <InputNumber
@@ -158,7 +164,6 @@ const Venta = () => {
           label="Seleccione el cliente"
           labelKey="nombre"
           valueKey="id"
-          open={open}
           onSelect={setSelectedCliente}
         />
         <Button
