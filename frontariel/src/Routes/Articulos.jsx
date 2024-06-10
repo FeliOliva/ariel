@@ -34,34 +34,38 @@ const Articulos = () => {
     fetchData();
   }, []);
 
+  const resetFields = () => {
+    setNombre("");
+    setStock(0);
+    setCodigoProducto("");
+    setPrecioMonotributista(0);
+    setCosto(0);
+    setProveedorId(null);
+    setSubLineaId("");
+    setLineaId("");
+    setHasSublinea(false);
+    setProveedorId(null);
+  };
+
   const handleAddArticulo = async () => {
     try {
-      let idLineaSeleccionada;
-      let idSubLineaSeleccionada = subLineaId.value;
-      if (hasSublinea) {
-        const response = await axios.get(
-          `http://localhost:3000/getSublineaByLinea/${idSubLineaSeleccionada}`
-        );
-        idLineaSeleccionada = response.data.linea_id;
-      } else {
-        idLineaSeleccionada = lineaId;
-      }
-
       const nuevoArticulo = {
         nombre,
         stock,
         codigo_producto: codigoProducto,
-        proveedor_id: proveedorId.value,
+        proveedor_id: proveedorId,
         precio_monotributista,
         costo,
-        subLinea_id: hasSublinea ? subLineaId.value : null,
-        linea_id: idLineaSeleccionada,
+        subLinea_id: subLineaId,
+        linea_id: lineaId,
       };
-      console.log(nuevoArticulo, hasSublinea, idLineaSeleccionada);
+      console.log(nuevoArticulo);
       await axios.post("http://localhost:3000/addArticulo", nuevoArticulo);
       fetchData();
+      resetFields();
       setOpen(false);
       alert("Artículo agregado con éxito");
+      // window.location.reload();
     } catch (error) {
       console.error("Error adding article:", error);
       alert("Error al agregar el artículo");
@@ -69,28 +73,28 @@ const Articulos = () => {
   };
 
   const handleSubLineaSelect = async (selectedSubLineaId) => {
+    const fetchSubLinea = selectedSubLineaId.value;
+    setSubLineaId(fetchSubLinea);
+
     try {
-      setSubLineaId(selectedSubLineaId.value);
-      setHasSublinea(true);
-      const fetchSubLinea = selectedSubLineaId.value;
       const response = await axios.get(
         `http://localhost:3000/getLineaBySublinea/${fetchSubLinea}`
       );
       const lineaID = response.data.id;
-      console.log(lineaID, lineaId);
       setLineaId(parseInt(lineaID));
+      setHasSublinea(true);
+      console.log(fetchSubLinea, lineaID);
     } catch (error) {
       console.error("Error fetching sublinea details:", error);
     }
   };
 
-  const handleLineaSelect = (selectedLineaId) => {
-    setLineaId(selectedLineaId);
-    setSubLineaId(null);
+  const handleLineaSelect = async (selectedLineaId) => {
+    const lineaId = selectedLineaId.value;
+    setLineaId(lineaId);
+    setSubLineaId(5);
+    console.log(lineaId, subLineaId);
     setHasSublinea(false);
-    console.log(selectedLineaId);
-
-    // Otras acciones si es necesario
   };
 
   const columns = [
@@ -131,7 +135,10 @@ const Articulos = () => {
         title="Nuevo Artículo"
         closable={true}
         maskClosable={false}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          resetFields();
+        }}
       >
         <Input
           value={nombre}
@@ -182,7 +189,7 @@ const Articulos = () => {
           labelKey="nombre"
           valueKey="id"
           onSelect={setProveedorId}
-          style={{ marginBottom: 10 }}
+          style={{ marginBottom: 10, width: 200 }}
         />
         <br />
         <Button
@@ -199,8 +206,8 @@ const Articulos = () => {
             label="Sublínea"
             labelKey="subLinea_nombre"
             valueKey="subLinea_id"
-            onSelect={handleSubLineaSelect} // Pasamos el handler para la sublínea
-            style={{ marginBottom: 10 }}
+            onSelect={handleSubLineaSelect}
+            style={{ marginBottom: 10, width: 150 }}
           />
         ) : (
           <FetchComboBox
@@ -208,8 +215,8 @@ const Articulos = () => {
             label="Línea"
             labelKey="nombre"
             valueKey="id"
-            onSelect={handleLineaSelect} // Pasamos el handler para la línea
-            style={{ marginBottom: 10 }}
+            onSelect={handleLineaSelect}
+            style={{ marginBottom: 10, width: 150 }}
           />
         )}
 
@@ -225,6 +232,7 @@ const Articulos = () => {
           data={data}
           progressPending={loading}
           pagination
+          defaultSortFieldId={columns[0].name}
         />
       </div>
     </MenuLayout>

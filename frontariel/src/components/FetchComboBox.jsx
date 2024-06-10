@@ -1,40 +1,53 @@
 import React, { useState, useEffect } from "react";
-import { Autocomplete, TextField } from "@mui/material";
 import axios from "axios";
+import { Select } from "antd";
 
-const FetchComboBox = ({ url, label, labelKey, valueKey, onSelect }) => {
+const { Option } = Select;
+
+const FetchComboBox = ({
+  url,
+  label,
+  labelKey,
+  valueKey,
+  onSelect,
+  value,
+  style,
+}) => {
   const [options, setOptions] = useState([]);
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOptions = async () => {
       try {
         const response = await axios.get(url);
-        const formattedOptions = response.data.map((item) => ({
-          label: item[labelKey],
-          value: item[valueKey],
-        }));
-        setOptions(formattedOptions);
+        setOptions(response.data);
       } catch (error) {
-        console.error("Error fetching options:", error);
+        console.error(`Error fetching options from ${url}:`, error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchOptions();
-  }, [url, labelKey, valueKey]);
+  }, [url]);
 
   return (
-    <Autocomplete
-      options={options}
-      getOptionLabel={(option) => option.label}
-      isOptionEqualToValue={(option, value) => option.value === value.value}
-      value={selectedOption}
-      onChange={(event, newValue) => {
-        setSelectedOption(newValue);
-        onSelect(newValue);
-      }}
-      renderInput={(params) => <TextField {...params} label={label} />}
-    />
+    <Select
+      showSearch
+      placeholder={`Seleccione ${label}`}
+      optionFilterProp="children"
+      onChange={(value) => onSelect({ value })}
+      style={style}
+      value={value}
+      loading={loading}
+      allowClear
+    >
+      {options.map((option) => (
+        <Option key={option[valueKey]} value={option[valueKey]}>
+          {option[labelKey]}
+        </Option>
+      ))}
+    </Select>
   );
 };
 

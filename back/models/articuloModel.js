@@ -33,6 +33,7 @@ const addArticulo = async (
       subLinea_id,
       linea_id,
     ]);
+    console.log("Articulo agregado");
   } catch (err) {
     throw err;
   }
