@@ -23,6 +23,7 @@ const Articulos = () => {
     try {
       const response = await axios.get("http://localhost:3000/articulos");
       setData(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -34,26 +35,13 @@ const Articulos = () => {
     fetchData();
   }, []);
 
-  const resetFields = () => {
-    setNombre("");
-    setStock(0);
-    setCodigoProducto("");
-    setPrecioMonotributista(0);
-    setCosto(0);
-    setProveedorId(null);
-    setSubLineaId("");
-    setLineaId("");
-    setHasSublinea(false);
-    setProveedorId(null);
-  };
-
   const handleAddArticulo = async () => {
     try {
       const nuevoArticulo = {
         nombre,
         stock,
         codigo_producto: codigoProducto,
-        proveedor_id: proveedorId,
+        proveedor_id: proveedorId.value,
         precio_monotributista,
         costo,
         subLinea_id: subLineaId,
@@ -62,7 +50,6 @@ const Articulos = () => {
       console.log(nuevoArticulo);
       await axios.post("http://localhost:3000/addArticulo", nuevoArticulo);
       fetchData();
-      resetFields();
       setOpen(false);
       alert("Artículo agregado con éxito");
       // window.location.reload();
@@ -93,7 +80,7 @@ const Articulos = () => {
     const lineaId = selectedLineaId.value;
     setLineaId(lineaId);
     setSubLineaId(5);
-    console.log(lineaId, subLineaId);
+    console.log("Linea id: ", lineaId, "subLinea id: ", subLineaId);
     setHasSublinea(false);
   };
 
@@ -137,7 +124,6 @@ const Articulos = () => {
         maskClosable={false}
         onClose={() => {
           setOpen(false);
-          resetFields();
         }}
       >
         <Input
@@ -232,7 +218,6 @@ const Articulos = () => {
           data={data}
           progressPending={loading}
           pagination
-          defaultSortFieldId={columns[0].name}
         />
       </div>
     </MenuLayout>

@@ -21,6 +21,14 @@ const addArticulo = async (req, res) => {
       subLinea_id,
       linea_id,
     } = req.body;
+
+    // Verificación de línea_id antes de la inserción
+    if (!linea_id) {
+      return res
+        .status(400)
+        .json({ error: "El campo linea_id es obligatorio" });
+    }
+
     await articuloModel.addArticulo(
       nombre,
       stock,
@@ -31,6 +39,7 @@ const addArticulo = async (req, res) => {
       subLinea_id,
       linea_id
     );
+
     res.status(201).json({ message: "Articulo agregado con éxito" });
   } catch (error) {
     console.error(error);
