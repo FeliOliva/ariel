@@ -4,7 +4,6 @@ import DataTable from "react-data-table-component";
 import { Drawer, Button, InputNumber, Input } from "antd";
 import MenuLayout from "../components/MenuLayout";
 import FetchComboBox from "../components/FetchComboBox";
-import TransitionsModal from "../components/TransitionsModal";
 
 const Articulos = () => {
   const [data, setData] = useState([]);
@@ -206,29 +205,6 @@ const Articulos = () => {
             style={{ marginBottom: 10, width: 150 }}
           />
         )}
-        <div style={{ display: "flex" }}>
-          <TransitionsModal
-            url="http://localhost:3000/addLinea"
-            title="Agregar Línea"
-            fields={[
-              { name: "nombre", label: "Nombre de la linea" },
-              { name: "SubLinea", label: "Nombre de la SubLinea" },
-            ]}
-          />
-          <TransitionsModal
-            url="http://localhost:3000/addSublinea"
-            title="Agregar subLínea"
-            fields={[
-              { name: "subLineaNombre", label: "Nombre de la SubLínea" },
-              {
-                name: "lineaId",
-                label: "Línea a la que pertenece",
-                type: "fetchComboBox",
-                url: "http://localhost:3000/lineas",
-              },
-            ]}
-          />
-        </div>
         <br />
         <Button onClick={handleAddArticulo} type="primary">
           Agregar

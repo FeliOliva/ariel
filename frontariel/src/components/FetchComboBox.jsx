@@ -31,19 +31,31 @@ const FetchComboBox = ({
     fetchOptions();
   }, [url]);
 
+  console.log("options");
+  console.log(options);
   return (
     <Select
       showSearch
       placeholder={`Seleccione ${label}`}
       optionFilterProp="children"
-      onChange={(value) => onSelect({ value })}
-      style={style}
+      onChange={(value) => {
+        console.log(options[0]);
+        const op = options.filter((i) => i[valueKey] === value);
+        if (op.length > 0) {
+          onSelect(op[0]);
+        }
+      }}
+      style={{ ...style, position: "relative" }}
       value={value}
       loading={loading}
       allowClear
     >
       {options.map((option) => (
-        <Option key={option[valueKey]} value={option[valueKey]}>
+        <Option
+          key={option[valueKey]}
+          value={option[valueKey]}
+          style={{ width: "100%" }}
+        >
           {option[labelKey]}
         </Option>
       ))}

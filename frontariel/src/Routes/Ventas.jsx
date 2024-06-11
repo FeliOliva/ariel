@@ -14,8 +14,13 @@ const Venta = () => {
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [cantidad, setCantidad] = useState(1);
   const [articulos, setArticulos] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [openVentaDrawer, setOpenVentaDrawer] = useState(false);
+  const [openLineaDrawer, setOpenLineaDrawer] = useState(false);
+  const [openSublineaDrawer, setOpenSublineaDrawer] = useState(false);
   const [nroVenta, setNroVenta] = useState("V001");
+  const [newLinea, setNewLinea] = useState("");
+  const [newSublinea, setNewSublinea] = useState("");
+  const [selectedLinea, setSelectedLinea] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -41,13 +46,13 @@ const Venta = () => {
   const handleAddArticulo = () => {
     if (selectedArticulo) {
       const newArticulo = {
-        label: selectedArticulo.label,
-        value: selectedArticulo.value,
+        label: selectedArticulo.articulo_nombre,
+        value: selectedArticulo.articulo_id,
         quantity: cantidad,
         costo: 0,
         precio_monotributista: 0,
       };
-      setArticulos([...articulos, newArticulo]);
+      setArticulos((prevArticulos) => [...prevArticulos, newArticulo]);
       setSelectedArticulo(null);
       setCantidad(1);
     }
@@ -60,13 +65,10 @@ const Venta = () => {
   const handleSendVenta = async () => {
     if (selectedCliente && articulos.length > 0) {
       try {
-        const clienteResponse = await axios.get(
-          `http://localhost:3000/getClientsByID/${selectedCliente.value}`
-        );
-        const zonaId = clienteResponse.data.zona_id;
+        const zonaId = selectedCliente.zona_id;
 
         const ventaData = {
-          cliente_id: selectedCliente.value,
+          cliente_id: selectedCliente.id,
           nroVenta,
           zona_id: zonaId,
           pago: 1,
@@ -83,7 +85,7 @@ const Venta = () => {
         setSelectedCliente(null);
         setSelectedArticulo(null);
         setCantidad(1);
-        setOpen(false);
+        setOpenVentaDrawer(false);
         alert("Venta registrada con éxito");
         fetchData();
       } catch (error) {
@@ -92,6 +94,42 @@ const Venta = () => {
       }
     } else {
       alert("Seleccione un cliente y agregue al menos un artículo");
+    }
+  };
+
+  const handleAddLinea = async () => {
+    if (newLinea.trim() === "") {
+      alert("Ingrese el nombre de la línea");
+      return;
+    }
+
+    try {
+      await axios.post("http://localhost:3000/addLinea", { nombre: newLinea });
+      alert("Línea agregada con éxito");
+      setNewLinea("");
+    } catch (error) {
+      console.error("Error agregando línea:", error);
+      alert("Error al agregar la línea");
+    }
+  };
+
+  const handleAddSublinea = async () => {
+    if (newSublinea.trim() === "" || !selectedLinea) {
+      alert("Ingrese el nombre de la sublínea y seleccione una línea");
+      return;
+    }
+
+    try {
+      await axios.post("http://localhost:3000/addSublinea", {
+        nombre: newSublinea,
+        linea_id: selectedLinea.linea_id,
+      });
+      alert("Sublínea agregada con éxito");
+      setNewSublinea("");
+      setSelectedLinea(null);
+    } catch (error) {
+      console.error("Error agregando sublínea:", error);
+      alert("Error al agregar la sublínea");
     }
   };
 
@@ -126,23 +164,23 @@ const Venta = () => {
 
   return (
     <MenuLayout>
-      <Button onClick={() => setOpen(true)} type="primary">
+      <Button onClick={() => setOpenVentaDrawer(true)} type="primary">
         Agregar venta
       </Button>
       <Drawer
-        open={open}
+        open={openVentaDrawer}
         title="Nueva Venta"
         footer={"Zona de ventas"}
         closable={true}
         maskClosable={false}
-        onClose={() => setOpen(false)}
+        onClose={() => setOpenVentaDrawer(false)}
       >
         <Input value={nroVenta} readOnly style={{ marginBottom: 10 }} />
         <FetchComboBox
           url="http://localhost:3000/articulos"
           label="Seleccione los articulos"
           labelKey="articulo_nombre"
-          valueKey="id"
+          valueKey="articulo_id"
           onSelect={setSelectedArticulo}
         />
         <InputNumber
@@ -173,10 +211,79 @@ const Venta = () => {
         >
           Cargar Venta
         </Button>
-        <Button onClick={() => setOpen(false)} style={{ marginTop: 10 }}>
-          Close
+        <div style={{ display: "flex"}}>
+          <Button
+            onClick={() => setOpenLineaDrawer(true)}
+            type="primary"
+            style={{ marginTop: 10 }}
+          >
+            Agregar linea
+          </Button>
+          <Button
+            onClick={() => setOpenSublineaDrawer(true)}
+            type="primary"
+            style={{ marginTop: 10 }}
+          >
+            Agregar Sublinea
+          </Button>
+        </div>
+      </Drawer>
+
+      <Drawer
+        open={openLineaDrawer}
+        title="Agregar línea"
+        footer={"Zona de Líneas"}
+        closable={true}
+        maskClosable={false}
+        onClose={() => setOpenLineaDrawer(false)}
+      >
+        <div>
+          <Input
+            placeholder="Nombre de la Línea"
+            value={newLinea}
+            onChange={(e) => setNewLinea(e.target.value)}
+            style={{ marginBottom: 10 }}
+          />
+          <Button
+            onClick={handleAddLinea}
+            type="primary"
+            style={{ marginBottom: 10 }}
+          >
+            Agregar Línea
+          </Button>
+        </div>
+      </Drawer>
+      <Drawer
+        open={openSublineaDrawer}
+        title="agregar sublínea"
+        closable={true}
+        maskClosable={false}
+        onClose={() => setOpenSublineaDrawer(false)}
+      >
+        {" "}
+        <FetchComboBox
+          url="http://localhost:3000/lineas"
+          label="Seleccione la Línea"
+          labelKey="nombre"
+          valueKey="linea_id"
+          onSelect={setSelectedLinea}
+          style={{ marginBottom: 10 }}
+        />
+        <Input
+          placeholder="Nombre de la Sublínea"
+          value={newSublinea}
+          onChange={(e) => setNewSublinea(e.target.value)}
+          style={{ marginBottom: 10 }}
+        />
+        <Button
+          onClick={handleAddSublinea}
+          type="primary"
+          style={{ marginBottom: 10 }}
+        >
+          Agregar Sublínea
         </Button>
       </Drawer>
+
       <div>
         <h1>Lista de Ventas</h1>
         {loading ? (
