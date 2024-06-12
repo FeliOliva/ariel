@@ -31,15 +31,15 @@ const FetchComboBox = ({
     fetchOptions();
   }, [url]);
 
-  console.log("options");
-  console.log(options);
+  // console.log("options");
+  // console.log(options);
   return (
     <Select
       showSearch
       placeholder={`Seleccione ${label}`}
       optionFilterProp="children"
       onChange={(value) => {
-        console.log(options[0]);
+        // console.log(options[0]);
         const op = options.filter((i) => i[valueKey] === value);
         if (op.length > 0) {
           onSelect(op[0]);

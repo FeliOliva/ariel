@@ -18,6 +18,11 @@ const Articulos = () => {
   const [subLineaId, setSubLineaId] = useState("");
   const [lineaId, setLineaId] = useState("");
   const [hasSublinea, setHasSublinea] = useState(false);
+  const [openLineaDrawer, setOpenLineaDrawer] = useState(false);
+  const [openSublineaDrawer, setOpenSublineaDrawer] = useState(false);
+  const [subLineaValue, setSubLineaValue] = useState("");
+  const [lineaValue, setLineaValue] = useState("");
+  const [lineaFetched, setLineaFetched] = useState("");
 
   const fetchData = async () => {
     try {
@@ -41,7 +46,7 @@ const Articulos = () => {
         nombre,
         stock,
         codigo_producto: codigoProducto,
-        proveedor_id: proveedorId.value,
+        proveedor_id: proveedorId.id,
         precio_monotributista,
         costo,
         subLinea_id: subLineaId,
@@ -60,7 +65,8 @@ const Articulos = () => {
   };
 
   const handleSubLineaSelect = async (selectedSubLineaId) => {
-    const fetchSubLinea = selectedSubLineaId.value;
+    const fetchSubLinea = selectedSubLineaId.subLinea_id;
+    console.log(selectedSubLineaId);
     setSubLineaId(fetchSubLinea);
 
     try {
@@ -70,14 +76,54 @@ const Articulos = () => {
       const lineaID = response.data.id;
       setLineaId(parseInt(lineaID));
       setHasSublinea(true);
-      console.log(fetchSubLinea, lineaID);
+      console.log(fetchSubLinea);
+      console.log("ssss");
+      console.log(lineaID);
     } catch (error) {
       console.error("Error fetching sublinea details:", error);
     }
   };
-
+  const handleLineaFetch = async (selectedLineaFetch) => {
+    setLineaValue(selectedLineaFetch.id);
+    console.log(selectedLineaFetch.id);
+  };
+  const handleAddSubLinea = async () => {
+    try {
+      const nuevaSubLinea = {
+        nombre: subLineaValue,
+        linea_id: lineaValue,
+      };
+      console.log(nuevaSubLinea);
+      const response = await axios.post(
+        `http://localhost:3000/addSubLinea`,
+        nuevaSubLinea
+      );
+      console.log(response);
+      setOpenSublineaDrawer(false);
+    } catch (error) {
+      console.error("Error al agregar la subLinea:", error);
+      alert("Error al agregar el subLinea");
+    }
+  };
+  const handleAddLinea = async () => {
+    try {
+      const nuevaLinea = {
+        nombre: lineaFetched,
+      };
+      const response = await axios.post(
+        "http://localhost:3000/addLinea",
+        nuevaLinea
+      );
+      console.log(nuevaLinea);
+      console.log(response);
+      setOpenLineaDrawer(false);
+    } catch (error) {
+      console.error("Error al agregar la linea:", error);
+      alert("Error al agregar el linea");
+    }
+  };
   const handleLineaSelect = async (selectedLineaId) => {
-    const lineaId = selectedLineaId.value;
+    const lineaId = selectedLineaId.id;
     setLineaId(lineaId);
     setSubLineaId(5);
     console.log("Linea id: ", lineaId, "subLinea id: ", subLineaId);
@@ -206,8 +252,93 @@ const Articulos = () => {
           />
         )}
         <br />
+        <div
+          style={{
+            display: "flex",
+            marginTop: 10,
+            border: "1px solid #ccc",
+          }}
+        >
+          <div style={{ marginRight: 10 }}>
+            <Button
+              onClick={() => {
+                setOpenLineaDrawer(true);
+              }}
+              type="primary"
+            >
+              Agregar Linea
+            </Button>
+            <Drawer
+              open={openLineaDrawer}
+              title="Nueva linea"
+              closable={true}
+              maskClosable={false}
+              onClose={() => {
+                setOpenLineaDrawer(false);
+              }}
+            >
+              <Input
+                value={lineaFetched}
+                onChange={(e) => setLineaFetched(e.target.value)}
+                placeholder="Nombre de la linea"
+                style={{ marginBottom: 10 }}
+              />
+              <Button
+                onClick={() => {
+                  handleAddLinea();
+                }}
+                type="primary"
+              >
+                Agregar
+              </Button>
+            </Drawer>
+          </div>
+          <div style={{ marginRight: 10 }}>
+            <Button
+              onClick={() => {
+                setOpenSublineaDrawer(true);
+              }}
+              type="primary"
+            >
+              Agregar SubLinea
+            </Button>
+            <Drawer
+              open={openSublineaDrawer}
+              title="Nueva sublinea"
+              closable={true}
+              maskClosable={false}
+              onClose={() => {
+                setOpenSublineaDrawer(false);
+              }}
+            >
+              <Input
+                type="text"
+                label="Nombre de SubLinea"
+                style={{ display: "flex", marginBottom: 10 }}
+                onChange={(e) => setSubLineaValue(e.target.value)}
+              />
+              <FetchComboBox
+                url="http://localhost:3000/lineas"
+                label="Línea"
+                labelKey="nombre"
+                valueKey="id"
+                onSelect={handleLineaFetch}
+                style={{ marginBottom: 10, width: 150 }}
+              />
+              <Button
+                onClick={() => {
+                  handleAddSubLinea();
+                }}
+                type="primary"
+              >
+                Agregar
+              </Button>
+            </Drawer>
+          </div>
+        </div>
+        <br />
         <Button onClick={handleAddArticulo} type="primary">
-          Agregar
+          Agregar Artículo
         </Button>
       </Drawer>
       <div>
