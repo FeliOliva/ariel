@@ -41,10 +41,22 @@ const updateLinea = async (nombre, ID) => {
     throw err;
   }
 };
+const getSublineasByLinea = async (lineaId) => {
+  try {
+    const query = queriesLineas.getSublineaByLinea;
+    const [rows] = await db.query(query, [lineaId]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+
 module.exports = {
   getAllLineas,
   addLinea,
   dropLinea,
   upLinea,
   updateLinea,
+  getSublineasByLinea,
 };

@@ -13,6 +13,7 @@ const Linea = () => {
       try {
         const response = await axios.get("http://localhost:3000/lineas");
         setLineas(response.data);
+        console.log(response.data);
       } catch (error) {
         console.error("Error fetching the data:", error);
       } finally {

@@ -49,10 +49,22 @@ const updateLinea = async (req, res) => {
     res.status(500).json({ message: "Error al modificar la linea" });
   }
 };
+const getSubLineasByLinea = async (req, res) => {
+  try {
+    const { linea_id } = req.params;
+    const sublineas = await lineaModels.getSublineasByLinea(linea_id);
+    res.json(sublineas);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   getAllLineas,
   addLinea,
   dropLinea,
   upLinea,
   updateLinea,
+  getSubLineasByLinea,
 };

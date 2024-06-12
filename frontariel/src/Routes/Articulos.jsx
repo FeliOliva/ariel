@@ -252,13 +252,7 @@ const Articulos = () => {
           />
         )}
         <br />
-        <div
-          style={{
-            display: "flex",
-            marginTop: 10,
-            border: "1px solid #ccc",
-          }}
-        >
+        <div style={{ display: "flex", marginTop: 10 }}>
           <div style={{ marginRight: 10 }}>
             <Button
               onClick={() => {
