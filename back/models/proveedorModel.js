@@ -44,10 +44,20 @@ const updateProveedor = async (nombre, ID) => {
     throw err;
   }
 };
+const getProveedorByID = async (ID) => {
+  try {
+    const query = queriesProveedor.getProveedorByID;
+    const [rows] = await db.query(query, [ID]);
+    return rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllProveedores,
   addProveedor,
   dropProveedor,
   upProveedor,
   updateProveedor,
+  getProveedorByID,
 };

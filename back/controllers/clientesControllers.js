@@ -9,17 +9,30 @@ const getAllClients = async (req, res) => {
 };
 const addClient = async (req, res) => {
   try {
-    const { nombre, apellido, direccion, email, telefono } = req.body;
+    const {
+      nombre,
+      apellido,
+      direccion,
+      email,
+      telefono,
+      cuil,
+      zona_id,
+      es_responsable_inscripto,
+    } = req.body;
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
+    const cuilValue = cuil ?? null;
 
     const client = await clientModels.addClient(
       nombre,
       apellido,
       direccionValue,
       emailValue,
-      telefonoValue
+      telefonoValue,
+      cuilValue,
+      zona_id,
+      es_responsable_inscripto
     );
     res
       .status(201)
@@ -51,20 +64,36 @@ const upClient = async (req, res) => {
 };
 const updateClients = async (req, res) => {
   try {
-    const { nombre, apellido, direccion, email, telefono, ID } = req.body;
+    const {
+      nombre,
+      apellido,
+      direccion,
+      email,
+      telefono,
+      cuil,
+      zona_id,
+      es_responsable_inscripto,
+      ID,
+    } = req.body;
+
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
-    const products = await clientModels.updateClients(
+    const cuilValue = cuil ?? null;
+
+    await clientModels.updateClients(
       nombre,
       apellido,
       direccionValue,
       emailValue,
       telefonoValue,
+      cuilValue,
+      zona_id,
+      es_responsable_inscripto,
       ID
     );
+
     res.status(200).json({ message: "Cliente actualizado correctamente" });
-    res.json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

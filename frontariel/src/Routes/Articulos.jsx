@@ -28,7 +28,6 @@ const Articulos = () => {
     try {
       const response = await axios.get("http://localhost:3000/articulos");
       setData(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -57,7 +56,7 @@ const Articulos = () => {
       fetchData();
       setOpen(false);
       alert("Artículo agregado con éxito");
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
       console.error("Error adding article:", error);
       alert("Error al agregar el artículo");
@@ -83,10 +82,12 @@ const Articulos = () => {
       console.error("Error fetching sublinea details:", error);
     }
   };
+
   const handleLineaFetch = async (selectedLineaFetch) => {
     setLineaValue(selectedLineaFetch.id);
     console.log(selectedLineaFetch.id);
   };
+
   const handleAddSubLinea = async () => {
     try {
       const nuevaSubLinea = {
@@ -105,6 +106,7 @@ const Articulos = () => {
       alert("Error al agregar el subLinea");
     }
   };
+
   const handleAddLinea = async () => {
     try {
       const nuevaLinea = {
@@ -122,12 +124,29 @@ const Articulos = () => {
       alert("Error al agregar el linea");
     }
   };
+
   const handleLineaSelect = async (selectedLineaId) => {
     const lineaId = selectedLineaId.id;
     setLineaId(lineaId);
     setSubLineaId(5);
     console.log("Linea id: ", lineaId, "subLinea id: ", subLineaId);
     setHasSublinea(false);
+  };
+
+  const handleToggleState = async (id, currentState) => {
+    try {
+      if (currentState) {
+        await axios.put(`http://localhost:3000/dropArticulo/${id}`);
+      } else {
+        await axios.put(`http://localhost:3000/upArticulo/${id}`);
+      }
+      fetchData();
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
   };
 
   const columns = [
@@ -155,7 +174,21 @@ const Articulos = () => {
       selector: (row) => row.proveedor_nombre,
       sortable: true,
     },
-    { name: "Estado", selector: (row) => row.estado, sortable: true },
+    {
+      name: "Estado",
+      selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
+      sortable: true,
+    },
+    {
+      name: "Habilitar/Deshabilitar",
+      cell: (row) => (
+        <Button
+          type="primary"
+          onClick={() => handleToggleState(row.articulo_id, row.estado)}
+          style={{ marginLeft: 10 }}
+        ></Button>
+      ),
+    },
   ];
 
   return (
@@ -259,6 +292,7 @@ const Articulos = () => {
                 setOpenLineaDrawer(true);
               }}
               type="primary"
+              style={{ backgroundColor: "#4CAF50", marginRight: 10 }}
             >
               Agregar Linea
             </Button>
@@ -293,6 +327,7 @@ const Articulos = () => {
                 setOpenSublineaDrawer(true);
               }}
               type="primary"
+              style={{ backgroundColor: "#4CAF50", marginRight: 10 }}
             >
               Agregar SubLinea
             </Button>
@@ -336,7 +371,7 @@ const Articulos = () => {
         </Button>
       </Drawer>
       <div>
-        <h1>Lista de Productos</h1>
+        <h1>Lista de Articulos</h1>
         <DataTable
           columns={columns}
           data={data}

@@ -10,11 +10,21 @@ const getAllClients = async () => {
   }
 };
 
-const addClient = async (nombre, apellido, direccion, email, telefono) => {
+const addClient = async (
+  nombre,
+  apellido,
+  direccion,
+  email,
+  telefono,
+  cuil,
+  zona_id,
+  es_responsable_inscripto
+) => {
   try {
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
+    const cuilValue = cuil ?? null;
 
     const query = queriesClients.addClient;
     await db.query(query, [
@@ -23,6 +33,9 @@ const addClient = async (nombre, apellido, direccion, email, telefono) => {
       direccionValue,
       emailValue,
       telefonoValue,
+      cuilValue,
+      zona_id,
+      es_responsable_inscripto,
     ]);
   } catch (err) {
     throw err;
@@ -50,19 +63,28 @@ const updateClients = async (
   direccion,
   email,
   telefono,
+  cuil,
+  zona_id,
+  es_responsable_inscripto,
   ID
 ) => {
   try {
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
+    const cuilValue = cuil ?? null;
+
     const query = queriesClients.updateClients;
+
     await db.query(query, [
       nombre,
       apellido,
       direccionValue,
       emailValue,
       telefonoValue,
+      cuilValue,
+      zona_id,
+      es_responsable_inscripto,
       ID,
     ]);
   } catch (err) {
@@ -73,7 +95,7 @@ const getClientsByID = async (ID) => {
   try {
     const query = queriesClients.getClientsByID;
     const [rows] = await db.query(query, [ID]);
-    return rows[0]; 
+    return rows[0];
   } catch (err) {
     throw err;
   }

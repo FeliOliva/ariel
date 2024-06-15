@@ -1,7 +1,8 @@
 module.exports = {
   getAllZonas: `SELECT * FROM Zona;`,
-  addZona: `INSERT INTO Zona (zona,descripcion) VALUES (?,?);`,
-  dropZona: `UPDATE Zona SET estado = 'inactivo' WHERE ID = ?`,
-  upZona: `UPDATE Zona SET estado = 'activo' WHERE ID = ?`,
-  updateZona: `UPDATE Zona SET zona = ?,descripcion = ? WHERE ID = ?`,
+  addZona: `INSERT INTO Zona (nombre) VALUES (?);`,
+  dropZona: `UPDATE Zona SET estado = 0 WHERE ID = ?`,
+  upZona: `UPDATE Zona SET estado = 1 WHERE ID = ?`,
+  updateZona: `UPDATE Zona SET nombre = ?  WHERE ID = ?`,
+  getZonaByID: `SELECT * FROM Zona WHERE ID = ?;`,
 };

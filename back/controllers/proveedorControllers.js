@@ -48,10 +48,21 @@ const updateProveedor = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getProveedorByID = async (req, res) => {
+  try {
+    const { ID } = req.params;
+    const proveedor = await proveedorModel.getProveedorByID(ID);
+    res.json(proveedor);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllProveedores,
   addProveedor,
   dropProveedor,
   upProveedor,
   updateProveedor,
+  getProveedorByID,
 };

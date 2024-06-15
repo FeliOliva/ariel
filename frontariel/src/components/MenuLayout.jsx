@@ -1,19 +1,24 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  UploadOutlined,
-  UserOutlined,
-  VideoCameraOutlined,
+  ContactsOutlined,
+  ShoppingCartOutlined,
+  SkinOutlined,
+  TeamOutlined,
+  SisternodeOutlined,
+  HomeOutlined,
+  SubnodeOutlined,
 } from "@ant-design/icons";
 import { Button, Layout, Menu, theme } from "antd";
-import { useNavigate } from "react-router-dom";
 
 const { Header, Sider, Content } = Layout;
 
 const MenuLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate(); // Hook para navegación
+  const navigate = useNavigate();
+  const location = useLocation(); // Hook para obtener la ubicación actual
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -35,8 +40,36 @@ const MenuLayout = ({ children }) => {
       case "5":
         navigate("/Linea");
         break;
-      default:
+      case "6":
+        navigate("/Proveedor");
         break;
+      case "7":
+        navigate("/Zonas");
+        break;
+      default:
+    }
+  };
+
+  // Determina la clave del menú activo basada en la ruta actual
+  const getSelectedKeys = () => {
+    const path = location.pathname;
+    switch (path) {
+      case "/":
+        return ["1"];
+      case "/clientes":
+        return ["2"];
+      case "/Articulos":
+        return ["3"];
+      case "/Ventas":
+        return ["4"];
+      case "/Linea":
+        return ["5"];
+      case "/Proveedor":
+        return ["6"];
+      case "/Zonas":
+        return ["7"];
+      default:
+        return ["1"]; // Clave por defecto si no coincide ninguna ruta
     }
   };
 
@@ -47,33 +80,43 @@ const MenuLayout = ({ children }) => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={["1"]}
-          onClick={handleMenuClick} // Manejar click del menú
+          defaultSelectedKeys={getSelectedKeys()} // Establece las claves seleccionadas
+          onClick={handleMenuClick}
           items={[
             {
               key: "1",
-              icon: <UserOutlined />,
+              icon: <HomeOutlined />,
               label: "Inicio",
             },
             {
               key: "2",
-              icon: <VideoCameraOutlined />,
+              icon: <ContactsOutlined />,
               label: "Clientes",
             },
             {
               key: "3",
-              icon: <UploadOutlined />,
+              icon: <SkinOutlined />,
               label: "Articulos",
             },
             {
               key: "4",
-              icon: <UploadOutlined />,
+              icon: <ShoppingCartOutlined />,
               label: "Ventas",
             },
             {
               key: "5",
-              icon: <UploadOutlined />,
+              icon: <SisternodeOutlined />,
               label: "Linea",
+            },
+            {
+              key: "6",
+              icon: <TeamOutlined />,
+              label: "Proveedor",
+            },
+            {
+              key: "7",
+              icon: <SubnodeOutlined />,
+              label: "Zonas",
             },
           ]}
         />

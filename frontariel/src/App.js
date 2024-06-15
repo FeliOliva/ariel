@@ -6,8 +6,9 @@ import Inicio from "./Routes/Inicio";
 import Venta from "./Routes/Ventas";
 import VentaDetalles from "./Routes/VentaDetalles";
 import Linea from "./Routes/Linea";
-import SubLinea from "./Routes/SubLinea"; // Importa el componente SubLinea
-
+import SubLinea from "./Routes/SubLinea";
+import Proveedor from "./Routes/Proveedor";
+import Zonas from "./Routes/Zonas";
 function App() {
   return (
     <Routes>
@@ -18,6 +19,8 @@ function App() {
       <Route path="/venta/:id" element={<VentaDetalles />} />{" "}
       <Route path="/linea" element={<Linea />} />
       <Route path="/linea/:id" element={<SubLinea />} />
+      <Route path="/proveedor" element={<Proveedor />} />
+      <Route path="/zonas" element={<Zonas />} />
     </Routes>
   );
 }

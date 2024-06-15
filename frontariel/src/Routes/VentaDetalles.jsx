@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
+import { Button } from "antd";
 
 const VentaDetalles = () => {
   const { id } = useParams();
@@ -50,6 +51,7 @@ const VentaDetalles = () => {
   return (
     <MenuLayout>
       <div>
+        <Button onClick={() => window.history.back()}>Volver</Button>
         <h1>Detalle de Venta {id}</h1>
         {loading ? (
           <p>Cargando...</p>

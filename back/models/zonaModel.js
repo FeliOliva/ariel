@@ -10,11 +10,10 @@ const getAllZonas = async () => {
     throw err;
   }
 };
-const addZona = async (zona, descripcion) => {
+const addZona = async (nombre) => {
   try {
-    const descripcionValue = descripcion ?? "";
     const query = queriesZonas.addZona;
-    await db.query(query, [zona, descripcionValue]);
+    await db.query(query, [nombre]);
   } catch (err) {
     throw err;
   }
@@ -35,20 +34,28 @@ const upZona = async (ID) => {
     throw err;
   }
 };
-const updateZona = async (zona, descripcion, ID) => {
+const updateZona = async (nombre, ID) => {
   try {
-    const descripcionValue = descripcion ?? "";
     const query = queriesZonas.updateZona;
-    await db.query(query, [zona, descripcionValue, ID]);
+    await db.query(query, [nombre, ID]);
   } catch (err) {
     throw err;
   }
 };
-
+const getZonaByID = async (ID) => {
+  try {
+    const query = queriesZonas.getZonaByID;
+    const [rows] = await db.query(query, [ID]);
+    return rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllZonas,
   addZona,
   dropZona,
   upZona,
   updateZona,
+  getZonaByID,
 };

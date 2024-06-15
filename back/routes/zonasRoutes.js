@@ -7,5 +7,6 @@ router.post("/addZona", zonaControllers.addZona);
 router.put("/dropZona/:ID", zonaControllers.dropZona);
 router.put("/upZona/:ID", zonaControllers.upZona);
 router.put("/updateZona", zonaControllers.updateZona);
+router.get("/getZonaByID/:ID", zonaControllers.getZonaByID);
 
 module.exports = router;

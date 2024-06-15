@@ -52,7 +52,7 @@ const FetchComboBox = ({
     >
       {options.map((option) => (
         <Option
-          key={option[valueKey]}
+          key={`option-${option[valueKey]}`}
           value={option[valueKey]}
           style={{ width: "100%" }}
         >
