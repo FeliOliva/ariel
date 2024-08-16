@@ -18,7 +18,7 @@ const Proveedores = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/proveedor");
+      const response = await axios.get("http://localhost:3001/proveedor");
       setData(response.data);
       setLoading(false);
       console.log(response.data);
@@ -38,7 +38,7 @@ const Proveedores = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/addProveedor",
+        "http://localhost:3001/addProveedor",
         nuevoProveedor
       );
       setData([...data, response.data]);
@@ -64,7 +64,7 @@ const Proveedores = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:3000/updateProveedor`,
+        `http://localhost:3001/updateProveedor`,
         proveedorActualizado
       );
 
@@ -103,7 +103,7 @@ const Proveedores = () => {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3000/getProveedorByID/${id}`
+        `http://localhost:3001/getProveedorByID/${id}`
       );
       setCurrentProveedor(response.data);
       setNombre(response.data.nombre);

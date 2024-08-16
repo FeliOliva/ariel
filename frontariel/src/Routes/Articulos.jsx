@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
-import { Drawer, Button, InputNumber, Input } from "antd";
+import { Drawer, Button, InputNumber, Input, Tooltip } from "antd";
 import MenuLayout from "../components/MenuLayout";
 import FetchComboBox from "../components/FetchComboBox";
+import ProveedorList from "../components/ProveedorList";
 
 const Articulos = () => {
   const [data, setData] = useState([]);
@@ -14,7 +15,7 @@ const Articulos = () => {
   const [codigoProducto, setCodigoProducto] = useState("");
   const [precio_monotributista, setPrecioMonotributista] = useState(0);
   const [costo, setCosto] = useState(0);
-  const [proveedorId, setProveedorId] = useState(null);
+  const [proveedorId, setProveedorId] = useState("");
   const [subLineaId, setSubLineaId] = useState("");
   const [lineaId, setLineaId] = useState("");
   const [hasSublinea, setHasSublinea] = useState(false);
@@ -23,10 +24,16 @@ const Articulos = () => {
   const [subLineaValue, setSubLineaValue] = useState("");
   const [lineaValue, setLineaValue] = useState("");
   const [lineaFetched, setLineaFetched] = useState("");
+  const [openEditDrawer, setOpenEditDrawer] = useState(false);
+  const [currentArticulo, setCurrentArticulo] = useState(null);
+  const [proveedor, setProveedor] = useState("");
+  const [linea, setLinea] = useState("");
+  const [subLinea, setSubLinea] = useState("");
+  const [openEditProveedorDrawer, setOpenEditProveedorDrawer] = useState(false);
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/articulos");
+      const response = await axios.get("http://localhost:3001/articulos");
       setData(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -52,7 +59,7 @@ const Articulos = () => {
         linea_id: lineaId,
       };
       console.log(nuevoArticulo);
-      await axios.post("http://localhost:3000/addArticulo", nuevoArticulo);
+      await axios.post("http://localhost:3001/addArticulo", nuevoArticulo);
       fetchData();
       setOpen(false);
       alert("Artículo agregado con éxito");
@@ -63,6 +70,83 @@ const Articulos = () => {
     }
   };
 
+  const handleEditArticulo = async () => {
+    if (!nombre || !codigoProducto || !proveedorId) {
+      alert(
+        "Los campos Nombre, Código de Producto y Proveedor son obligatorios"
+      );
+      return;
+    }
+
+    const articuloActualizado = {
+      articulo_nombre: nombre,
+      articulo_stock: stock,
+      articulo_codigo: codigoProducto,
+      articulo_costo: costo,
+      precio_monotributista,
+      proveedor_id: proveedorId.id,
+      sublinea_id: subLineaId,
+      linea_id: lineaId,
+      articulo_id: currentArticulo.articulo_id,
+    };
+
+    try {
+      const response = await axios.put(
+        `http://localhost:3001/updateArticulo`,
+        articuloActualizado
+      );
+
+      const updatedData = data.map((articulo) =>
+        articulo.articulo_id === currentArticulo.articulo_id
+          ? response.data
+          : articulo
+      );
+
+      setData(updatedData);
+      alert("Artículo actualizado con éxito");
+      setOpenEditDrawer(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating the article:", error);
+    }
+  };
+
+  const handleOpenEditDrawer = async (id) => {
+    console.log(id);
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getArticuloByID/${id}`
+      );
+      if (response.data.length > 0) {
+        const articulo = response.data[0];
+        console.log(articulo);
+        setCurrentArticulo(articulo);
+        setNombre(articulo.articulo_nombre);
+        setStock(articulo.articulo_stock);
+        setCodigoProducto(articulo.articulo_codigo);
+        setCosto(articulo.articulo_costo);
+        setPrecioMonotributista(articulo.precio_monotributista);
+        const proveedorResponse = await axios.get(
+          `http://localhost:3001/getZonaByID/${response.data.proveedor_id}`
+        );
+        setProveedor({
+          id: response.data.proveedor_id,
+          nombre: proveedorResponse.data.proveedor_nombre,
+        });
+        setSubLineaId(articulo.subLinea_id);
+        setLineaId(articulo.linea_id);
+        setLinea(articulo.linea_nombre);
+        setSubLinea(articulo.sublinea_nombre);
+        setOpenEditDrawer(true);
+        console.log(proveedor);
+      } else {
+        console.error("No data found for the provided ID");
+      }
+    } catch (error) {
+      console.error("Error fetching the data:", error);
+    }
+  };
+
   const handleSubLineaSelect = async (selectedSubLineaId) => {
     const fetchSubLinea = selectedSubLineaId.subLinea_id;
     console.log(selectedSubLineaId);
@@ -70,7 +154,7 @@ const Articulos = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:3000/getLineaBySublinea/${fetchSubLinea}`
+        `http://localhost:3001/getLineaBySublinea/${fetchSubLinea}`
       );
       const lineaID = response.data.id;
       setLineaId(parseInt(lineaID));
@@ -96,7 +180,7 @@ const Articulos = () => {
       };
       console.log(nuevaSubLinea);
       const response = await axios.post(
-        `http://localhost:3000/addSubLinea`,
+        `http://localhost:3001/addSubLinea`,
         nuevaSubLinea
       );
       console.log(response);
@@ -113,7 +197,7 @@ const Articulos = () => {
         nombre: lineaFetched,
       };
       const response = await axios.post(
-        "http://localhost:3000/addLinea",
+        "http://localhost:3001/addLinea",
         nuevaLinea
       );
       console.log(nuevaLinea);
@@ -125,20 +209,12 @@ const Articulos = () => {
     }
   };
 
-  const handleLineaSelect = async (selectedLineaId) => {
-    const lineaId = selectedLineaId.id;
-    setLineaId(lineaId);
-    setSubLineaId(5);
-    console.log("Linea id: ", lineaId, "subLinea id: ", subLineaId);
-    setHasSublinea(false);
-  };
-
   const handleToggleState = async (id, currentState) => {
     try {
       if (currentState) {
-        await axios.put(`http://localhost:3000/dropArticulo/${id}`);
+        await axios.put(`http://localhost:3001/dropArticulo/${id}`);
       } else {
-        await axios.put(`http://localhost:3000/upArticulo/${id}`);
+        await axios.put(`http://localhost:3001/upArticulo/${id}`);
       }
       fetchData();
     } catch (error) {
@@ -147,6 +223,10 @@ const Articulos = () => {
         error
       );
     }
+  };
+  const handleEditProveedor = async () => {
+    setOpenEditProveedorDrawer(false);
+    console.log(proveedor);
   };
 
   const columns = [
@@ -180,13 +260,25 @@ const Articulos = () => {
       sortable: true,
     },
     {
+      name: "Editar",
+      cell: (row) => (
+        <Button
+          type="primary"
+          onClick={() => handleOpenEditDrawer(row.articulo_id)}
+        >
+          Editar
+        </Button>
+      ),
+    },
+    {
       name: "Habilitar/Deshabilitar",
       cell: (row) => (
         <Button
           type="primary"
           onClick={() => handleToggleState(row.articulo_id, row.estado)}
-          style={{ marginLeft: 10 }}
-        ></Button>
+        >
+          {row.estado ? "Desactivar" : "Activar"}
+        </Button>
       ),
     },
   ];
@@ -198,187 +290,242 @@ const Articulos = () => {
       </Button>
       <Drawer
         open={open}
-        title="Nuevo Artículo"
-        closable={true}
-        maskClosable={false}
-        onClose={() => {
-          setOpen(false);
-        }}
+        title="Agregar Artículo"
+        onClose={() => setOpen(false)}
       >
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Nombre</Tooltip>
+        </div>
         <Input
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
-          placeholder="Nombre del artículo"
-          style={{ marginBottom: 10 }}
+          placeholder="Nombre"
         />
-        <br />
-        <span style={{ fontWeight: "bold" }}>Stock</span>
-        <br />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Stock</Tooltip>
+        </div>
         <InputNumber
-          min={0}
           value={stock}
-          onChange={setStock}
-          placeholder="Ingrese el stock"
-          style={{ marginBottom: 10 }}
+          onChange={(value) => setStock(value)}
+          placeholder="Stock"
+          style={{ width: "100%", marginBottom: 10 }}
         />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Codigo Producto</Tooltip>
+        </div>
         <Input
           value={codigoProducto}
           onChange={(e) => setCodigoProducto(e.target.value)}
-          placeholder="Código del producto"
-          style={{ marginBottom: 10 }}
+          placeholder="Codigo Producto"
+          style={{ width: "100%", marginBottom: 10 }}
         />
-        <br />
-        <span style={{ fontWeight: "bold" }}>Precio Monotributista</span>
-        <br />
-        <InputNumber
-          min={0}
-          value={precio_monotributista}
-          onChange={setPrecioMonotributista}
-          placeholder="Ingrese el precio monotributista"
-          style={{ marginBottom: 10 }}
-        />
-        <br />
-        <span style={{ fontWeight: "bold" }}>Costo</span>
-        <br />
-        <InputNumber
-          min={0}
-          value={costo}
-          onChange={setCosto}
-          placeholder="Ingrese el costo"
-          style={{ marginBottom: 10 }}
-        />
-        <br />
-        <FetchComboBox
-          url="http://localhost:3000/proveedor"
-          label="Proveedor"
-          labelKey="nombre"
-          valueKey="id"
-          onSelect={setProveedorId}
-          style={{ marginBottom: 10, width: 200 }}
-        />
-        <br />
-        <Button
-          onClick={() => setHasSublinea(true)}
-          style={{ marginRight: 10, marginBottom: 10 }}
-        >
-          Sublínea
-        </Button>
-        <Button onClick={() => setHasSublinea(false)}>Línea</Button>
-        <br />
-        {hasSublinea ? (
-          <FetchComboBox
-            url="http://localhost:3000/subLinea"
-            label="Sublínea"
-            labelKey="subLinea_nombre"
-            valueKey="subLinea_id"
-            onSelect={handleSubLineaSelect}
-            style={{ marginBottom: 10, width: 150 }}
-          />
-        ) : (
-          <FetchComboBox
-            url="http://localhost:3000/lineas"
-            label="Línea"
-            labelKey="nombre"
-            valueKey="id"
-            onSelect={handleLineaSelect}
-            style={{ marginBottom: 10, width: 150 }}
-          />
-        )}
-        <br />
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <div style={{ marginRight: 10 }}>
-            <Button
-              onClick={() => {
-                setOpenLineaDrawer(true);
-              }}
-              type="primary"
-              style={{ backgroundColor: "#4CAF50", marginRight: 10 }}
-            >
-              Agregar Linea
-            </Button>
-            <Drawer
-              open={openLineaDrawer}
-              title="Nueva linea"
-              closable={true}
-              maskClosable={false}
-              onClose={() => {
-                setOpenLineaDrawer(false);
-              }}
-            >
-              <Input
-                value={lineaFetched}
-                onChange={(e) => setLineaFetched(e.target.value)}
-                placeholder="Nombre de la linea"
-                style={{ marginBottom: 10 }}
-              />
-              <Button
-                onClick={() => {
-                  handleAddLinea();
-                }}
-                type="primary"
-              >
-                Agregar
-              </Button>
-            </Drawer>
-          </div>
-          <div style={{ marginRight: 10 }}>
-            <Button
-              onClick={() => {
-                setOpenSublineaDrawer(true);
-              }}
-              type="primary"
-              style={{ backgroundColor: "#4CAF50", marginRight: 10 }}
-            >
-              Agregar SubLinea
-            </Button>
-            <Drawer
-              open={openSublineaDrawer}
-              title="Nueva sublinea"
-              closable={true}
-              maskClosable={false}
-              onClose={() => {
-                setOpenSublineaDrawer(false);
-              }}
-            >
-              <Input
-                type="text"
-                label="Nombre de SubLinea"
-                style={{ display: "flex", marginBottom: 10 }}
-                onChange={(e) => setSubLineaValue(e.target.value)}
-              />
-              <FetchComboBox
-                url="http://localhost:3000/lineas"
-                label="Línea"
-                labelKey="nombre"
-                valueKey="id"
-                onSelect={handleLineaFetch}
-                style={{ marginBottom: 10, width: 150 }}
-              />
-              <Button
-                onClick={() => {
-                  handleAddSubLinea();
-                }}
-                type="primary"
-              >
-                Agregar
-              </Button>
-            </Drawer>
-          </div>
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Proveedor</Tooltip>
         </div>
-        <br />
+        <FetchComboBox
+          placeholder="Proveedor"
+          apiUrl="http://localhost:3001/proveedores"
+          value={proveedorId}
+          onChange={setProveedorId}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Precio Monotributista</Tooltip>
+        </div>
+        <InputNumber
+          value={precio_monotributista}
+          onChange={(value) => setPrecioMonotributista(value)}
+          placeholder="Precio monotributista"
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Costo</Tooltip>
+        </div>
+        <InputNumber
+          value={costo}
+          onChange={(value) => setCosto(value)}
+          placeholder="Costo"
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Linea</Tooltip>
+        </div>
+        <FetchComboBox
+          placeholder="Linea"
+          apiUrl="http://localhost:3001/lineas"
+          value={lineaValue}
+          onChange={handleLineaFetch}
+        />
+        <Button onClick={() => setOpenLineaDrawer(true)}>Agregar Linea</Button>
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>SubLinea</Tooltip>
+        </div>
+        <FetchComboBox
+          placeholder="SubLinea"
+          apiUrl="http://localhost:3001/subLineas"
+          value={subLineaValue}
+          onChange={handleSubLineaSelect}
+        />
+        <Button onClick={() => setOpenSublineaDrawer(true)}>
+          Agregar SubLinea
+        </Button>
         <Button onClick={handleAddArticulo} type="primary">
-          Agregar Artículo
+          Agregar Articulo
         </Button>
       </Drawer>
-      <div>
-        <h1>Lista de Articulos</h1>
-        <DataTable
-          columns={columns}
-          data={data}
-          progressPending={loading}
-          pagination
+      <Drawer
+        open={openLineaDrawer}
+        title="Agregar Linea"
+        onClose={() => setOpenLineaDrawer(false)}
+      >
+        <Input
+          value={lineaFetched}
+          onChange={(e) => setLineaFetched(e.target.value)}
+          placeholder="Linea"
         />
-      </div>
+        <Button onClick={handleAddLinea} type="primary">
+          Agregar Linea
+        </Button>
+      </Drawer>
+      <Drawer
+        open={openSublineaDrawer}
+        title="Agregar Sublinea"
+        onClose={() => setOpenSublineaDrawer(false)}
+      >
+        <FetchComboBox
+          placeholder="Linea"
+          apiUrl="http://localhost:3001/lineas"
+          value={lineaValue}
+          onChange={handleLineaFetch}
+        />
+        <Input
+          value={subLineaValue}
+          onChange={(e) => setSubLineaValue(e.target.value)}
+          placeholder="SubLinea"
+        />
+        <Button onClick={handleAddSubLinea} type="primary">
+          Agregar Sublinea
+        </Button>
+      </Drawer>
+      <Drawer
+        open={openEditDrawer}
+        title="Editar Articulo"
+        onClose={() => setOpenEditDrawer(false)}
+      >
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Nombre</Tooltip>
+        </div>
+        <Input
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          placeholder="Nombre"
+          style={{ marginBottom: 10 }}
+          required
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Stock</Tooltip>
+        </div>
+        <InputNumber
+          value={stock}
+          onChange={(value) => setStock(value)}
+          placeholder="Stock"
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Codigo Producto</Tooltip>
+        </div>
+        <Input
+          value={codigoProducto}
+          onChange={(e) => setCodigoProducto(e.target.value)}
+          placeholder="Codigo Producto"
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Proveedor</Tooltip>
+        </div>
+        <Input
+          value={proveedor.nombre}
+          readOnly
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <Button
+          onClick={() => setOpenEditProveedorDrawer(true)}
+          type="primary"
+          style={{ marginBottom: 10 }}
+        >
+          Editar Proveedor
+        </Button>
+        <Drawer
+          open={openEditProveedorDrawer}
+          title="Editar Proveedor"
+          onClose={() => setOpenEditProveedorDrawer(false)}
+        >
+          <ProveedorList></ProveedorList>
+          {/* <FetchComboBox
+            url="http://localhost:3001/proveedor"
+            label="Proveedor"
+            labelKey="nombre"
+            valueKey="id"
+            initialValue={proveedor}
+            onSelect={setProveedor}
+            style={{ marginBottom: 10 }}
+          /> */}
+          <Button onClick={handleEditProveedor} type="primary">
+            Guardar Cambios
+          </Button>
+        </Drawer>
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Precio Monotributista</Tooltip>
+        </div>
+        <InputNumber
+          value={precio_monotributista}
+          onChange={(value) => setPrecioMonotributista(value)}
+          placeholder="Precio monotributista"
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Costo</Tooltip>
+        </div>
+        <InputNumber
+          value={costo}
+          onChange={(value) => setCosto(value)}
+          placeholder="Costo"
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Linea</Tooltip>
+        </div>
+        <Input
+          value={linea}
+          readOnly
+          style={{ width: "50%", marginBottom: 10 }}
+        />
+        <Button>Agregar Linea</Button>
+        {/* <FetchComboBox
+          placeholder="Linea"
+          apiUrl="http://localhost:3001/lineas"
+          value={lineaValue}
+          onChange={handleLineaFetch}
+        /> */}
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>SubLinea</Tooltip>
+        </div>
+        <Input
+          value={subLinea}
+          readOnly
+          style={{ width: "50%", marginBottom: 10 }}
+        />
+        {/* <FetchComboBox
+          placeholder="SubLinea"
+          apiUrl="http://localhost:3001/subLineas"
+          value={subLineaValue}
+          onChange={handleSubLineaSelect}
+        /> */}
+        <Button>Agregar SubLinea</Button>
+        <Button onClick={handleEditArticulo} type="primary">
+          Guardar Cambios
+        </Button>
+      </Drawer>
+      <DataTable columns={columns} data={data} progressPending={loading} />
     </MenuLayout>
   );
 };

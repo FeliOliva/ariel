@@ -44,6 +44,7 @@ ORDER BY v.id;
   a.nombre AS nombre_articulo, 
   a.codigo_producto AS cod_articulo,
   dv.venta_id, 
+  v.nroVenta,  -- Agregamos el número de venta
   dv.costo, 
   dv.cantidad, 
   dv.precio_monotributista, 
@@ -55,7 +56,18 @@ FROM detalle_venta dv
 INNER JOIN articulo a ON dv.articulo_id = a.id
 INNER JOIN venta v ON dv.venta_id = v.id
 INNER JOIN cliente c ON v.cliente_id = c.id
-WHERE dv.venta_id = ?
-GROUP BY dv.id, dv.articulo_id, a.nombre, a.codigo_producto, dv.venta_id, dv.costo, dv.cantidad, dv.precio_monotributista, dv.fecha, c.nombre;
+WHERE dv.venta_id = 23
+GROUP BY 
+  dv.id, 
+  dv.articulo_id, 
+  a.nombre, 
+  a.codigo_producto, 
+  dv.venta_id, 
+  v.nroVenta,
+  dv.costo, 
+  dv.cantidad, 
+  dv.precio_monotributista, 
+  dv.fecha, 
+  c.nombre;
   `,
 };

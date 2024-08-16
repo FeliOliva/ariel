@@ -13,7 +13,7 @@ const SubLinea = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/getSubLineasByLinea/${id}`
+          `http://localhost:3001/getSubLineasByLinea/${id}`
         );
         console.log(response.data);
         console.log(id);

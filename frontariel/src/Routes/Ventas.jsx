@@ -19,7 +19,7 @@ const Venta = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/ventas");
+      const response = await axios.get("http://localhost:3001/ventas");
       setData(response.data);
       if (response.data.length > 0) {
         const lastSaleNumber =
@@ -77,7 +77,7 @@ const Venta = () => {
           })),
         };
 
-        await axios.post("http://localhost:3000/addVenta", ventaData);
+        await axios.post("http://localhost:3001/addVenta", ventaData);
         setArticulos([]);
         setSelectedCliente(null);
         setSelectedArticulo(null);
@@ -159,7 +159,7 @@ const Venta = () => {
       >
         <Input value={nroVenta} readOnly style={{ marginBottom: 10 }} />
         <FetchComboBox
-          url="http://localhost:3000/articulos"
+          url="http://localhost:3001/articulos"
           label="Seleccione los artículos"
           labelKey="articulo_nombre"
           valueKey="articulo_id"
@@ -180,7 +180,7 @@ const Venta = () => {
         </Button>
         <DynamicList items={articulos} onDelete={handleDeleteArticulo} />
         <FetchComboBox
-          url="http://localhost:3000/clientes"
+          url="http://localhost:3001/clientes"
           label="Seleccione el cliente"
           labelKey="nombre"
           valueKey="id"

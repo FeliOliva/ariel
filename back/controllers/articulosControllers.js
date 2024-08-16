@@ -13,16 +13,16 @@ const addArticulo = async (req, res) => {
   try {
     const {
       nombre,
+      mediciones,
       stock,
       codigo_producto,
       proveedor_id,
       precio_monotributista,
       costo,
-      subLinea_id,
       linea_id,
+      subLinea_id,
     } = req.body;
 
-    // Verificación de línea_id antes de la inserción
     if (!linea_id) {
       return res
         .status(400)
@@ -31,13 +31,14 @@ const addArticulo = async (req, res) => {
 
     await articuloModel.addArticulo(
       nombre,
+      mediciones,
       stock,
       codigo_producto,
       proveedor_id,
       precio_monotributista,
       costo,
-      subLinea_id,
-      linea_id
+      linea_id,
+      subLinea_id
     );
 
     res.status(201).json({ message: "Articulo agregado con éxito" });
@@ -77,6 +78,8 @@ const updateArticulo = async (req, res) => {
       precio_monotributista,
       costo,
       subLinea_id,
+      linea_id,
+      mediciones,
       ID,
     } = req.body;
     const products = await articuloModel.updateArticulo(
@@ -87,19 +90,119 @@ const updateArticulo = async (req, res) => {
       precio_monotributista,
       costo,
       subLinea_id,
+      linea_id,
+      mediciones,
       ID
     );
-    res.status(200).json({ message: "Articulo actualizado correctamente" });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const getArticuloByID = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const products = await articuloModel.getArticuloByID(ID);
+    res.json(products[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const getArticulosByProveedorID = async (req, res) => {
+  try {
+    const proveedorID = req.params.proveedorID;
+    const products = await articuloModel.getArticulosByProveedorID(proveedorID);
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const getArticulosByLineaID = async (req, res) => {
+  try {
+    const lineaID = req.params.lineaID;
+    const products = await articuloModel.getArticulosByLineaID(lineaID);
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+const getArticulosBySubLineaID = async (req, res) => {
+  try {
+    const subLineaID = req.params.subLineaID;
+    const products = await articuloModel.getArticulosBySubLineaID(subLineaID);
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const increasePrices = async (req, res) => {
+  try {
+    const proveedorID = req.params.proveedorID;
+    const { percentage } = req.body;
+
+    if (!percentage || isNaN(percentage)) {
+      return res.status(400).json({ error: "Invalid percentage value" });
+    }
+
+    await articuloModel.increasePrices(proveedorID, percentage);
+    res.status(200).json({ message: "Prices updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error updating prices" });
+  }
+};
+const increasePrice = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const { percentage } = req.body;
+    if (!percentage || isNaN(percentage)) {
+      return res.status(400).json({ error: "Invalid percentage value" });
+    }
+    await articuloModel.increasePrice(ID, percentage);
+    res.status(200).json({ message: "Price updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updateLogPrecios = async (req, res) => {
+  try {
+    const {
+      articulo_id,
+      costo_nuevo,
+      costo_antiguo,
+      precio_monotributista_nuevo,
+      precio_monotributista_antiguo,
+      porcentaje,
+    } = req.body;
+    if (!porcentaje || isNaN(porcentaje)) {
+      return res.status(400).json({ error: "Invalid percentage value" });
+    }
+    await articuloModel.updateLogPrecios(
+      articulo_id,
+      costo_nuevo,
+      costo_antiguo,
+      precio_monotributista_nuevo,
+      precio_monotributista_antiguo,
+      porcentaje
+    );
+    res.status(200).json({ message: "Log updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllArticulos,
   addArticulo,
   dropArticulo,
   upArticulo,
   updateArticulo,
+  getArticuloByID,
+  getArticulosByProveedorID,
+  getArticulosByLineaID,
+  getArticulosBySubLineaID,
+  increasePrices,
+  increasePrice,
+  updateLogPrecios,
 };

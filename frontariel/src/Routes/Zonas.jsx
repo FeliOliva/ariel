@@ -17,7 +17,7 @@ const Zonas = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/zonas");
+      const response = await axios.get("http://localhost:3001/zonas");
       setData(response.data);
       setLoading(false);
     } catch (error) {
@@ -37,7 +37,7 @@ const Zonas = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/addZona",
+        "http://localhost:3001/addZona",
         nuevaZona
       );
       setData([...data, response.data]);
@@ -63,7 +63,7 @@ const Zonas = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:3000/updateZona`,
+        `http://localhost:3001/updateZona`,
         zonaActualizada
       );
 
@@ -103,7 +103,7 @@ const Zonas = () => {
     console.log(ID);
     try {
       const response = await axios.get(
-        `http://localhost:3000/getZonaByID/${ID}`
+        `http://localhost:3001/getZonaByID/${ID}`
       );
       setCurrentZona(response.data);
       setNombre(response.data.nombre);

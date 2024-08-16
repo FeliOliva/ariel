@@ -9,15 +9,19 @@ const VentaDetalles = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  console.log(id);
+  const [nroVenta, setNroVenta] = useState("");
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/getVentaByID/${id}`
+          `http://localhost:3001/getVentaByID/${id}`
         );
+        if (response.data.length > 0) {
+          setNroVenta(response.data[0].nroVenta);
+        }
         setData(response.data);
-        console.log(response.data);
+        console.log(nroVenta);
       } catch (error) {
         console.error("Error fetching the data:", error);
       } finally {
@@ -52,7 +56,7 @@ const VentaDetalles = () => {
     <MenuLayout>
       <div>
         <Button onClick={() => window.history.back()}>Volver</Button>
-        <h1>Detalle de Venta {id}</h1>
+        <h1>Detalle de Venta {nroVenta}</h1>
         {loading ? (
           <p>Cargando...</p>
         ) : (

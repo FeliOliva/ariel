@@ -3,7 +3,7 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input, InputNumber, Radio, Tooltip } from "antd";
-import FetchComboBox from "../components/FetchComboBox";
+import ZonasInput from "../components/ZonasInput";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -11,15 +11,19 @@ const Clientes = () => {
   const [openAddDrawer, setOpenAddDrawer] = useState(false);
   const [openEditDrawer, setOpenEditDrawer] = useState(false);
   const [currentCliente, setCurrentCliente] = useState(null);
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [cuil, setCuil] = useState("");
+  const [newClient, setNewClient] = useState({
+    nombre: "",
+    apellido: "",
+    email: "",
+    telefono: "",
+    direccion: "",
+    cuil: "",
+    responsableInscripto: false,
+  });
   const [zona, setZona] = useState("");
   const [responsableInscripto, setResponsableInscripto] = useState(false);
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -37,19 +41,15 @@ const Clientes = () => {
   };
 
   const handleAddCliente = async () => {
-    if (!nombre || !apellido || !zona) {
-      alert("Los campos Nombre, Apellido y Zona son obligatorios");
-      return;
-    }
     const nuevoCliente = {
-      nombre,
-      apellido,
-      email,
-      telefono,
-      direccion,
-      cuil: cuil || null,
-      zona_id: zona.id,
-      es_responsable_inscripto: responsableInscripto ? 1 : 0,
+      nombre: newClient.nombre,
+      apellido: newClient.apellido,
+      email: newClient.email,
+      telefono: newClient.telefono,
+      direccion: newClient.direccion,
+      cuil: newClient.cuil,
+      zona: zona.id,
+      responsableInscripto: newClient.responsableInscripto,
     };
 
     try {
@@ -67,6 +67,9 @@ const Clientes = () => {
   };
 
   const handleEditCliente = async () => {
+    const { nombre, apellido, cuil, email, telefono, direccion } =
+      currentCliente;
+
     if (!nombre || !apellido || !zona) {
       alert("Los campos Nombre, Apellido y Zona son obligatorios");
       return;
@@ -129,6 +132,7 @@ const Clientes = () => {
   const handleEditedZona = () => {
     setOpenEditZonaDrawer(false);
   };
+
   const columns = [
     { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
     { name: "Nombre", selector: (row) => row.nombre, sortable: true },
@@ -169,21 +173,8 @@ const Clientes = () => {
       const response = await axios.get(
         `http://localhost:3001/getClientsByID/${id}`
       );
-      console.log(response.data);
       setCurrentCliente(response.data);
-      setNombre(response.data.nombre);
-      setApellido(response.data.apellido);
-      setEmail(response.data.email);
-      setTelefono(response.data.telefono);
-      setDireccion(response.data.direccion);
-      setCuil(response.data.cuil);
-
-      const zonaResponse = await axios.get(
-        `http://localhost:3001/getZonaByID/${response.data.zona_id}`
-      );
-      setZona({ id: response.data.zona_id, nombre: zonaResponse.data.nombre });
-
-      setResponsableInscripto(response.data.es_responsable_inscripto === 1);
+      setZona({ id: response.data.zona_id, nombre: response.data.zona_nombre });
       setOpenEditDrawer(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -204,8 +195,10 @@ const Clientes = () => {
           <Tooltip>Nombre</Tooltip>
         </div>
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={newClient?.nombre}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, nombre: e.target.value }))
+          }
           placeholder="Nombre"
           style={{ marginBottom: 10 }}
           required
@@ -214,8 +207,10 @@ const Clientes = () => {
           <Tooltip>Apellido</Tooltip>
         </div>
         <Input
-          value={apellido}
-          onChange={(e) => setApellido(e.target.value)}
+          value={newClient?.apellido}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, apellido: e.target.value }))
+          }
           placeholder="Apellido"
           style={{ marginBottom: 10 }}
           required
@@ -224,8 +219,10 @@ const Clientes = () => {
           <Tooltip>Dirección</Tooltip>
         </div>
         <Input
-          value={direccion}
-          onChange={(e) => setDireccion(e.target.value)}
+          value={newClient?.direccion}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, direccion: e.target.value }))
+          }
           placeholder="Dirección"
           style={{ marginBottom: 10 }}
         />
@@ -233,8 +230,10 @@ const Clientes = () => {
           <Tooltip>Email</Tooltip>
         </div>
         <Input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={newClient?.email}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, email: e.target.value }))
+          }
           placeholder="Email"
           style={{ marginBottom: 10 }}
         />
@@ -242,8 +241,10 @@ const Clientes = () => {
           <Tooltip>Telefono</Tooltip>
         </div>
         <InputNumber
-          value={telefono}
-          onChange={setTelefono}
+          value={newClient?.telefono}
+          onChange={(value) =>
+            setNewClient((prev) => ({ ...prev, telefono: value }))
+          }
           placeholder="Teléfono"
           style={{ marginBottom: 10, display: "flex" }}
         />
@@ -251,30 +252,35 @@ const Clientes = () => {
           <Tooltip>Cuil</Tooltip>
         </div>
         <InputNumber
-          value={cuil}
-          onChange={setCuil}
+          value={newClient?.cuil}
+          onChange={(value) =>
+            setNewClient((prev) => ({ ...prev, cuil: value }))
+          }
           placeholder="CUIL"
           style={{ marginBottom: 10, display: "flex" }}
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Responsable Inscripto</Tooltip>
+        </div>
+        <Radio.Group
+          onChange={(e) =>
+            setNewClient((prev) => ({
+              ...prev,
+              responsableInscripto: e.target.value,
+            }))
+          }
+          value={newClient?.responsableInscripto}
+          style={{ marginBottom: 10, display: "flex" }}
+        >
+          <Radio value={false}>No</Radio>
+          <Radio value={true}>Sí</Radio>
+        </Radio.Group>
+        <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
-        <FetchComboBox
-          url="http://localhost:3001/zonas"
-          label="Zona"
-          labelKey="nombre"
-          valueKey="id"
-          onSelect={setZona}
-          style={{ marginBottom: 10, display: "flex" }}
-        />
-        <Radio
-          checked={responsableInscripto}
-          onChange={(e) => setResponsableInscripto(e.target.checked)}
-        >
-          Es responsable inscripto
-        </Radio>
+        <ZonasInput onChangeZona={setZona} />
         <Button onClick={handleAddCliente} type="primary">
-          Agregar Cliente
+          Guardar
         </Button>
       </Drawer>
       <Drawer
@@ -286,8 +292,10 @@ const Clientes = () => {
           <Tooltip>Nombre</Tooltip>
         </div>
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={currentCliente?.nombre}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({ ...prev, nombre: e.target.value }))
+          }
           placeholder="Nombre"
           style={{ marginBottom: 10 }}
           required
@@ -296,8 +304,10 @@ const Clientes = () => {
           <Tooltip>Apellido</Tooltip>
         </div>
         <Input
-          value={apellido}
-          onChange={(e) => setApellido(e.target.value)}
+          value={currentCliente?.apellido}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({ ...prev, apellido: e.target.value }))
+          }
           placeholder="Apellido"
           style={{ marginBottom: 10 }}
           required
@@ -306,8 +316,13 @@ const Clientes = () => {
           <Tooltip>Dirección</Tooltip>
         </div>
         <Input
-          value={direccion}
-          onChange={(e) => setDireccion(e.target.value)}
+          value={currentCliente?.direccion}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({
+              ...prev,
+              direccion: e.target.value,
+            }))
+          }
           placeholder="Dirección"
           style={{ marginBottom: 10 }}
         />
@@ -315,8 +330,10 @@ const Clientes = () => {
           <Tooltip>Email</Tooltip>
         </div>
         <Input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={currentCliente?.email}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({ ...prev, email: e.target.value }))
+          }
           placeholder="Email"
           style={{ marginBottom: 10 }}
         />
@@ -324,8 +341,10 @@ const Clientes = () => {
           <Tooltip>Telefono</Tooltip>
         </div>
         <InputNumber
-          value={telefono}
-          onChange={setTelefono}
+          value={currentCliente?.telefono}
+          onChange={(value) =>
+            setCurrentCliente((prev) => ({ ...prev, telefono: value }))
+          }
           placeholder="Teléfono"
           style={{ marginBottom: 10, display: "flex" }}
         />
@@ -333,15 +352,32 @@ const Clientes = () => {
           <Tooltip>Cuil</Tooltip>
         </div>
         <InputNumber
-          value={cuil}
-          onChange={setCuil}
+          value={currentCliente?.cuil}
+          onChange={(value) =>
+            setCurrentCliente((prev) => ({ ...prev, cuil: value }))
+          }
           placeholder="CUIL"
           style={{ marginBottom: 10, display: "flex" }}
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Responsable Inscripto</Tooltip>
+        </div>
+        <Radio.Group
+          onChange={(e) => setResponsableInscripto(e.target.value)}
+          value={responsableInscripto}
+          style={{ marginBottom: 10, display: "flex" }}
+        >
+          <Radio value={false}>No</Radio>
+          <Radio value={true}>Sí</Radio>
+        </Radio.Group>
+        <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
-        <Input value={zona?.nombre} readOnly style={{ width: "40%" }}></Input>
+        <Input
+          value={currentCliente?.nombreZona}
+          readOnly
+          style={{ width: "40%" }}
+        ></Input>
         <Button
           onClick={() => setOpenEditZonaDrawer(true)}
           type="primary"
@@ -354,35 +390,16 @@ const Clientes = () => {
           title="Editar Zona"
           onClose={() => setOpenEditZonaDrawer(false)}
         >
-          <FetchComboBox
-            url="http://localhost:3001/zonas"
-            label="Zona"
-            labelKey="nombre"
-            valueKey="id"
-            initialValue={zona}
-            onSelect={setZona}
-            style={{ marginBottom: 10 }}
-          />
+          <ZonasInput onChangeZona={setCurrentCliente.zona_id} />
           <Button onClick={handleEditedZona} type="primary">
             Guardar Cambios
           </Button>
         </Drawer>
-        <Radio
-          checked={responsableInscripto}
-          onChange={(e) => setResponsableInscripto(e.target.checked)}
-        >
-          Es responsable inscripto
-        </Radio>
         <Button onClick={handleEditCliente} type="primary">
-          Guardar Cambios
+          Guardar
         </Button>
       </Drawer>
-      <DataTable
-        columns={columns}
-        data={data}
-        progressPending={loading}
-        pagination
-      />
+      <DataTable columns={columns} data={data} progressPending={loading} />
     </MenuLayout>
   );
 };

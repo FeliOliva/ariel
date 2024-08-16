@@ -1,5 +1,3 @@
-const { getSublineaByLinea } = require("./queriesSubLinea");
-
 module.exports = {
   getAllLineas: `select * from linea;`,
   addLinea: `INSERT INTO linea (nombre) VALUES (?);`,

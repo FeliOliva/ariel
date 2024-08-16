@@ -7,6 +7,7 @@ module.exports = {
   cliente.estado, 
   cliente.email, 
   cliente.cuil, 
+  cliente.zona_id,
   cliente.telefono, 
   zona.nombre AS zona_nombre,
   cliente.es_responsable_inscripto
@@ -20,5 +21,5 @@ JOIN
   dropClient: `UPDATE cliente SET estado = 0 WHERE ID = ?`,
   upClient: `UPDATE cliente SET estado = 1 WHERE ID = ?`,
   updateClients: `UPDATE cliente SET nombre = ?, apellido = ?, direccion = ?, email = ?, telefono = ?, cuil = ?, zona_id = ?, es_responsable_inscripto = ? WHERE ID = ?`,
-  getClientsByID: `SELECT * FROM cliente WHERE ID = ?;`,
+  getClientsByID: `SELECT C.*, Z.nombre AS nombreZona FROM cliente C LEFT JOIN zona Z ON Z.id = C.zona_id where C.ID = ?;`,
 };
