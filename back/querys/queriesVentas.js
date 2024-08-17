@@ -3,9 +3,10 @@ module.exports = {
   v.id,
   v.estado, 
   c.nombre AS nombre_cliente, 
-  v.nroVenta AS nro_venta,
+  v.nroVenta ,
   z.nombre AS nombre_zona,
   v.pago,
+  v.fecha_venta,
   SUM(d.costo * d.cantidad) AS total_costo,
   SUM(d.precio_monotributista * d.cantidad) AS total_monotributista
 FROM venta v
@@ -44,19 +45,19 @@ ORDER BY v.id;
   a.nombre AS nombre_articulo, 
   a.codigo_producto AS cod_articulo,
   dv.venta_id, 
-  v.nroVenta,  -- Agregamos el número de venta
+  v.nroVenta,  -- Número de venta
   dv.costo, 
   dv.cantidad, 
   dv.precio_monotributista, 
   dv.fecha, 
-  c.nombre AS nombre_cliente,
-  SUM(dv.costo * dv.cantidad) AS total_costo, -- Calcula el total de costo
-  SUM(dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista -- Calcula el total de precio monotributista
+  CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente_completo, -- Nombre completo del cliente
+  SUM(dv.costo * dv.cantidad) AS total_costo, -- Total de costo
+  SUM(dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista -- Total de precio monotributista
 FROM detalle_venta dv
 INNER JOIN articulo a ON dv.articulo_id = a.id
 INNER JOIN venta v ON dv.venta_id = v.id
 INNER JOIN cliente c ON v.cliente_id = c.id
-WHERE dv.venta_id = 23
+WHERE dv.venta_id = ?
 GROUP BY 
   dv.id, 
   dv.articulo_id, 
@@ -68,6 +69,8 @@ GROUP BY
   dv.cantidad, 
   dv.precio_monotributista, 
   dv.fecha, 
-  c.nombre;
+  c.nombre, 
+  c.apellido;
+
   `,
 };
