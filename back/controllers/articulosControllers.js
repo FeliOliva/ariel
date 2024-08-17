@@ -192,6 +192,35 @@ const updateLogPrecios = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const logsPreciosById = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const logs = await articuloModel.logsPreciosById(ID);
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deshacerCambios = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { costo_antiguo, precio_monotributista_antiguo, articulo_id } =
+      req.body;
+
+    await articuloModel.deshacerCambios(
+      articulo_id,
+      costo_antiguo,
+      precio_monotributista_antiguo,
+      id
+    );
+    res.status(200).json({ message: "Cambio deshecho correctamente" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -205,4 +234,6 @@ module.exports = {
   increasePrices,
   increasePrice,
   updateLogPrecios,
+  logsPreciosById,
+  deshacerCambios,
 };

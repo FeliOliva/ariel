@@ -9,13 +9,14 @@ import Linea from "./Routes/Linea";
 import SubLinea from "./Routes/SubLinea";
 import Proveedor from "./Routes/Proveedor";
 import Zonas from "./Routes/Zonas";
-import MenuLayout from "./components/MenuLayout";
+import Logs from "./Routes/Logs";
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Inicio />} />
       <Route path="/clientes" element={<Clientes />} />
       <Route path="/Articulos" element={<Articulos />} />
+      <Route path="/Logs/:id" element={<Logs />} />
       <Route path="/Ventas" element={<Venta />} />
       <Route path="/venta/:id" element={<VentaDetalles />} />{" "}
       <Route path="/linea" element={<Linea />} />

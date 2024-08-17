@@ -166,6 +166,39 @@ const updateLogPrecios = async (
     throw new Error("Error updating log: " + error.message);
   }
 };
+const logsPreciosById = async (ID) => {
+  try {
+    const query = queriesArticulos.logsPreciosById;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+const deshacerCambios = async (
+  articulo_id,
+  costo_antiguo,
+  precio_monotributista_antiguo,
+  log_id
+) => {
+  try {
+    const queryUpdate = queriesArticulos.deshacerCambiosUpdate;
+    const queryDelete = queriesArticulos.deshacerCambiosDelete;
+
+    // Ejecutar la actualización del artículo
+    await db.query(queryUpdate, [
+      costo_antiguo,
+      precio_monotributista_antiguo,
+      articulo_id,
+    ]);
+
+    // Ejecutar la eliminación del log
+    await db.query(queryDelete, [log_id]);
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -179,4 +212,6 @@ module.exports = {
   increasePrices,
   increasePrice,
   updateLogPrecios,
+  logsPreciosById,
+  deshacerCambios,
 };

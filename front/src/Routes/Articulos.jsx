@@ -6,6 +6,7 @@ import MenuLayout from "../components/MenuLayout";
 import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
+import { Link } from "react-router-dom";
 
 function Articulos() {
   const [data, setData] = useState([]);
@@ -101,6 +102,14 @@ function Articulos() {
       ),
     },
     {
+      name: "Logs",
+      cell: (row) => (
+        <Link to={`/Logs/${row.id}`}>
+          <Button type="primary">Logs</Button>
+        </Link>
+      ),
+    },
+    {
       name: "Habilitar/Deshabilitar",
       cell: (row) => (
         <Button
@@ -137,7 +146,6 @@ function Articulos() {
       console.log("Porcentaje:", currentIncrease?.percentage);
       console.log("ID:", currentIncrease?.id);
 
-      // Obtener el artículo antiguo
       const response = await axios.get(
         `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
       );
@@ -212,22 +220,26 @@ function Articulos() {
   };
 
   const handleEditedArticulo = async () => {
+    if (currentArticulo.sublinea_id === undefined) {
+      currentArticulo.sublinea_id = currentArticulo.subLinea_id;
+    }
+    console.log(currentArticulo);
     const articuloEdited = {
       nombre: currentArticulo.nombre,
       stock: currentArticulo.stock,
       codigo_producto: currentArticulo.codigo_producto,
-      proveedor_id: currentArticulo.proveedor_id,
+      proveedor_id: currentArticulo?.proveedor_id,
       precio_monotributista: currentArticulo.precio_monotributista,
       costo: currentArticulo.costo,
-      subLinea_id: currentArticulo.sublinea_id,
+      subLinea_id: currentArticulo?.sublinea_id,
       mediciones: currentArticulo.mediciones,
-      linea_id: currentArticulo.linea_id,
+      linea_id: currentArticulo?.linea_id,
       ID: currentArticulo.id,
     };
     console.log(articuloEdited);
     try {
       await axios.put(`http://localhost:3001/updateArticulos/`, articuloEdited);
-      fetchData();
+      window.location.reload();
       setOpen(false);
     } catch (error) {
       console.error("Error editing the articulo:", error);
@@ -247,26 +259,52 @@ function Articulos() {
   };
 
   const handleFilterChange = async () => {
-    console.log(currentFilter.proveedor_id);
-
     try {
       if (!currentFilter.percentage || isNaN(currentFilter.percentage)) {
-        throw new Error("El porcentage es inválido o no está definido");
+        throw new Error("El porcentaje es inválido o no está definido");
       }
 
+      // Obtener los artículos antes de actualizar los precios
+      const responseAntiguos = await axios.get(
+        `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
+      );
+      const articulosAntiguos = responseAntiguos.data;
+
+      // Actualizar los precios
       await axios.put(
         `http://localhost:3001/increasePrices/${currentFilter.proveedor_id}`,
         { percentage: currentFilter.percentage }
       );
-      console.log(currentFilter.percentage);
-      const response = await axios.get(
+
+      // Obtener los artículos después de actualizar los precios
+      const responseNuevos = await axios.get(
         `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
       );
-      console.log(response.data);
+      const articulosNuevos = responseNuevos.data;
 
-      setData(response.data);
+      // Crear un mapa de artículos antiguos para referencia rápida
+      const articulosAntiguosMap = new Map(
+        articulosAntiguos.map((articulo) => [articulo.id, articulo])
+      );
+
+      // Insertar logs para cada artículo actualizado
+      for (const articuloNuevo of articulosNuevos) {
+        const articuloAntiguo = articulosAntiguosMap.get(articuloNuevo.id);
+        if (articuloAntiguo) {
+          await axios.post(`http://localhost:3001/updateLog`, {
+            articulo_id: articuloNuevo.id,
+            costo_nuevo: articuloNuevo.costo,
+            costo_antiguo: articuloAntiguo.costo,
+            precio_monotributista_nuevo: articuloNuevo.precio_monotributista,
+            precio_monotributista_antiguo:
+              articuloAntiguo.precio_monotributista,
+            porcentaje: currentFilter.percentage,
+          });
+        }
+      }
+
+      setData(articulosNuevos);
       setOpenFilterDrawer(false);
-      console.log(data);
     } catch (error) {
       console.error("Error updating prices or fetching filtered data:", error);
     }

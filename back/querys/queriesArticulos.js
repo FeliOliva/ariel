@@ -91,8 +91,6 @@ module.exports = {
           precio_monotributista = precio_monotributista * (1 + ? / 100),
           costo = costo * (1 + ? / 100)
         WHERE proveedor_id = ?;
-        INSERT INTO precio_log (articulo_id, porcentaje) 
-        SELECT id, ? FROM articulo WHERE proveedor_id = ?;
       `,
   increasePrice: `
       UPDATE articulo
@@ -105,4 +103,18 @@ module.exports = {
       INSERT INTO precio_log (articulo_id, costo_nuevo, costo_antiguo, precio_monotributista_nuevo, precio_monotributista_antiguo, porcentaje) 
       VALUES (?, ?, ?, ?, ?, ?);
     `,
+  logsPreciosById: `SELECT pl.*, a.nombre AS nombre_articulo
+FROM precio_log pl
+JOIN articulo a ON pl.articulo_id = a.id
+WHERE pl.articulo_id = ?;
+`,
+  deshacerCambiosUpdate: `
+UPDATE articulo 
+SET costo = ?, precio_monotributista = ? 
+WHERE id = ?;
+`,
+  deshacerCambiosDelete: `
+DELETE FROM precio_log 
+WHERE id = ?;
+`,
 };
