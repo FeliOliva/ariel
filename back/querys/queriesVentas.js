@@ -3,18 +3,19 @@ module.exports = {
   v.id,
   v.estado, 
   c.nombre AS nombre_cliente, 
-  v.nroVenta ,
+  v.nroVenta,
   z.nombre AS nombre_zona,
   v.pago,
   v.fecha_venta,
-  SUM(d.costo * d.cantidad) AS total_costo,
-  SUM(d.precio_monotributista * d.cantidad) AS total_monotributista
+  COALESCE(SUM(d.costo * d.cantidad), 0) AS total_costo,
+  COALESCE(SUM(d.precio_monotributista * d.cantidad), 0) AS total_monotributista
 FROM venta v
 INNER JOIN cliente c ON v.cliente_id = c.id
 INNER JOIN zona z ON v.zona_id = z.id
-INNER JOIN detalle_venta d ON v.id = d.venta_id
+LEFT JOIN detalle_venta d ON v.id = d.venta_id
 GROUP BY v.id, v.estado, c.nombre, v.nroVenta, z.nombre, v.pago
 ORDER BY v.id;
+
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, pago) VALUES (?, ?, ?, ?);`,
   addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista) VALUES (?, ?, ?, ?, ?);`,
