@@ -14,6 +14,7 @@ const VentaDetalles = () => {
   const [loading, setLoading] = useState(true);
   const [nroVenta, setNroVenta] = useState("");
   const [cliente, setCliente] = useState("");
+  const [totalImporte, setTotalImporte] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,6 +26,7 @@ const VentaDetalles = () => {
           setData(response.data);
           setNroVenta(response.data[0].nroVenta);
           setCliente(response.data[0].nombre_cliente_completo); // Almacena el nombre completo
+          setTotalImporte(parseFloat(response.data[0].total_importe)); // Ajusta el total importe
         }
       } catch (error) {
         console.error("Error fetching the data:", error);
@@ -156,12 +158,21 @@ const VentaDetalles = () => {
                 },
                 cells: {
                   style: {
-                    fontSize: "200px", // Tamaño de fuente para las celdas
+                    fontSize: "20px", // Tamaño de fuente para las celdas
                     padding: "10px", // Padding para las celdas
                   },
                 },
               }}
             />
+            <div
+              style={{
+                textAlign: "right",
+                marginTop: "20px",
+                fontSize: "30px",
+              }}
+            >
+              <strong>Total Importe: </strong> {totalImporte.toFixed(2)}
+            </div>
           </div>
         )}
       </div>

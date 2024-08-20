@@ -51,26 +51,15 @@ ORDER BY v.id;
   dv.precio_monotributista, 
   dv.fecha, 
   CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente_completo, -- Nombre completo del cliente
-  SUM(dv.costo * dv.cantidad) AS total_costo, -- Total de costo
-  SUM(dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista -- Total de precio monotributista
+  (dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista, -- Importe de cada detalle
+  (SELECT SUM(dv1.precio_monotributista * dv1.cantidad)
+   FROM detalle_venta dv1 
+   WHERE dv1.venta_id = dv.venta_id) AS total_importe -- Total de todos los detalles
 FROM detalle_venta dv
 INNER JOIN articulo a ON dv.articulo_id = a.id
 INNER JOIN venta v ON dv.venta_id = v.id
 INNER JOIN cliente c ON v.cliente_id = c.id
-WHERE dv.venta_id = ?
-GROUP BY 
-  dv.id, 
-  dv.articulo_id, 
-  a.nombre, 
-  a.codigo_producto, 
-  dv.venta_id, 
-  v.nroVenta,
-  dv.costo, 
-  dv.cantidad, 
-  dv.precio_monotributista, 
-  dv.fecha, 
-  c.nombre, 
-  c.apellido;
+WHERE dv.venta_id = ?;
 
   `,
 };
