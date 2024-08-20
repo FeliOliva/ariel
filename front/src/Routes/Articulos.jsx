@@ -23,6 +23,11 @@ function Articulos() {
   const [currentFilter, setCurrentFilter] = useState(null);
   const [openIncreaseDrawer, setOpenIncreaseDrawer] = useState(false);
   const [currentIncrease, setCurrentIncrease] = useState(null);
+  const [openAddLineaDrawer, setOpenAddLineaDrawer] = useState(false);
+  const [linea, setLinea] = useState([]);
+  const [isSubLineaEnabled, setIsSubLineaEnabled] = useState(false);
+  const [subLinea, setSubLinea] = useState("");
+  const [openAddSubLineaDrawer, setOpenAddSubLineaDrawer] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -110,6 +115,14 @@ function Articulos() {
       ),
     },
     {
+      name: "Aumentos",
+      cell: (row) => (
+        <Button type="primary" onClick={() => handleIncrease(row.id)}>
+          Aumentar
+        </Button>
+      ),
+    },
+    {
       name: "Habilitar/Deshabilitar",
       cell: (row) => (
         <Button
@@ -117,14 +130,6 @@ function Articulos() {
           onClick={() => handleToggleState(row.id, row.estado)}
         >
           {row.estado ? "Desactivar" : "Activar"}
-        </Button>
-      ),
-    },
-    {
-      name: "Aumentos",
-      cell: (row) => (
-        <Button type="primary" onClick={() => handleIncrease(row.id)}>
-          Aumentar
         </Button>
       ),
     },
@@ -323,6 +328,58 @@ function Articulos() {
   const reload = async () => {
     window.location.reload();
   };
+  const handleOpenLineaDrawer = async () => {
+    setOpenAddLineaDrawer(true);
+  };
+  const handleOpenSubLineaDrawer = async () => {
+    setOpenAddSubLineaDrawer(true);
+  };
+  const handleLineaChange = (e) => {
+    const newLinea = e.target.value;
+    setLinea((prev) => ({
+      ...prev,
+      linea: newLinea,
+    }));
+    if (newLinea) {
+      setIsSubLineaEnabled(true);
+    } else {
+      setIsSubLineaEnabled(false);
+    }
+  };
+
+  const handleAddLinea = async () => {
+    try {
+      await axios.post(`http://localhost:3001/addLinea`, {
+        nombre: linea.linea,
+      });
+
+      const response = await axios.get("http://localhost:3001/getLastLinea");
+      const lastLinea = response.data;
+      console.log(lastLinea);
+      console.log(subLinea);
+
+      // Finalmente, agrega la sublínea con el ID de la línea recién creada
+      await axios.post(`http://localhost:3001/addSubLinea`, {
+        nombre: subLinea,
+        linea_id: lastLinea.id,
+      });
+
+      setOpenAddLineaDrawer(false);
+    } catch (error) {
+      console.error("Error adding the linea or sublinea:", error);
+    }
+  };
+  const handleAddSubLinea = async () => {
+    try {
+      await axios.post(`http://localhost:3001/addSubLinea`, {
+        nombre: subLinea,
+        linea_id: linea.linea_id,
+      });
+      setOpenAddSubLineaDrawer(false);
+    } catch (error) {
+      console.error("Error adding the linea or sublinea:", error);
+    }
+  };
 
   return (
     <MenuLayout>
@@ -507,13 +564,31 @@ function Articulos() {
             />
           </>
         )}
-        <Button
-          onClick={handleAddArticulo}
-          style={{ display: "flex", marginTop: 10 }}
-          type="primary"
-        >
-          Agregar
-        </Button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Button
+            type="primary"
+            onClick={() => setOpenAddLineaDrawer(true)}
+            style={{ backgroundColor: "#4CAF50", borderColor: "#4CAF50" }}
+          >
+            Agregar Línea
+          </Button>
+          <Button
+            type="primary"
+            onClick={() => setOpenAddSubLineaDrawer(true)}
+            style={{ backgroundColor: "#FF9800", borderColor: "#FF9800" }}
+          >
+            Agregar SubLínea
+          </Button>
+        </div>
+        <div style={{ display: "flex", marginTop: 10 }}>
+          <Button
+            onClick={handleAddArticulo}
+            style={{ display: "flex", marginTop: 10 }}
+            type="primary"
+          >
+            Agregar
+          </Button>
+        </div>
       </Drawer>
       <Drawer
         open={open}
@@ -644,6 +719,71 @@ function Articulos() {
           type="primary"
         >
           Confirmar cambios
+        </Button>
+      </Drawer>
+      <Drawer
+        open={openAddLineaDrawer}
+        onClose={() => setOpenAddLineaDrawer(false)}
+        title="Añadir Línea"
+      >
+        <div style={{ display: "flex", marginTop: 10 }}>
+          <Tooltip title="Línea">Línea</Tooltip>
+        </div>
+        <Input
+          value={linea?.linea}
+          onChange={handleLineaChange}
+          style={{ padding: 0 }}
+        />
+
+        {isSubLineaEnabled && (
+          <div style={{ marginTop: 20 }}>
+            <Tooltip title="SubLínea">SubLínea</Tooltip>
+            <Input
+              value={subLinea}
+              onChange={(e) => setSubLinea(e.target.value)}
+              style={{ padding: 0 }}
+            />
+          </div>
+        )}
+        <Button
+          onClick={handleAddLinea}
+          type="primary"
+          style={{ marginTop: 10 }}
+        >
+          Guardar
+        </Button>
+      </Drawer>
+      <Drawer
+        open={openAddSubLineaDrawer}
+        onClose={() => setOpenAddSubLineaDrawer(false)}
+        title="Añadir SubLínea"
+      >
+        <div style={{ display: "flex", marginTop: 10 }}>
+          <Tooltip>Linea</Tooltip>
+        </div>
+        <LineaInput
+          onChangeLinea={(value) =>
+            setLinea((prev) => ({
+              ...prev,
+              linea_id: value.id,
+              linea_nombre: value.nombre,
+            }))
+          }
+        />
+        <div style={{ display: "flex", marginTop: 10 }}>
+          <Tooltip>SubLinea</Tooltip>
+        </div>
+        <Input
+          value={subLinea}
+          onChange={(e) => setSubLinea(e.target.value)}
+          style={{ padding: 0 }}
+        />
+        <Button
+          onClick={handleAddSubLinea}
+          style={{ marginTop: 10 }}
+          type="primary"
+        >
+          Guardar
         </Button>
       </Drawer>
       <Drawer

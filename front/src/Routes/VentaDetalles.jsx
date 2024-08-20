@@ -5,16 +5,12 @@ import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Button } from "antd";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import logo from "../logoAriel.png"; // Importa la imagen
+import "jspdf-autotable";
 
 const VentaDetalles = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [nroVenta, setNroVenta] = useState("");
-  const [cliente, setCliente] = useState("");
-  const [totalImporte, setTotalImporte] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,9 +20,7 @@ const VentaDetalles = () => {
         );
         if (response.data && response.data.length > 0) {
           setData(response.data);
-          setNroVenta(response.data[0].nroVenta);
-          setCliente(response.data[0].nombre_cliente_completo); // Almacena el nombre completo
-          setTotalImporte(parseFloat(response.data[0].total_importe)); // Ajusta el total importe
+          console.log(response.data);
         }
       } catch (error) {
         console.error("Error fetching the data:", error);
@@ -39,36 +33,74 @@ const VentaDetalles = () => {
   }, [id]);
 
   const handleGeneratePDF = () => {
-    const input = document.getElementById("pdf-content");
+    const pdf = new jsPDF("p", "mm", "a4");
 
-    // Ajusta la escala para mejorar la calidad de la imagen
-    html2canvas(input, { scale: 2.5 }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 210; // Ancho de la página en mm (tamaño máximo)
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    if (data.length > 0) {
+      const venta = data[0];
 
-      // Agregar título
-      pdf.setFontSize(24); // Aumenta el tamaño del título
-      pdf.text("Distribuidora Renacer", 10, 20);
+      // Encabezado de la factura
+      pdf.setFontSize(10);
+      pdf.text(`N° ${venta.nroVenta}`, 160, 20);
+      pdf.text(`Fecha: ${new Date(venta.fecha).toLocaleDateString()}`, 160, 25);
 
-      // Agregar nombre del emisor
-      pdf.setFontSize(14); // Ajusta el tamaño del texto
-      pdf.text("Emitido por: Ariel Bosco", 10, 30);
+      pdf.setFontSize(12);
+      pdf.text(`( ${venta.id} ) - ${venta.nombre_cliente_completo}`, 10, 30);
+      pdf.text(`${venta.direccion}`, 10, 35);
+      pdf.text(`CUIL: ${venta.cuil}`, 10, 40);
 
-      // Agregar nombre del destinatario
-      pdf.text(`Dirigido a: ${cliente}`, 10, 40); // Usa el estado cliente
+      const estadoFiscal = venta.es_responsable_inscripto
+        ? "RESPONSABLE INSCRIPTO"
+        : "RESPONSABLE MONOTRIBUTO";
+      pdf.text(estadoFiscal, 10, 45);
 
-      // Agregar imagen importada
-      pdf.addImage(logo, "PNG", 160, 10, 30, 30);
+      pdf.text("CUENTA CORRIENTE", 10, 50);
 
-      // Agregar contenido de la tabla
-      pdf.addImage(imgData, "PNG", 0, 50, imgWidth, imgHeight);
+      pdf.setFontSize(10);
+      pdf.text("01-beto", 160, 45);
 
-      // Guardar el PDF
-      pdf.save(`${nroVenta}.pdf`);
-    });
+      // Preparación de los datos de la tabla
+      const headers = [
+        { title: "Cantidad", dataKey: "cantidad" },
+        { title: "Artículo", dataKey: "nombre_articulo" },
+        { title: "Unidades", dataKey: "Unidades" },
+        { title: "P. Unitario", dataKey: "precio_monotributista" },
+        { title: "Total", dataKey: "total_precio_monotributista" },
+      ];
+
+      const tableData = data.map((row) => ({
+        cantidad: row.cantidad,
+        nombre_articulo: row.nombre_articulo,
+        Unidades: row.cantidad, // Ajustar según sea necesario
+        precio_monotributista: parseFloat(row.precio_monotributista).toFixed(2),
+        total_precio_monotributista: parseFloat(
+          row.total_precio_monotributista
+        ).toFixed(2),
+      }));
+
+      console.log("Datos de la tabla:", tableData); // Verifica el contenido antes de generar el PDF
+
+      pdf.autoTable({
+        head: [headers.map((header) => header.title)],
+        body: tableData.map((row) =>
+          headers.map((header) => row[header.dataKey])
+        ),
+        startY: 60,
+        theme: "plain",
+        styles: {
+          fontSize: 10,
+          cellPadding: 2,
+        },
+      });
+
+      pdf.setFontSize(12);
+      pdf.text(
+        `Total: ${parseFloat(venta.total_importe).toFixed(2)}`,
+        160,
+        pdf.lastAutoTable.finalY + 10
+      );
+
+      pdf.save(`${venta.nroVenta}.pdf`);
+    }
   };
 
   const columns = [
@@ -106,7 +138,7 @@ const VentaDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "30px" }}>
-          {row.precio_monotributista}
+          {parseFloat(row.precio_monotributista).toFixed(2)}
         </div>
       ),
     },
@@ -116,11 +148,16 @@ const VentaDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "30px" }}>
-          {row.total_precio_monotributista}
+          {parseFloat(row.total_precio_monotributista).toFixed(2)}
         </div>
       ),
     },
   ];
+
+  const totalImporte = data.reduce(
+    (acc, item) => acc + parseFloat(item.total_precio_monotributista),
+    0
+  );
 
   return (
     <MenuLayout>
@@ -135,7 +172,7 @@ const VentaDetalles = () => {
         >
           Generar PDF
         </Button>
-        <h1>Detalle de Venta {nroVenta}</h1>
+        <h1>Detalle de Venta {data.length > 0 ? data[0].nroVenta : ""}</h1>
         {loading ? (
           <p>Cargando...</p>
         ) : (

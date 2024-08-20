@@ -5,4 +5,5 @@ module.exports = {
   upLinea: `UPDATE linea SET estado = 1 WHERE ID = ?;`,
   updateLinea: `UPDATE linea SET nombre = ? WHERE ID = ?;`,
   getSublineaByLinea: `SELECT id, nombre FROM subLinea WHERE linea_id = ?;`,
+  getLastLinea: `SELECT * FROM linea ORDER BY createdAt DESC LIMIT 1;`,
 };

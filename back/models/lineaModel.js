@@ -50,7 +50,15 @@ const getSublineasByLinea = async (lineaId) => {
     throw err;
   }
 };
-
+const getLastLinea = async () => {
+  try {
+    const query = queriesLineas.getLastLinea;
+    const [rows] = await db.query(query);
+    return rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
 
 module.exports = {
   getAllLineas,
@@ -59,4 +67,5 @@ module.exports = {
   upLinea,
   updateLinea,
   getSublineasByLinea,
+  getLastLinea,
 };

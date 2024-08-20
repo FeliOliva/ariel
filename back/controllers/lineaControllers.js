@@ -58,7 +58,14 @@ const getSubLineasByLinea = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+const getLastLinea = async (req, res) => {
+  try {
+    const lastLinea = await lineaModels.getLastLinea();
+    res.json(lastLinea);
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+};
 
 module.exports = {
   getAllLineas,
@@ -67,4 +74,5 @@ module.exports = {
   upLinea,
   updateLinea,
   getSubLineasByLinea,
+  getLastLinea,
 };

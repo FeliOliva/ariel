@@ -7,6 +7,10 @@ router.post("/addLinea", lineaControllers.addLinea);
 router.put("/dropLinea/:ID", lineaControllers.dropLinea);
 router.put("/upLinea/:ID", lineaControllers.upLinea);
 router.put("/updateLinea", lineaControllers.updateLinea);
-router.get("/getSubLineasByLinea/:linea_id", lineaControllers.getSubLineasByLinea);
+router.get(
+  "/getSubLineasByLinea/:linea_id",
+  lineaControllers.getSubLineasByLinea
+);
+router.get("/getLastLinea", lineaControllers.getLastLinea);
 
 module.exports = router;
