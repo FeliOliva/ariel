@@ -24,25 +24,35 @@ const addVenta = async (cliente_id, nroVenta, zona_id, pago) => {
     throw err;
   }
 };
+const checkStock = async (articulo_id, cantidad) => {
+  try {
+    const [rows] = await db.query(queriesVentas.checkStock, [articulo_id]);
+    if (rows.length === 0 || rows[0].stock < cantidad) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    throw new Error("Error al verificar el stock: " + error.message);
+  }
+};
 
 const addDetalleVenta = async (
-  venta_id,
+  ventaId,
   articulo_id,
   costo,
   cantidad,
   precio_monotributista
 ) => {
   try {
-    const query = queriesVentas.addDetalleVenta;
-    await db.query(query, [
-      venta_id,
+    await db.query(queriesVentas.addDetalleVenta, [
+      ventaId,
       articulo_id,
       costo,
       cantidad,
       precio_monotributista,
     ]);
-  } catch (err) {
-    throw err;
+  } catch (error) {
+    throw new Error("Error al agregar el detalle de venta: " + error.message);
   }
 };
 const dropVenta = async (ID) => {
@@ -116,4 +126,5 @@ module.exports = {
   getVentasByProducto,
   addDetalleVenta,
   getVentaByID,
+  checkStock,
 };

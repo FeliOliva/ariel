@@ -18,6 +18,19 @@ const addVenta = async (req, res) => {
       pago
     );
     for (const detalle of detalles) {
+      const stockDisponible = await ventasModel.checkStock(
+        detalle.articulo_id,
+        detalle.cantidad
+      );
+      if (!stockDisponible) {
+        return res.status(400).json({
+          error:
+            "Stock insuficiente para el artículo con ID: " +
+            detalle.articulo_id,
+        });
+      }
+    }
+    for (const detalle of detalles) {
       await ventasModel.addDetalleVenta(
         ventaId,
         detalle.articulo_id,
