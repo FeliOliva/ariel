@@ -20,6 +20,7 @@ const RoutesZonas = require("./routes/zonasRoutes");
 const RoutesDetalleVentas = require("./routes/detalleVentasRoutes");
 const RoutesProveedores = require("./routes/proveedorRoutes");
 const RoutesOfertas = require("./routes/ofertasRoutes");
+const RoutesFilter = require("./routes/filterRoutes");
 
 app.use(
   "/",
@@ -32,7 +33,8 @@ app.use(
   RoutesZonas,
   RoutesDetalleVentas,
   RoutesProveedores,
-  RoutesOfertas
+  RoutesOfertas,
+  RoutesFilter
 );
 
 app.listen(PORT, () => {

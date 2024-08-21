@@ -1,3 +1,4 @@
+// BarChart.js
 import React from "react";
 import {
   Chart as ChartJS,
@@ -10,7 +11,6 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
-// Registrar los componentes de ChartJS
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -20,14 +20,7 @@ ChartJS.register(
   Legend
 );
 
-const BarChart = ({
-  data, // Datos del gráfico
-  title, // Título del gráfico
-  width, // Ancho del gráfico
-  height, // Altura del gráfico
-  xTitle, // Título del eje X
-  yTitle, // Título del eje Y
-}) => {
+const BarChart = ({ data, title, width, height, xTitle, yTitle }) => {
   return (
     <div style={{ width: width || "300px", height: height || "300px" }}>
       <h3>{title}</h3>
@@ -55,13 +48,13 @@ const BarChart = ({
                 text: xTitle || "Fecha",
               },
               ticks: {
-                callback: function (value, index, values) {
-                  const date = new Date(data.labels[index]);
-                  return !isNaN(date)
-                    ? `${date.getDate()}/${
-                        date.getMonth() + 1
-                      }/${date.getFullYear()}`
-                    : data.labels[index];
+                autoSkip: true,
+                maxRotation: 45,
+                minRotation: 45,
+                callback: function (value) {
+                  const label = this.getLabelForValue(value);
+                  const day = label.split("/")[0]; // Extraer solo el día (DD)
+                  return day;
                 },
               },
             },
