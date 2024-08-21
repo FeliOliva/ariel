@@ -116,14 +116,24 @@ function Ventas() {
           })),
         };
 
-        await axios.post("http://localhost:3001/addVenta", ventaData);
-        setVenta({ articulos: [], cliente: null, nroVenta: "" });
-        setArticuloValue("");
-        setClienteValue("");
-        setCantidad(1);
-        setOpen(false);
-        alert("Venta registrada con éxito");
-        fetchData();
+        const response = await axios.post(
+          "http://localhost:3001/addVenta",
+          ventaData
+        );
+        if (response.status === 203) {
+          console.log(response.data.error_code);
+          const articuloFaltante = response.data.error_code;
+          alert(`stock insuficiente para ${articuloFaltante} `);
+          return;
+        } else {
+          setVenta({ articulos: [], cliente: null, nroVenta: "" });
+          setArticuloValue("");
+          setClienteValue("");
+          setCantidad(1);
+          setOpen(false);
+          alert("Venta registrada con éxito");
+          fetchData();
+        }
       } catch (error) {
         console.error("Error sending venta:", error);
         alert("Error al registrar la venta");

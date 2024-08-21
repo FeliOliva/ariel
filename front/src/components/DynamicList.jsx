@@ -11,8 +11,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 const DynamicList = ({ items, onDelete }) => {
   return (
     <List>
-      {items.map((item, index) => (
-        <ListItem key={`item-${index}`}>
+      {items.map((item) => (
+        <ListItem key={item.id}>
+          {" "}
+          {/* Usa el ID como key */}
           <ListItemText
             primary={item.label}
             secondary={`Cantidad: ${item.quantity}`}
@@ -21,7 +23,7 @@ const DynamicList = ({ items, onDelete }) => {
             <IconButton
               edge="end"
               aria-label="delete"
-              onClick={() => onDelete(index)}
+              onClick={() => onDelete(item.id)} // Pasa el ID en lugar del índice
             >
               <DeleteIcon />
             </IconButton>

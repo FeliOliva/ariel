@@ -10,6 +10,7 @@ const getAllVentas = async () => {
     throw err;
   }
 };
+
 const addVenta = async (cliente_id, nroVenta, zona_id, pago) => {
   try {
     const query = queriesVentas.addVenta;
@@ -24,15 +25,39 @@ const addVenta = async (cliente_id, nroVenta, zona_id, pago) => {
     throw err;
   }
 };
+
 const checkStock = async (articulo_id, cantidad) => {
   try {
     const [rows] = await db.query(queriesVentas.checkStock, [articulo_id]);
     if (rows.length === 0 || rows[0].stock < cantidad) {
-      return false;
+      return {
+        disponible: false,
+        nombre: rows.length > 0 ? rows[0].nombre : "Desconocido",
+      };
     }
-    return true;
+    return { disponible: true };
   } catch (error) {
     throw new Error("Error al verificar el stock: " + error.message);
+  }
+};
+
+const descontarStock = async (articulo_id, cantidad) => {
+  try {
+    await db.query(queriesVentas.descontarStock, [cantidad, articulo_id]);
+  } catch (error) {
+    throw new Error("Error al descontar el stock: " + error.message);
+  }
+};
+
+const updateLogVenta = async (cliente_id, articulo_id, cantidad) => {
+  try {
+    await db.query(queriesVentas.updateLogVenta, [
+      cliente_id,
+      articulo_id,
+      cantidad,
+    ]);
+  } catch (error) {
+    throw new Error("Error al registrar en el log de ventas: " + error.message);
   }
 };
 
@@ -55,6 +80,7 @@ const addDetalleVenta = async (
     throw new Error("Error al agregar el detalle de venta: " + error.message);
   }
 };
+
 const dropVenta = async (ID) => {
   try {
     const query = queriesVentas.dropVenta;
@@ -63,6 +89,7 @@ const dropVenta = async (ID) => {
     throw err;
   }
 };
+
 const upVenta = async (ID) => {
   try {
     const query = queriesVentas.upVenta;
@@ -71,6 +98,7 @@ const upVenta = async (ID) => {
     throw err;
   }
 };
+
 const updateVentas = async (producto_id, cantidad, cliente_id, zona_id, ID) => {
   try {
     const query = queriesVentas.updateVentas;
@@ -79,6 +107,7 @@ const updateVentas = async (producto_id, cantidad, cliente_id, zona_id, ID) => {
     throw err;
   }
 };
+
 const getVentasByClientes = async (cliente_id) => {
   try {
     const query = queriesVentas.getVentasByClientes;
@@ -88,6 +117,7 @@ const getVentasByClientes = async (cliente_id) => {
     throw err;
   }
 };
+
 const getVentasByZona = async (zona_id) => {
   try {
     const query = queriesVentas.getVentasByZona;
@@ -97,6 +127,7 @@ const getVentasByZona = async (zona_id) => {
     throw err;
   }
 };
+
 const getVentasByProducto = async (producto_id) => {
   try {
     const query = queriesVentas.getVentasByProducto;
@@ -106,6 +137,7 @@ const getVentasByProducto = async (producto_id) => {
     throw err;
   }
 };
+
 const getVentaByID = async (venta_id) => {
   try {
     const query = queriesVentas.getVentaByID;
@@ -115,16 +147,19 @@ const getVentaByID = async (venta_id) => {
     throw err;
   }
 };
+
 module.exports = {
   getAllVentas,
   addVenta,
+  checkStock,
+  descontarStock,
+  updateLogVenta,
+  addDetalleVenta,
   dropVenta,
   upVenta,
   updateVentas,
   getVentasByClientes,
   getVentasByZona,
   getVentasByProducto,
-  addDetalleVenta,
   getVentaByID,
-  checkStock,
 };

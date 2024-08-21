@@ -66,7 +66,9 @@ INNER JOIN articulo a ON dv.articulo_id = a.id
 INNER JOIN venta v ON dv.venta_id = v.id
 INNER JOIN cliente c ON v.cliente_id = c.id
 WHERE dv.venta_id = ?;
-
-
   `,
+  checkStock: "SELECT stock, nombre FROM articulo WHERE id = ?",
+  descontarStock: "UPDATE articulo SET stock = stock - ? WHERE id = ?",
+  updateLogVenta:
+    "INSERT INTO stock_log(cliente_id, articulo_id, cantidad, fecha) VALUES (?, ?, ?, NOW())",
 };
