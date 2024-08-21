@@ -44,6 +44,8 @@ const MenuLayout = ({ children }) => {
       case "7":
         navigate("/Zonas");
         break;
+      case "8":
+        navigate("/Ofertas");
       default:
     }
   };
@@ -66,6 +68,8 @@ const MenuLayout = ({ children }) => {
         return ["6"];
       case "/Zonas":
         return ["7"];
+      case "/Ofertas":
+        return ["8"];
       default:
         return ["1"]; // Clave por defecto si no coincide ninguna ruta
     }
@@ -115,6 +119,11 @@ const MenuLayout = ({ children }) => {
               key: "7",
               icon: <SubnodeOutlined />,
               label: "Zonas",
+            },
+            {
+              key: "8",
+              icon: <SubnodeOutlined />,
+              label: "Ofertas",
             },
           ]}
         />

@@ -10,6 +10,8 @@ import SubLinea from "./Routes/SubLinea";
 import Proveedor from "./Routes/Proveedor";
 import Zonas from "./Routes/Zonas";
 import Logs from "./Routes/Logs";
+import Ofertas from "./Routes/Ofertas";
+import OfertasDetalles from "./Routes/OfertasDetalles";
 function App() {
   return (
     <Routes>
@@ -23,6 +25,8 @@ function App() {
       <Route path="/linea/:id" element={<SubLinea />} />
       <Route path="/proveedor" element={<Proveedor />} />
       <Route path="/zonas" element={<Zonas />} />
+      <Route path="/ofertas" element={<Ofertas />} />
+      <Route path="/ofertas/:id" element={<OfertasDetalles />} />
     </Routes>
   );
 }
