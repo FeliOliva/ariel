@@ -41,6 +41,8 @@ const Clientes = () => {
   };
 
   const handleAddCliente = async () => {
+    console.log(newClient);
+    console.log(zona.id);
     const nuevoCliente = {
       nombre: newClient.nombre,
       apellido: newClient.apellido,
@@ -48,7 +50,7 @@ const Clientes = () => {
       telefono: newClient.telefono,
       direccion: newClient.direccion,
       cuil: newClient.cuil,
-      zona: zona.id,
+      zona_id: zona.id,
       responsableInscripto: newClient.responsableInscripto,
     };
 
@@ -60,6 +62,7 @@ const Clientes = () => {
       setData([...data, response.data]);
       alert("Cliente agregado con éxito");
       setOpenAddDrawer(false);
+      // fetchData();//revisar para usar esto y resetear los inputs de cliente a vacio
       window.location.reload();
     } catch (error) {
       console.error("Error adding the cliente:", error);
