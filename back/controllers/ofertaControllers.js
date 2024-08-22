@@ -43,14 +43,20 @@ const upOferta = async (req, res) => {
 };
 
 const updateOferta = async (req, res) => {
+  const { id, nombre, productos } = req.body;
+
   try {
-    const { nombre, detalles, ID } = req.body;
-    await ofertaModel.updateOferta(nombre, detalles, ID);
+    // Actualiza el nombre de la oferta
+    await ofertaModel.updateOferta(nombre, productos, id);
+
+    // Envía la respuesta de éxito
     res.status(200).json({ message: "Oferta actualizada correctamente" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error al actualizar la oferta:", error.message);
+    res.status(500).json({ error: "Error al actualizar la oferta" });
   }
 };
+
 const getOfertaById = async (req, res) => {
   try {
     const oferta_id = req.params.ID;
@@ -65,8 +71,8 @@ const getOfertaById = async (req, res) => {
         cod: oferta.cod_articulo,
         precio: oferta.precioOferta,
         cantidad: oferta.cantidad,
-      }))
-    }
+      })),
+    };
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });

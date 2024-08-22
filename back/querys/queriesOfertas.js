@@ -21,6 +21,7 @@ GROUP BY
   deleteDetallesOferta: `DELETE FROM detalle_oferta WHERE oferta_id = ?;`,
   getOfertaById: `SELECT 
     o.nombre,
+    o.id,
     o.estado,
     o.fecha,
     a.id AS articulo_id,

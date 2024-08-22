@@ -51,13 +51,15 @@ const upOferta = async (ID) => {
   }
 };
 
-const updateOferta = async (nombre, detalles, ID) => {
+const updateOferta = async (nombre, productos, ID) => {
   try {
     const query = queriesOfertas.updateOferta;
     await db.query(query, [nombre, ID]);
+
     const queryDeleteDetalles = queriesOfertas.deleteDetallesOferta;
     await db.query(queryDeleteDetalles, [ID]);
-    for (const detalle of detalles) {
+
+    for (const detalle of productos) {
       const queryDetalle = queriesOfertas.addDetalleOferta;
       await db.query(queryDetalle, [
         ID,
@@ -70,6 +72,7 @@ const updateOferta = async (nombre, detalles, ID) => {
     throw err;
   }
 };
+
 const getOfertaById = async (oferta_id) => {
   try {
     const query = queriesOfertas.getOfertaById;
