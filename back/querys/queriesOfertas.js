@@ -1,29 +1,17 @@
 module.exports = {
   getAllOfertas: `
-      SELECT 
+     SELECT 
     o.id,
     o.nombre,
     o.estado,
     o.fecha,
-    SUM(d.cantidad * d.precioOferta) AS total_oferta,
-    JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'articulo_id', d.articulo_id,
-            'articulo_nombre', a.nombre,
-            'cantidad', d.cantidad,
-            'detalle_precioOferta', d.precioOferta,
-            'subtotal', d.cantidad * d.precioOferta
-        )
-    ) AS detalles_oferta
+    SUM(d.cantidad * d.precioOferta) AS total_oferta
 FROM 
     oferta o
 LEFT JOIN 
     detalle_oferta d ON o.id = d.oferta_id
-LEFT JOIN 
-    articulo a ON d.articulo_id = a.id
 GROUP BY 
-    o.id, o.nombre, o.estado;
-
+    o.id, o.nombre, o.estado, o.fecha;
 `,
   addOferta: `INSERT INTO oferta (nombre) VALUES (?);`,
   addDetalleOferta: `INSERT INTO detalle_oferta (oferta_id, articulo_id, cantidad, precioOferta) VALUES (?, ?, ?, ?);`,
@@ -32,29 +20,25 @@ GROUP BY
   updateOferta: `UPDATE oferta SET nombre = ? WHERE id = ?;`,
   deleteDetallesOferta: `DELETE FROM detalle_oferta WHERE oferta_id = ?;`,
   getOfertaById: `SELECT 
-    o.id,
     o.nombre,
     o.estado,
     o.fecha,
-    SUM(d.cantidad * d.precioOferta) AS total_oferta,
-    JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'articulo_id', d.articulo_id,
-            'articulo_nombre', a.nombre,
-            'cantidad', d.cantidad,
-            'detalle_precioOferta', d.precioOferta,
-            'subtotal', d.cantidad * d.precioOferta
-        )
-    ) AS detalles_oferta
+    a.id AS articulo_id,
+    a.nombre AS nombre_articulo,
+    a.codigo_producto AS cod_articulo,
+    d.cantidad,
+    d.precioOferta,
+    (d.cantidad * d.precioOferta) AS subtotal,
+    (SELECT SUM(d1.cantidad * d1.precioOferta)
+     FROM detalle_oferta d1 
+     WHERE d1.oferta_id = o.id) AS total_oferta -- Total de todos los detalles
 FROM 
     oferta o
-LEFT JOIN 
+INNER JOIN 
     detalle_oferta d ON o.id = d.oferta_id
-LEFT JOIN 
+INNER JOIN 
     articulo a ON d.articulo_id = a.id
 WHERE 
-    o.id = ? -- Reemplaza con el ID de la oferta específica
-GROUP BY 
-    o.id, o.nombre, o.estado;
+    o.id = ?; 
 `,
 };

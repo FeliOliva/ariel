@@ -55,7 +55,19 @@ const getOfertaById = async (req, res) => {
   try {
     const oferta_id = req.params.ID;
     const oferta = await ofertaModel.getOfertaById(oferta_id);
-    res.json(oferta);
+
+    let data = {
+      nombre: oferta[0].nombre,
+      id: oferta[0].id,
+      productos: oferta.map((oferta) => ({
+        id: oferta.articulo_id,
+        nombre: oferta.nombre_articulo,
+        cod: oferta.cod_articulo,
+        precio: oferta.precioOferta,
+        cantidad: oferta.cantidad,
+      }))
+    }
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
