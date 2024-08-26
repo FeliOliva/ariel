@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: host.docker.internal
+      DB_USER: root
+      DB_PASSWORD: 154254693feli
+      DB_NAME: ariel2db
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: npm run dev

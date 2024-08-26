@@ -244,7 +244,7 @@ function Articulos() {
     console.log(articuloEdited);
     try {
       await axios.put(`http://localhost:3001/updateArticulos/`, articuloEdited);
-      window.location.reload();
+      fetchData();
       setOpen(false);
     } catch (error) {
       console.error("Error editing the articulo:", error);
@@ -256,7 +256,6 @@ function Articulos() {
     try {
       await axios.post(`http://localhost:3001/addArticulo`, articulo);
       fetchData();
-      window.location.reload();
       setOpenAddArticulo(false);
     } catch (error) {
       console.error("Error adding the articulo:", error);
@@ -325,9 +324,6 @@ function Articulos() {
   const handleCloseEditSubLineaDrawer = async () => {
     setOpenEditSubLineaDrawer(false);
   };
-  const reload = async () => {
-    window.location.reload();
-  };
   const handleOpenLineaDrawer = async () => {
     setOpenAddLineaDrawer(true);
   };
@@ -386,9 +382,6 @@ function Articulos() {
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Button type="primary" onClick={setOpenAddArticulo}>
           Agregar artículo
-        </Button>
-        <Button type="primary" onClick={reload}>
-          Recargar
         </Button>
         <Button type="primary" onClick={setOpenFilterDrawer}>
           Aumentos
