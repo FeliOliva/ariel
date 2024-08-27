@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
+import { Button } from "antd";
 
 const SubLinea = () => {
   const { id } = useParams();
@@ -40,6 +41,9 @@ const SubLinea = () => {
 
   return (
     <MenuLayout>
+      <Button onClick={() => window.history.back()} type="primary">
+        Volver
+      </Button>
       <div>
         <h1>Lista de Sublíneas de la Línea {id}</h1>
         <DataTable

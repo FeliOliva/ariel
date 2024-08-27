@@ -17,6 +17,20 @@ const addSubLinea = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const addSubLineaByID = async (req, res) => {
+  try {
+    const { subLinea_id, linea_id } = req.body;
+    const sublinea = await subLineaModels.getSublineaByID(subLinea_id);
+    const nombre = sublinea.nombre;
+
+    await subLineaModels.addSubLinea(nombre, linea_id);
+
+    res.status(201).json({ message: "SubLinea agregada con éxito" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const dropSubLinea = async (req, res) => {
   try {
     const ID = req.params.ID;
@@ -58,7 +72,15 @@ const getLineaBySublinea = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+const getSublineaByID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sublinea = await subLineaModels.getSublineaByID(id);
+    res.json(sublinea);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllSubLinea,
   addSubLinea,
@@ -66,4 +88,5 @@ module.exports = {
   upSubLinea,
   updateSubLinea,
   getLineaBySublinea,
+  addSubLineaByID,
 };

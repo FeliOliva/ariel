@@ -4,6 +4,7 @@ import DataTable from "react-data-table-component";
 import { Link } from "react-router-dom";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input, Tooltip, message } from "antd";
+import SubLineasInput from "../components/InputSubLineas";
 
 const Linea = () => {
   const [lineas, setLineas] = useState([]);
@@ -12,6 +13,7 @@ const Linea = () => {
   const [linea, setLinea] = useState({ nombre: "" });
   const [subLinea, setSubLinea] = useState([]);
   const [openSubLineaDrawer, setOpenSubLineaDrawer] = useState(false);
+  const [subLineaExisted, setSubLineaDrawerExisted] = useState(false);
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/lineas");
@@ -69,6 +71,23 @@ const Linea = () => {
     }
   };
 
+  const handleOpenDrawerExistedSL = async () => {
+    setSubLineaDrawerExisted(true);
+  };
+  const handleAddExistedSL = async () => {
+    console.log(subLinea);
+    try {
+      await axios.post(`http://localhost:3001/addSubLineaByID`, {
+        subLinea_id: subLinea.sublinea_id,
+        linea_id: subLinea.linea_id,
+      });
+      window.location.reload();
+      setSubLineaDrawerExisted(false);
+      setOpenSubLineaDrawer(false);
+    } catch (error) {
+      console.error("Error adding the linea or sublinea:", error);
+    }
+  };
   const columns = [
     { name: "Nombre", selector: (row) => row.nombre, sortable: true },
     {
@@ -137,21 +156,56 @@ const Linea = () => {
       <Drawer
         open={openSubLineaDrawer}
         onClose={() => setOpenSubLineaDrawer(false)}
-        title="Añadir Sublínea"
+        title="Añadir Nueva Sublínea"
       >
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip title="SubLínea">
-            <Input
-              placeholder="Nombre de la SubLínea"
-              value={subLinea.nombre}
-              onChange={handleSubLineaChange}
-              style={{ padding: 0 }}
-            />
-          </Tooltip>
+        <div>
+          <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+            <strong>Añadir una nueva SubLinea</strong>
+          </div>
+          <Input
+            placeholder="Nombre de la SubLínea"
+            value={subLinea.nombre}
+            onChange={handleSubLineaChange}
+            style={{ padding: 0 }}
+          />
         </div>
+        <div style={{ display: "flex", marginBottom: 10, marginTop: 10 }}>
+          <Button
+            style={{ backgroundColor: "#FF9800", borderColor: "#FF9800" }}
+            onClick={handleOpenDrawerExistedSL}
+          >
+            Agregar a SubLinea existente
+          </Button>
+        </div>
+        <div>
+          <Button
+            type="primary"
+            onClick={handleAddSubLinea}
+            style={{ marginTop: 20 }}
+          >
+            Guardar
+          </Button>
+        </div>
+      </Drawer>
+      <Drawer
+        open={subLineaExisted}
+        onClose={() => setSubLineaDrawerExisted(false)}
+        title="Añadir a Sublínea existente"
+      >
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <strong>Añadir a SubLinea Existente</strong>
+        </div>
+        <SubLineasInput
+          onChangeSubLineas={(value) => {
+            setSubLinea((prev) => ({
+              ...prev,
+              sublinea_id: value.id,
+            }));
+          }}
+        />
         <Button
           type="primary"
-          onClick={handleAddSubLinea}
+          onClick={handleAddExistedSL}
           style={{ marginTop: 20 }}
         >
           Guardar

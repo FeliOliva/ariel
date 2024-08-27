@@ -299,7 +299,7 @@ function Articulos() {
         } finally {
           setTimeout(() => {
             window.location.reload();
-          }, 1500);
+          }, 1000);
         }
       }
     });
@@ -600,7 +600,7 @@ function Articulos() {
             />
           </>
         )}
-        <div style={{ display: "flex", gap: 10 }}>
+        {/* <div style={{ display: "flex", gap: 10 }}>
           <Button
             type="primary"
             onClick={() => setOpenAddLineaDrawer(true)}
@@ -615,7 +615,7 @@ function Articulos() {
           >
             Agregar SubLínea
           </Button>
-        </div>
+        </div> */}
         <div style={{ display: "flex", marginTop: 10 }}>
           <Button
             onClick={handleAddArticulo}
@@ -878,6 +878,24 @@ function Articulos() {
           data={data}
           pagination={true}
           responsive={true}
+          customStyles={{
+            rows: {
+              style: {
+                fontSize: "12px", // Cambia este valor para reducir el tamaño del texto
+                padding: "4px 8px", // Ajusta el padding para reducir el tamaño general de las filas
+              },
+            },
+            headCells: {
+              style: {
+                fontSize: "14px", // Tamaño del texto en los encabezados
+              },
+            },
+            cells: {
+              style: {
+                padding: "4px 8px", // Ajusta el padding de las celdas
+              },
+            },
+          }}
         />
       </div>
     </MenuLayout>
