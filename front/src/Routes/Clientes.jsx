@@ -2,7 +2,15 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Input, InputNumber, Radio, Tooltip } from "antd";
+import {
+  Button,
+  Drawer,
+  Input,
+  InputNumber,
+  Radio,
+  Tooltip,
+  Switch,
+} from "antd";
 import ZonasInput from "../components/ZonasInput";
 
 const Clientes = () => {
@@ -33,6 +41,7 @@ const Clientes = () => {
     try {
       const response = await axios.get("http://localhost:3001/clientes");
       setData(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -51,7 +60,7 @@ const Clientes = () => {
       direccion: newClient.direccion,
       cuil: newClient.cuil,
       zona_id: zona.id,
-      responsableInscripto: newClient.responsableInscripto,
+      es_responsable_inscripto: newClient.responsableInscripto,
     };
 
     try {
@@ -60,10 +69,10 @@ const Clientes = () => {
         nuevoCliente
       );
       setData([...data, response.data]);
+      console.log(nuevoCliente);
       alert("Cliente agregado con éxito");
       setOpenAddDrawer(false);
-      // fetchData();//revisar para usar esto y resetear los inputs de cliente a vacio
-      window.location.reload();
+      fetchData(); //revisar para usar esto y resetear los inputs de cliente a vacio
     } catch (error) {
       console.error("Error adding the cliente:", error);
     }
@@ -110,7 +119,7 @@ const Clientes = () => {
       setData(updatedData);
       alert("Cliente actualizado con éxito");
       setOpenEditDrawer(false);
-      window.location.reload();
+      fetchData();
     } catch (error) {
       console.error("Error updating the cliente:", error);
     }
@@ -136,6 +145,14 @@ const Clientes = () => {
     setOpenEditZonaDrawer(false);
   };
 
+  const onChange = (checked) => {
+    console.log(`switch to ${checked ? 1 : 0}`);
+    setNewClient((prev) => ({
+      ...prev,
+      responsableInscripto: checked ? 1 : 0, // Conviertes el valor de `checked` en `1` o `0`
+    }));
+  };
+
   const columns = [
     { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
     { name: "Nombre", selector: (row) => row.nombre, sortable: true },
@@ -145,6 +162,11 @@ const Clientes = () => {
     { name: "Dirección", selector: (row) => row.direccion, sortable: true },
     { name: "CUIL", selector: (row) => row.cuil, sortable: true },
     { name: "Zona", selector: (row) => row.zona_nombre, sortable: true },
+    {
+      name: "Responasable Incripto",
+      selector: (row) => (row.es_responsable_inscripto ? "Si" : "No"),
+      sortable: true,
+    },
     {
       name: "Estado",
       selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
@@ -265,19 +287,10 @@ const Clientes = () => {
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Responsable Inscripto</Tooltip>
         </div>
-        <Radio.Group
-          onChange={(e) =>
-            setNewClient((prev) => ({
-              ...prev,
-              responsableInscripto: e.target.value,
-            }))
-          }
-          value={newClient?.responsableInscripto}
-          style={{ marginBottom: 10, display: "flex" }}
-        >
-          <Radio value={false}>No</Radio>
-          <Radio value={true}>Sí</Radio>
-        </Radio.Group>
+        <Switch
+          defaultChecked={newClient?.responsableInscripto}
+          onChange={onChange}
+        />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
@@ -365,14 +378,10 @@ const Clientes = () => {
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Responsable Inscripto</Tooltip>
         </div>
-        <Radio.Group
-          onChange={(e) => setResponsableInscripto(e.target.value)}
-          value={responsableInscripto}
-          style={{ marginBottom: 10, display: "flex" }}
-        >
-          <Radio value={false}>No</Radio>
-          <Radio value={true}>Sí</Radio>
-        </Radio.Group>
+        <Switch
+          checked={responsableInscripto}
+          onChange={(checked) => setResponsableInscripto(checked)}
+        />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
@@ -402,7 +411,13 @@ const Clientes = () => {
           Guardar
         </Button>
       </Drawer>
-      <DataTable columns={columns} data={data} progressPending={loading} />
+      <DataTable
+        columns={columns}
+        data={data}
+        progressPending={loading}
+        keyField="id"
+        pagination
+      />
     </MenuLayout>
   );
 };

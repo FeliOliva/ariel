@@ -7,6 +7,7 @@ import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 
 function Articulos() {
   const [data, setData] = useState([]);
@@ -252,14 +253,36 @@ function Articulos() {
   };
 
   const handleAddArticulo = async () => {
-    console.log(articulo);
-    try {
-      await axios.post(`http://localhost:3001/addArticulo`, articulo);
-      fetchData();
-      setOpenAddArticulo(false);
-    } catch (error) {
-      console.error("Error adding the articulo:", error);
-    }
+    Swal.fire({
+      title: "¿Estás seguro de agregar este artículo?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, agregarlo",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          console.log(articulo); // Verifica el objeto antes de enviarlo
+          await axios.post(`http://localhost:3001/addArticulo`, articulo);
+          Swal.fire({
+            title: "¡Artículo agregado!",
+            text: "El artículo ha sido agregado con éxito.",
+            icon: "success",
+          });
+          fetchData(); // Actualiza la lista de artículos después de agregar uno nuevo
+          setOpenAddArticulo(false); // Cierra el modal de agregar artículo
+        } catch (error) {
+          console.error("Error al agregar el artículo:", error);
+          Swal.fire({
+            title: "Error",
+            text: "Hubo un problema al agregar el artículo. Inténtalo de nuevo.",
+            icon: "error",
+          });
+        }
+      }
+    });
   };
 
   const handleFilterChange = async () => {
