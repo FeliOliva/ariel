@@ -226,30 +226,46 @@ function Articulos() {
   };
 
   const handleEditedArticulo = async () => {
-    if (currentArticulo.sublinea_id === undefined) {
-      currentArticulo.sublinea_id = currentArticulo.subLinea_id;
-    }
-    console.log(currentArticulo);
-    const articuloEdited = {
-      nombre: currentArticulo.nombre,
-      stock: currentArticulo.stock,
-      codigo_producto: currentArticulo.codigo_producto,
-      proveedor_id: currentArticulo?.proveedor_id,
-      precio_monotributista: currentArticulo.precio_monotributista,
-      costo: currentArticulo.costo,
-      subLinea_id: currentArticulo?.sublinea_id,
-      mediciones: currentArticulo.mediciones,
-      linea_id: currentArticulo?.linea_id,
-      ID: currentArticulo.id,
-    };
-    console.log(articuloEdited);
-    try {
-      await axios.put(`http://localhost:3001/updateArticulos/`, articuloEdited);
-      fetchData();
-      setOpen(false);
-    } catch (error) {
-      console.error("Error editing the articulo:", error);
-    }
+    Swal.fire({
+      title: "¿Estás seguro de hacer este cambio?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        if (currentArticulo.sublinea_id === undefined) {
+          currentArticulo.sublinea_id = currentArticulo.subLinea_id;
+        }
+        console.log(currentArticulo);
+        const articuloEdited = {
+          nombre: currentArticulo.nombre,
+          stock: currentArticulo.stock,
+          codigo_producto: currentArticulo.codigo_producto,
+          proveedor_id: currentArticulo?.proveedor_id,
+          precio_monotributista: currentArticulo.precio_monotributista,
+          costo: currentArticulo.costo,
+          subLinea_id: currentArticulo?.sublinea_id,
+          mediciones: currentArticulo.mediciones,
+          linea_id: currentArticulo?.linea_id,
+          ID: currentArticulo.id,
+        };
+        console.log(articuloEdited);
+        try {
+          await axios.put(
+            `http://localhost:3001/updateArticulos/`,
+            articuloEdited
+          );
+          fetchData();
+          setOpen(false);
+        } catch (error) {
+          console.error("Error editing the articulo:", error);
+        } finally {
+        }
+      }
+    });
   };
 
   const handleAddArticulo = async () => {
@@ -271,8 +287,8 @@ function Articulos() {
             text: "El artículo ha sido agregado con éxito.",
             icon: "success",
           });
-          fetchData(); // Actualiza la lista de artículos después de agregar uno nuevo
-          setOpenAddArticulo(false); // Cierra el modal de agregar artículo
+
+          setOpenAddArticulo(false);
         } catch (error) {
           console.error("Error al agregar el artículo:", error);
           Swal.fire({
@@ -280,6 +296,10 @@ function Articulos() {
             text: "Hubo un problema al agregar el artículo. Inténtalo de nuevo.",
             icon: "error",
           });
+        } finally {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
       }
     });
