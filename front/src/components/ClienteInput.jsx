@@ -24,7 +24,9 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
     onInputChange(value); // Update input value in parent
   };
 
-  const options = clientes.map((cliente) => ({
+  const options = clientes
+  .filter((cliente) => cliente.estado === 1)
+  .map((cliente) => ({
     label: `${cliente.nombre} ${cliente.apellido}`,
     value: cliente.id,
   }));

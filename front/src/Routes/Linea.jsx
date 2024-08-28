@@ -3,8 +3,9 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import { Link } from "react-router-dom";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Input, Tooltip, message } from "antd";
+import { Button, Drawer, Input, Row, Tooltip, message } from "antd";
 import SubLineasInput from "../components/InputSubLineas";
+import Swal from "sweetalert2";
 
 const Linea = () => {
   const [lineas, setLineas] = useState([]);
@@ -14,11 +15,12 @@ const Linea = () => {
   const [subLinea, setSubLinea] = useState([]);
   const [openSubLineaDrawer, setOpenSubLineaDrawer] = useState(false);
   const [subLineaExisted, setSubLineaDrawerExisted] = useState(false);
+  const [currentLinea, setCurrentLinea] = useState({});
+  const [OpenEditDrawer, setOpenEditDrawer] = useState(false);
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/lineas");
       setLineas(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -35,19 +37,34 @@ const Linea = () => {
   };
 
   const handleGuardarLinea = async () => {
-    console.log(linea.nombre);
-    try {
-      await axios.post("http://localhost:3001/addLinea", {
-        nombre: linea.nombre,
-      });
-      fetchData();
-      message.success("Línea añadida exitosamente!");
-      setOpenLineaDrawer(false); // Cierra el drawer
-      setLinea({ nombre: "" }); // Resetea el estado del input
-    } catch (error) {
-      console.error("Error al guardar la línea:", error);
-      message.error("Hubo un error al añadir la línea.");
-    }
+    Swal.fire({
+      title: "¿Estás seguro de agregar esta linea?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.post("http://localhost:3001/addLinea", {
+            nombre: linea.nombre,
+          });
+          fetchData();
+          setOpenLineaDrawer(false); // Cierra el drawer
+          setLinea({ nombre: "" }); // Resetea el estado del input
+          Swal.fire({
+            title: "Linea agregada con exito!",
+            text: "La linea ha sido agregada con éxito.",
+            icon: "success",
+          });
+        } catch (error) {
+          console.error("Error al guardar la línea:", error);
+          message.error("Hubo un error al añadir la línea.");
+        }
+      }
+    });
   };
   const handleSubLineaChange = (e) => {
     setSubLinea({ ...subLinea, nombre: e.target.value });
@@ -58,24 +75,39 @@ const Linea = () => {
     setOpenSubLineaDrawer(true);
   };
   const handleAddSubLinea = async () => {
-    console.log(subLinea);
-    try {
-      await axios.post(`http://localhost:3001/addSubLinea`, {
-        nombre: subLinea.nombre,
-        linea_id: subLinea.linea_id,
-      });
-      fetchData();
-      setOpenSubLineaDrawer(false);
-    } catch (error) {
-      console.error("Error adding the linea or sublinea:", error);
-    }
+    Swal.fire({
+      title: "¿Estás seguro de agregar esta sublinea?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.post(`http://localhost:3001/addSubLinea`, {
+            nombre: subLinea.nombre,
+            linea_id: subLinea.linea_id,
+          });
+          fetchData();
+          setOpenSubLineaDrawer(false);
+          Swal.fire({
+            title: "Sublinea agregada con exito!",
+            text: "La sublinea ha sido agregada con éxito.",
+            icon: "success",
+          });
+        } catch (error) {
+          console.error("Error adding the linea or sublinea:", error);
+        }
+      }
+    });
   };
 
   const handleOpenDrawerExistedSL = async () => {
     setSubLineaDrawerExisted(true);
   };
   const handleAddExistedSL = async () => {
-    console.log(subLinea);
     try {
       await axios.post(`http://localhost:3001/addSubLineaByID`, {
         subLinea_id: subLinea.sublinea_id,
@@ -88,6 +120,101 @@ const Linea = () => {
       console.error("Error adding the linea or sublinea:", error);
     }
   };
+  const handleToggleState = async (id, currentState) => {
+    console.log(currentState);
+    try {
+      if (currentState === 1) {
+        Swal.fire({
+          title: "¿Estas seguro de desactivar esta Linea?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, desactivar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/dropLinea/${id}`);
+            Swal.fire({
+              title: "Linea desactivada",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
+      } else {
+        Swal.fire({
+          title: "¿Estas seguro de activar esta Linea?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, activar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/upLinea/${id}`);
+            Swal.fire({
+              title: "Linea activada",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
+  const handleOpenEditDrawer = async (id) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getLineaByID/${id}`
+      );
+      setCurrentLinea(response.data);
+      setOpenEditDrawer(true);
+    } catch (error) {
+      console.error("Error fetching the data:", error);
+    }
+  };
+  const handleEditedLinea = async () => {
+    const editedLinea = {
+      nombre: currentLinea.nombre,
+      ID: currentLinea.id,
+    };
+    Swal.fire({
+      title: "¿Estas seguro de editar esta Linea?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, editarla",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.put(`http://localhost:3001/updateLinea`, editedLinea);
+          setOpenEditDrawer(false);
+          fetchData();
+          Swal.fire({
+            title: "Linea editada con exito!",
+            text: "La Linea ha sido editada con exito.",
+            icon: "success",
+            timer: 1000,
+          });
+        } catch (error) {
+          console.error("Error fetching the data:", error);
+        }
+      }
+    });
+  };
   const columns = [
     { name: "Nombre", selector: (row) => row.nombre, sortable: true },
     {
@@ -98,8 +225,8 @@ const Linea = () => {
     {
       name: "Sublíneas",
       cell: (row) => (
-        <Link to={`/linea/${row.id}`}>
-          <button>Ver Sublíneas</button>
+        <Link to={`/linea/${row.id}`} style={{ textDecoration: "none" }}>
+          <Button type="primary">Ver Sublíneas</Button>
         </Link>
       ),
     },
@@ -108,6 +235,25 @@ const Linea = () => {
       cell: (row) => (
         <Button type="primary" onClick={() => handleOpenSubLineaDrawer(row.id)}>
           Añadir SubLineas
+        </Button>
+      ),
+    },
+    {
+      name: "Editar",
+      cell: (row) => (
+        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
+          Editar
+        </Button>
+      ),
+    },
+    {
+      name: "Habilitar/Deshabilitar",
+      cell: (row) => (
+        <Button
+          type="primary"
+          onClick={() => handleToggleState(row.id, row.estado)}
+        >
+          {row.estado ? "Desactivar" : "Activar"}
         </Button>
       ),
     },
@@ -209,6 +355,27 @@ const Linea = () => {
           style={{ marginTop: 20 }}
         >
           Guardar
+        </Button>
+      </Drawer>
+      <Drawer
+        open={OpenEditDrawer}
+        onClose={() => setOpenEditDrawer(false)}
+        title="Editar Línea"
+      >
+        <div style={{ display: "flex", marginTop: 10 }}>
+          <Tooltip>Nombre</Tooltip>
+        </div>
+        <Input
+          value={currentLinea?.nombre}
+          onChange={(e) =>
+            setCurrentLinea((prev) => ({ ...prev, nombre: e.target.value }))
+          }
+          placeholder="Linea"
+          style={{ marginBottom: 10 }}
+          required
+        ></Input>
+        <Button type="primary" onClick={handleEditedLinea}>
+          Actualizar Sublinea
         </Button>
       </Drawer>
     </MenuLayout>

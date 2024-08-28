@@ -12,4 +12,5 @@ router.get(
   "/getLineaBySublinea/:linea_id",
   subLineaControllers.getLineaBySublinea
 );
+router.get("/getSublineaByID/:ID", subLineaControllers.getSublineaByID);
 module.exports = router;

@@ -3,6 +3,7 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input } from "antd";
+import Swal from "sweetalert2";
 
 const Proveedores = () => {
   const [data, setData] = useState([]);
@@ -34,21 +35,36 @@ const Proveedores = () => {
     }
 
     const nuevoProveedor = { nombre: nombre };
-    console.log(nuevoProveedor);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3001/addProveedor",
-        nuevoProveedor
-      );
-      setData([...data, response.data]);
-      alert("Proveedor agregado con éxito");
-      setOpenAddDrawer(false);
-      setNombre("");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error adding the proveedor:", error);
-    }
+    Swal.fire({
+      title: "¿Estás seguro de agregar este proveedor?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await axios.post(
+            "http://localhost:3001/addProveedor",
+            nuevoProveedor
+          );
+          setData([...data, response.data]);
+          setOpenAddDrawer(false);
+          setNombre("");
+          fetchData();
+          Swal.fire({
+            icon: "success",
+            title: "Proveedor agregado con exito",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } catch (error) {
+          console.error("Error adding the proveedor:", error);
+        }
+      }
+    });
   };
 
   const handleEditProveedor = async () => {
@@ -62,23 +78,93 @@ const Proveedores = () => {
       ID: currentProveedor.id,
     };
 
+    Swal.fire({
+      title: "¿Estás seguro de actualizar este proveedor?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await axios.put(
+            `http://localhost:3001/updateProveedor`,
+            proveedorActualizado
+          );
+
+          const updatedData = data.map((proveedor) =>
+            proveedor.id === currentProveedor.id ? response.data : proveedor
+          );
+
+          setData(updatedData);
+          setOpenEditDrawer(false);
+          setNombre("");
+          fetchData();
+          Swal.fire({
+            icon: "success",
+            title: "Proveedor actualizado con exito",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } catch (error) {
+          console.error("Error updating the proveedor:", error);
+        }
+      }
+    });
+  };
+  const handleToggleState = async (id, currentState) => {
+    console.log(currentState);
     try {
-      const response = await axios.put(
-        `http://localhost:3001/updateProveedor`,
-        proveedorActualizado
-      );
-
-      const updatedData = data.map((proveedor) =>
-        proveedor.id === currentProveedor.id ? response.data : proveedor
-      );
-
-      setData(updatedData);
-      alert("Proveedor actualizado con éxito");
-      setOpenEditDrawer(false);
-      setNombre("");
-      window.location.reload();
+      if (currentState === 1) {
+        Swal.fire({
+          title: "¿Estas seguro de desactivar este Proveedor?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, desactivar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/dropProveedor/${id}`);
+            Swal.fire({
+              title: "Proveedor desactivado",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
+      } else {
+        Swal.fire({
+          title: "¿Estas seguro de activar este Proveedor?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, activar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/upProveedor/${id}`);
+            Swal.fire({
+              title: "Proveedor activado",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
+      }
     } catch (error) {
-      console.error("Error updating the proveedor:", error);
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
     }
   };
 
@@ -89,6 +175,17 @@ const Proveedores = () => {
       name: "Estado",
       selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
       sortable: true,
+    },
+    {
+      name: "Habilitar/Deshabilitar",
+      cell: (row) => (
+        <Button
+          type="primary"
+          onClick={() => handleToggleState(row.id, row.estado)}
+        >
+          {row.estado ? "Desactivar" : "Activar"}
+        </Button>
+      ),
     },
     {
       name: "Acciones",

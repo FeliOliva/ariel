@@ -27,10 +27,12 @@ export default function LineaInput({ onChangeLinea }) {
     console.log("search:", value);
   };
 
-  const options = linea.map((linea) => ({
-    label: linea.nombre,
-    value: linea.id,
-  }));
+  const options = linea
+    .filter((linea) => linea.estado === 1)
+    .map((linea) => ({
+      label: linea.nombre,
+      value: linea.id,
+    }));
 
   return (
     <Select

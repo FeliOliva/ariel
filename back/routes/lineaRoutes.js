@@ -12,5 +12,6 @@ router.get(
   lineaControllers.getSubLineasByLinea
 );
 router.get("/getLastLinea", lineaControllers.getLastLinea);
+router.get("/getLineaByID/:ID", lineaControllers.getLineaByID);
 
 module.exports = router;

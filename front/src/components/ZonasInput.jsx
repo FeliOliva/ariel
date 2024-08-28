@@ -27,7 +27,9 @@ export default function ZonasInput({ onChangeZona }) {
     console.log("search:", value);
   };
 
-  const options = zonas.map((zona) => ({
+  const options = zonas
+  .filter((zona) => zona.estado === 1)
+  .map((zona) => ({
     label: zona.nombre,
     value: zona.id,
   }));

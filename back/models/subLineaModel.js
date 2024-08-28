@@ -25,18 +25,18 @@ const addSubLineaByID = async (nombre, linea_id) => {
     throw err;
   }
 };
-const getSublineaByID = async (subLinea_id) => {
+const getSublineaByID = async (ID) => {
   try {
     const query = queriesSubLinea.getSublineaByID;
-    const [rows] = await db.query(query, [subLinea_id]);
-    return rows[0];
+    const [rows] = await db.query(query, [ID]);
+    return rows;
   } catch (err) {
     throw err;
   }
 };
 const dropSubLinea = async (subLinea_id, linea_id) => {
   try {
-    const query = queriesSubLinea.addSubLineaByID;
+    const query = queriesSubLinea.dropSubLinea;
     await db.query(query, [subLinea_id, linea_id]);
   } catch (err) {
     throw err;
@@ -50,10 +50,10 @@ const upSubLinea = async (ID) => {
     throw err;
   }
 };
-const updateSubLinea = async (nombre, linea_id, ID) => {
+const updateSubLinea = async (nombre, ID) => {
   try {
     const query = queriesSubLinea.updateSubLinea;
-    await db.query(query, [nombre, linea_id, ID]);
+    await db.query(query, [nombre, ID]);
   } catch (err) {
     throw err;
   }

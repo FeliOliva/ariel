@@ -19,7 +19,9 @@ export default function ProveedoresInput({ onChangeProveedor }) {
   }, []);
 
   const handleChangeProveedor = (value) => {
-    const selectedProveedor = proveedor.find((proveedor) => proveedor.id === value);
+    const selectedProveedor = proveedor.find(
+      (proveedor) => proveedor.id === value
+    );
     onChangeProveedor(selectedProveedor);
   };
 
@@ -27,10 +29,12 @@ export default function ProveedoresInput({ onChangeProveedor }) {
     console.log("search:", value);
   };
 
-  const options = proveedor.map((proveedor) => ({
-    label: proveedor.nombre,
-    value: proveedor.id,
-  }));
+  const options = proveedor
+    .filter((proveedor) => proveedor.estado === 1)
+    .map((proveedor) => ({
+      label: proveedor.nombre,
+      value: proveedor.id,
+    }));
 
   return (
     <Select

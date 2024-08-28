@@ -11,7 +11,7 @@ const SubLineaInput = ({ lineaId, onChangeSubLinea }) => {
   useEffect(() => {
     if (lineaId) {
       const fetchSubLineas = async () => {
-        setLoading(true); 
+        setLoading(true);
         try {
           const response = await axios.get(
             `http://localhost:3001/getSubLineasByLinea/${lineaId}`
@@ -28,13 +28,14 @@ const SubLineaInput = ({ lineaId, onChangeSubLinea }) => {
       fetchSubLineas();
     } else {
       setSubLineas([]);
+      setLoading(false);
     }
   }, [lineaId]);
 
   return (
     <Select
       style={{ width: "100%" }}
-      placeholder="Seleccione una sublinea"
+      placeholder="Seleccione una sublínea"
       onChange={(value) => {
         const selectedSubLinea = subLineas.find(
           (sublinea) => sublinea.id === value
@@ -43,11 +44,13 @@ const SubLineaInput = ({ lineaId, onChangeSubLinea }) => {
       }}
       loading={loading}
     >
-      {subLineas.map((sublinea) => (
-        <Option key={sublinea.id} value={sublinea.id}>
-          {sublinea.nombre}
-        </Option>
-      ))}
+      {subLineas
+        .filter((sublinea) => sublinea.estado === 1) // Filtra las sublíneas con estado === 1
+        .map((sublinea) => (
+          <Option key={sublinea.id} value={sublinea.id}>
+            {sublinea.nombre}
+          </Option>
+        ))}
     </Select>
   );
 };

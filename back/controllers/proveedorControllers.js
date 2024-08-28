@@ -41,7 +41,7 @@ const updateProveedor = async (req, res) => {
   try {
     const { nombre, ID } = req.body;
     const proveedor = await proveedorModel.updateProveedor(nombre, ID);
-    res.status(200).json({ message: "Proveedoredor actualizado con exito" });
+    res.status(200).json({ message: "Proveedor actualizado con exito" });
     res.json(proveedor);
   } catch (error) {
     console.log(error);

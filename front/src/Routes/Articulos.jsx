@@ -149,19 +149,10 @@ function Articulos() {
         throw new Error("El porcentaje es inválido o no está definido");
       }
 
-      console.log("Porcentaje:", currentIncrease?.percentage);
-      console.log("ID:", currentIncrease?.id);
-
       const response = await axios.get(
         `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
       );
       const articuloAntiguo = response.data;
-
-      console.log("Costo antiguo:", articuloAntiguo.costo);
-      console.log(
-        "Precio Monotributista antiguo:",
-        articuloAntiguo.precio_monotributista
-      );
 
       await axios.put(
         `http://localhost:3001/increasePrice/${currentIncrease.id}`,
@@ -174,12 +165,6 @@ function Articulos() {
         `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
       );
       const articuloNuevo = response2.data;
-
-      console.log("Costo nuevo:", articuloNuevo.costo);
-      console.log(
-        "Precio Monotributista nuevo:",
-        articuloNuevo.precio_monotributista
-      );
 
       await axios.post(`http://localhost:3001/updateLog`, {
         articulo_id: currentIncrease.id,
@@ -198,6 +183,7 @@ function Articulos() {
   };
 
   const handleToggleState = async (id, currentState) => {
+    console.log(currentState);
     try {
       if (currentState) {
         await axios.put(`http://localhost:3001/dropArticulo/${id}`);
@@ -239,7 +225,6 @@ function Articulos() {
         if (currentArticulo.sublinea_id === undefined) {
           currentArticulo.sublinea_id = currentArticulo.subLinea_id;
         }
-        console.log(currentArticulo);
         const articuloEdited = {
           nombre: currentArticulo.nombre,
           stock: currentArticulo.stock,
@@ -252,7 +237,6 @@ function Articulos() {
           linea_id: currentArticulo?.linea_id,
           ID: currentArticulo.id,
         };
-        console.log(articuloEdited);
         try {
           await axios.put(
             `http://localhost:3001/updateArticulos/`,
@@ -260,9 +244,13 @@ function Articulos() {
           );
           fetchData();
           setOpen(false);
+          Swal.fire({
+            title: "¡Artículo editado!",
+            text: "El artículo ha sido editado con éxito.",
+            icon: "success",
+          });
         } catch (error) {
           console.error("Error editing the articulo:", error);
-        } finally {
         }
       }
     });
@@ -280,7 +268,6 @@ function Articulos() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          console.log(articulo); // Verifica el objeto antes de enviarlo
           await axios.post(`http://localhost:3001/addArticulo`, articulo);
           Swal.fire({
             title: "¡Artículo agregado!",
@@ -367,12 +354,6 @@ function Articulos() {
   const handleCloseEditSubLineaDrawer = async () => {
     setOpenEditSubLineaDrawer(false);
   };
-  const handleOpenLineaDrawer = async () => {
-    setOpenAddLineaDrawer(true);
-  };
-  const handleOpenSubLineaDrawer = async () => {
-    setOpenAddSubLineaDrawer(true);
-  };
   const handleLineaChange = (e) => {
     const newLinea = e.target.value;
     setLinea((prev) => ({
@@ -394,8 +375,6 @@ function Articulos() {
 
       const response = await axios.get("http://localhost:3001/getLastLinea");
       const lastLinea = response.data;
-      console.log(lastLinea);
-      console.log(subLinea);
 
       // Finalmente, agrega la sublínea con el ID de la línea recién creada
       await axios.post(`http://localhost:3001/addSubLinea`, {
@@ -600,22 +579,6 @@ function Articulos() {
             />
           </>
         )}
-        {/* <div style={{ display: "flex", gap: 10 }}>
-          <Button
-            type="primary"
-            onClick={() => setOpenAddLineaDrawer(true)}
-            style={{ backgroundColor: "#4CAF50", borderColor: "#4CAF50" }}
-          >
-            Agregar Línea
-          </Button>
-          <Button
-            type="primary"
-            onClick={() => setOpenAddSubLineaDrawer(true)}
-            style={{ backgroundColor: "#FF9800", borderColor: "#FF9800" }}
-          >
-            Agregar SubLínea
-          </Button>
-        </div> */}
         <div style={{ display: "flex", marginTop: 10 }}>
           <Button
             onClick={handleAddArticulo}

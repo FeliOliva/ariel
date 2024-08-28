@@ -66,6 +66,15 @@ const getLastLinea = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+const getLineaByID = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const linea = await lineaModels.getLineaByID(ID);
+    res.json(linea[0]);
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+};
 
 module.exports = {
   getAllLineas,
@@ -75,4 +84,5 @@ module.exports = {
   updateLinea,
   getSubLineasByLinea,
   getLastLinea,
+  getLineaByID,
 };

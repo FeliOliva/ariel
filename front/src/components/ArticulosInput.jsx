@@ -34,10 +34,12 @@ export default function ArticulosInput({
     console.log("search:", value);
   };
 
-  const options = articulos.map((articulo) => ({
-    label: articulo.nombre,
-    value: articulo.id,
-  }));
+  const options = articulos
+    .filter((articulo) => articulo.estado === 1)
+    .map((articulo) => ({
+      label: articulo.nombre,
+      value: articulo.id,
+    }));
 
   return (
     <Select

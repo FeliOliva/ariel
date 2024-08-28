@@ -55,8 +55,8 @@ const upSubLinea = async (req, res) => {
 
 const updateSubLinea = async (req, res) => {
   try {
-    const { nombre, linea_id, ID } = req.body;
-    const subLinea = await subLineaModels.updateSubLinea(nombre, linea_id, ID);
+    const { nombre, ID } = req.body;
+    const subLinea = await subLineaModels.updateSubLinea(nombre, ID);
     res.status(200).json({ message: "SubLinea actualizada" });
     res.json(subLinea);
   } catch (error) {
@@ -74,9 +74,9 @@ const getLineaBySublinea = async (req, res) => {
 };
 const getSublineaByID = async (req, res) => {
   try {
-    const { id } = req.params;
-    const sublinea = await subLineaModels.getSublineaByID(id);
-    res.json(sublinea);
+    const ID = req.params.ID;
+    const sublinea = await subLineaModels.getSublineaByID(ID);
+    res.json(sublinea[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -89,4 +89,5 @@ module.exports = {
   updateSubLinea,
   getLineaBySublinea,
   addSubLineaByID,
+  getSublineaByID,
 };

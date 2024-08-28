@@ -59,6 +59,15 @@ const getLastLinea = async () => {
     throw err;
   }
 };
+const getLineaByID = async (ID) => {
+  try {
+    const query = queriesLineas.getLineaByID;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 
 module.exports = {
   getAllLineas,
@@ -68,4 +77,5 @@ module.exports = {
   updateLinea,
   getSublineasByLinea,
   getLastLinea,
+  getLineaByID,
 };

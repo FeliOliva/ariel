@@ -29,10 +29,12 @@ export default function SubLineasInput({ onChangeSubLineas }) {
     console.log("search:", value);
   };
 
-  const options = subLineas.map((subLineas) => ({
-    label: subLineas.nombre,
-    value: subLineas.id,
-  }));
+  const options = subLineas
+    .filter((subLinea) => subLinea.estado === 1) 
+    .map((subLinea) => ({
+      label: subLinea.nombre,
+      value: subLinea.id,
+    }));
 
   return (
     <Select
