@@ -688,13 +688,13 @@ function Articulos() {
           readOnly
           style={{ padding: 0 }}
         ></Input>
-        {/* <Button
+        <Button
           onClick={() => setOpenEditLineaDrawer(true)}
           title="Editar Linea"
           style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
         >
           Cambiar linea
-        </Button> */}
+        </Button>
         <div style={{ display: "flex", marginTop: 10 }}>
           <Tooltip>SubLinea</Tooltip>
         </div>
@@ -703,13 +703,13 @@ function Articulos() {
           readOnly
           style={{ padding: 0 }}
         ></Input>
-        {/* <Button
+        <Button
           onClick={() => setOpenEditSubLineaDrawer(true)}
           title="Editar subLinea"
           style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
         >
           Cambiar Sublinea
-        </Button> */}
+        </Button>
         <div style={{ display: "flex", marginTop: 10 }}>
           <Tooltip>Proveedor</Tooltip>
         </div>
