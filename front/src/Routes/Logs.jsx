@@ -89,6 +89,7 @@ function Logs() {
   };
   return (
     <MenuLayout>
+      <h1>Historial de precios de "{nombreArticulo}"</h1>
       <Button
         onClick={() => window.history.back()}
         type="primary"
@@ -96,7 +97,6 @@ function Logs() {
       >
         Volver
       </Button>
-      <h1>Historial de precios de "{nombreArticulo}"</h1>
       {loading ? (
         <p>Cargando...</p>
       ) : (

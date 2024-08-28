@@ -161,6 +161,7 @@ const VentaDetalles = () => {
 
   return (
     <MenuLayout>
+      <h1>Detalle de Venta {data.length > 0 ? data[0].nroVenta : ""}</h1>
       <div>
         <Button onClick={() => window.history.back()} type="primary">
           Volver
@@ -172,7 +173,6 @@ const VentaDetalles = () => {
         >
           Generar PDF
         </Button>
-        <h1>Detalle de Venta {data.length > 0 ? data[0].nroVenta : ""}</h1>
         {loading ? (
           <p>Cargando...</p>
         ) : (

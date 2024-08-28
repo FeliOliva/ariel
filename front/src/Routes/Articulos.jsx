@@ -185,12 +185,49 @@ function Articulos() {
   const handleToggleState = async (id, currentState) => {
     console.log(currentState);
     try {
-      if (currentState) {
-        await axios.put(`http://localhost:3001/dropArticulo/${id}`);
+      if (currentState === 1) {
+        Swal.fire({
+          title: "¿Estas seguro de desactivar este articulo?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, desactivar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/dropArticulo/${id}`);
+            Swal.fire({
+              title: "Articulo desactivado",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
       } else {
-        await axios.put(`http://localhost:3001/upArticulo/${id}`);
+        Swal.fire({
+          title: "¿Estas seguro de activar este articulo?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, activar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/upArticulo/${id}`);
+            Swal.fire({
+              title: "Articulo activado",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
       }
-      fetchData();
     } catch (error) {
       console.error(
         `Error ${currentState ? "deactivating" : "activating"} the article:`,
@@ -401,8 +438,13 @@ function Articulos() {
 
   return (
     <MenuLayout>
+      <h1>Listado de articulos</h1>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <Button type="primary" onClick={setOpenAddArticulo}>
+        <Button
+          style={{ marginBottom: 10 }}
+          type="primary"
+          onClick={setOpenAddArticulo}
+        >
           Agregar artículo
         </Button>
         <Button type="primary" onClick={setOpenFilterDrawer}>
@@ -844,18 +886,18 @@ function Articulos() {
           customStyles={{
             rows: {
               style: {
-                fontSize: "12px", // Cambia este valor para reducir el tamaño del texto
-                padding: "4px 8px", // Ajusta el padding para reducir el tamaño general de las filas
+                fontSize: "11px", // Cambia este valor para reducir el tamaño del texto
+                padding: "2px 4px", // Ajusta el padding para reducir el tamaño general de las filas
               },
             },
             headCells: {
               style: {
-                fontSize: "14px", // Tamaño del texto en los encabezados
+                fontSize: "10px", // Tamaño del texto en los encabezados
               },
             },
             cells: {
               style: {
-                padding: "4px 8px", // Ajusta el padding de las celdas
+                padding: "2px 4px", // Ajusta el padding de las celdas
               },
             },
           }}

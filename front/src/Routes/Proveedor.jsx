@@ -212,7 +212,12 @@ const Proveedores = () => {
 
   return (
     <MenuLayout>
-      <Button onClick={() => setOpenAddDrawer(true)} type="primary">
+      <h1>Lista de Proveedores</h1>
+      <Button
+        style={{ marginBottom: 10 }}
+        onClick={() => setOpenAddDrawer(true)}
+        type="primary"
+      >
         Agregar Proveedor
       </Button>
       <Drawer
@@ -248,7 +253,6 @@ const Proveedores = () => {
         </Button>
       </Drawer>
       <div>
-        <h1>Lista de Proveedores</h1>
         <DataTable
           columns={columns}
           data={data}

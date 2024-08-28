@@ -260,11 +260,15 @@ const Linea = () => {
   ];
   return (
     <MenuLayout>
-      <Button onClick={() => setOpenLineaDrawer(true)} type="primary">
+      <h1>Listado de lineas</h1>
+      <Button
+        style={{ marginBottom: 10 }}
+        onClick={() => setOpenLineaDrawer(true)}
+        type="primary"
+      >
         Añadir Línea
       </Button>
       <div>
-        <h1>Lista de Líneas</h1>
         {loading ? (
           <p>Cargando...</p>
         ) : (

@@ -12,6 +12,7 @@ import {
   Switch,
 } from "antd";
 import ZonasInput from "../components/ZonasInput";
+import Swal from "sweetalert2";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -36,6 +37,12 @@ const Clientes = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (currentCliente) {
+      setResponsableInscripto(currentCliente.es_responsable_inscripto === 1);
+    }
+  }, [currentCliente]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -50,8 +57,6 @@ const Clientes = () => {
   };
 
   const handleAddCliente = async () => {
-    console.log(newClient);
-    console.log(zona.id);
     const nuevoCliente = {
       nombre: newClient.nombre,
       apellido: newClient.apellido,
@@ -62,20 +67,39 @@ const Clientes = () => {
       zona_id: zona.id,
       es_responsable_inscripto: newClient.responsableInscripto,
     };
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3001/addClient",
-        nuevoCliente
-      );
-      setData([...data, response.data]);
-      console.log(nuevoCliente);
-      alert("Cliente agregado con éxito");
-      setOpenAddDrawer(false);
-      fetchData(); //revisar para usar esto y resetear los inputs de cliente a vacio
-    } catch (error) {
-      console.error("Error adding the cliente:", error);
-    }
+    Swal.fire({
+      title: "¿Estas seguro de agregar este cliente?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await axios.post(
+            "http://localhost:3001/addClient",
+            nuevoCliente
+          );
+          setData([...data, response.data]);
+          console.log(nuevoCliente);
+          setOpenAddDrawer(false);
+          fetchData(); //revisar para usar esto y resetear los inputs de cliente a vacio
+          Swal.fire({
+            title: "¡Cliente agregado con exito!",
+            icon: "success",
+            confirmButtonText: "OK",
+          });
+        } catch (error) {
+          console.error("Error adding the cliente:", error);
+        } finally {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      }
+    });
   };
 
   const handleEditCliente = async () => {
@@ -105,37 +129,91 @@ const Clientes = () => {
       es_responsable_inscripto: responsableInscripto ? 1 : 0,
       ID: currentCliente.id,
     };
+    Swal.fire({
+      title: "¿Estas seguro de actualizar este cliente?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Si, actualizar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await axios.put(
+            `http://localhost:3001/updateClients`,
+            clienteActualizado
+          );
 
-    try {
-      const response = await axios.put(
-        `http://localhost:3001/updateClients`,
-        clienteActualizado
-      );
+          const updatedData = data.map((cliente) =>
+            cliente.id === currentCliente.id ? response.data : cliente
+          );
 
-      const updatedData = data.map((cliente) =>
-        cliente.id === currentCliente.id ? response.data : cliente
-      );
-
-      setData(updatedData);
-      alert("Cliente actualizado con éxito");
-      setOpenEditDrawer(false);
-      fetchData();
-    } catch (error) {
-      console.error("Error updating the cliente:", error);
-    }
+          setData(updatedData);
+          setOpenEditDrawer(false);
+          fetchData();
+          Swal.fire({
+            title: "Cliente actualizado",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1000,
+          });
+        } catch (error) {
+          console.error("Error updating the cliente:", error);
+        }
+      }
+    });
   };
 
   const handleToggleState = async (id, currentState) => {
+    console.log(currentState);
     try {
-      if (currentState) {
-        await axios.put(`http://localhost:3001/dropClient/${id}`);
+      if (currentState === 1) {
+        Swal.fire({
+          title: "¿Estas seguro de desactivar este Cliente?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, desactivar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/dropClient/${id}`);
+            Swal.fire({
+              title: "Cliente desactivado",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
       } else {
-        await axios.put(`http://localhost:3001/upClient/${id}`);
+        Swal.fire({
+          title: "¿Estas seguro de activar este Cliente?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Si, activar",
+          cancelButtonText: "Cancelar",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await axios.put(`http://localhost:3001/upClient/${id}`);
+            Swal.fire({
+              title: "Cliente activado",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1000,
+            });
+            fetchData();
+          }
+        });
       }
-      fetchData();
     } catch (error) {
       console.error(
-        `Error ${currentState ? "deactivating" : "activating"} the client:`,
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
         error
       );
     }
@@ -149,7 +227,7 @@ const Clientes = () => {
     console.log(`switch to ${checked ? 1 : 0}`);
     setNewClient((prev) => ({
       ...prev,
-      responsableInscripto: checked ? 1 : 0, // Conviertes el valor de `checked` en `1` o `0`
+      responsableInscripto: checked ? 1 : 0,
     }));
   };
 
@@ -206,9 +284,29 @@ const Clientes = () => {
     }
   };
 
+  const formatCuil = (value) => {
+    const cuil = value.replace(/\D/g, "");
+    const part1 = cuil.slice(0, 2);
+    const part2 = cuil.slice(2, 10);
+    const part3 = cuil.slice(10, 11);
+
+    if (cuil.length > 10) {
+      return `${part1}-${part2}-${part3}`;
+    } else if (cuil.length > 2) {
+      return `${part1}-${part2}`;
+    } else {
+      return part1;
+    }
+  };
+
   return (
     <MenuLayout>
-      <Button onClick={() => setOpenAddDrawer(true)} type="primary">
+      <h1>Listado de clientes</h1>
+      <Button
+        style={{ marginBottom: 10 }}
+        onClick={() => setOpenAddDrawer(true)}
+        type="primary"
+      >
         Agregar Cliente
       </Button>
       <Drawer
@@ -276,13 +374,12 @@ const Clientes = () => {
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Cuil</Tooltip>
         </div>
-        <InputNumber
-          value={newClient?.cuil}
-          onChange={(value) =>
-            setNewClient((prev) => ({ ...prev, cuil: value }))
-          }
+        <Input
           placeholder="CUIL"
-          style={{ marginBottom: 10, display: "flex" }}
+          value={newClient.cuil}
+          onChange={(e) =>
+            setNewClient({ ...newClient, cuil: formatCuil(e.target.value) })
+          }
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Responsable Inscripto</Tooltip>

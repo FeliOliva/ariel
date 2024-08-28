@@ -144,6 +144,7 @@ function Ofertas() {
 
   return (
     <MenuLayout>
+      <h1>Listado de ofertas</h1>
       <Button onClick={() => setOpen(true)}>Añadir oferta</Button>
       <Drawer
         open={open}

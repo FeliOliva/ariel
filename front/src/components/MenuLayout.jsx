@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   ContactsOutlined,
   ShoppingCartOutlined,
   SkinOutlined,
@@ -9,7 +11,7 @@ import {
   HomeOutlined,
   SubnodeOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, theme } from "antd";
+import { Layout, Menu, theme, Button } from "antd";
 
 const { Header, Sider, Content } = Layout;
 
@@ -20,6 +22,10 @@ const MenuLayout = ({ children }) => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+  };
 
   const handleMenuClick = (e) => {
     switch (e.key) {
@@ -46,11 +52,11 @@ const MenuLayout = ({ children }) => {
         break;
       case "8":
         navigate("/Ofertas");
+        break;
       default:
     }
   };
 
-  // Determina la clave del menú activo basada en la ruta actual
   const getSelectedKeys = () => {
     const path = location.pathname;
     switch (path) {
@@ -71,7 +77,7 @@ const MenuLayout = ({ children }) => {
       case "/Ofertas":
         return ["8"];
       default:
-        return ["1"]; // Clave por defecto si no coincide ninguna ruta
+        return ["1"];
     }
   };
 
@@ -82,7 +88,7 @@ const MenuLayout = ({ children }) => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={getSelectedKeys()} // Establece las claves seleccionadas
+          defaultSelectedKeys={getSelectedKeys()}
           onClick={handleMenuClick}
           items={[
             {
@@ -133,8 +139,15 @@ const MenuLayout = ({ children }) => {
           style={{
             padding: 0,
             background: colorBgContainer,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
-        ></Header>
+        >
+          <Button type="text" onClick={toggleCollapsed}>
+            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          </Button>
+        </Header>
         <Content
           style={{
             margin: "24px 16px",

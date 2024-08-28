@@ -195,15 +195,15 @@ function Ventas() {
 
   return (
     <MenuLayout>
-      <Button type="primary" onClick={() => setOpen(true)}>
+      <h1>Listado de ventas</h1>
+      <Button
+        type="primary"
+        style={{ marginBottom: 10 }}
+        onClick={() => setOpen(true)}
+      >
         Nueva Venta
       </Button>
-      <DataTable
-        title="Listado de Ventas"
-        columns={columns}
-        data={data}
-        pagination
-      />
+      <DataTable columns={columns} data={data} pagination />
 
       <Drawer
         open={open}
