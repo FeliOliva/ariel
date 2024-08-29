@@ -298,6 +298,40 @@ function Articulos() {
   };
 
   const handleAddArticulo = async () => {
+    if (articulo === null) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No cargaste un articulo.",
+        icon: "error",
+      });
+      return;
+    }
+
+    if (articulo.linea_id === undefined) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No cargaste una linea.",
+        icon: "error",
+      });
+      return;
+    }
+    if (articulo.subLinea_id === undefined) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No cargaste una sublinea.",
+        icon: "error",
+      });
+      return;
+    }
+    if (articulo.proveedor_id === undefined) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No cargaste un proveedor.",
+        icon: "error",
+      });
+      return;
+    }
+    console.log(articulo);
     Swal.fire({
       title: "¿Estás seguro de agregar este artículo?",
       icon: "warning",
