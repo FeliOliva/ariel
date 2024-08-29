@@ -4,7 +4,7 @@ import DataTable from "react-data-table-component";
 import { Link } from "react-router-dom";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input, Row, Tooltip, message } from "antd";
-import SubLineasInput from "../components/InputSubLineas";
+// import SubLineasInput from "../components/InputSubLineas";
 import Swal from "sweetalert2";
 
 const Linea = () => {
@@ -53,7 +53,7 @@ const Linea = () => {
           });
           fetchData();
           setOpenLineaDrawer(false); // Cierra el drawer
-          setLinea({ nombre: "" }); // Resetea el estado del input
+          setLinea(""); // Resetea el estado del input
           Swal.fire({
             title: "Linea agregada con exito!",
             text: "La linea ha sido agregada con éxito.",
@@ -96,6 +96,7 @@ const Linea = () => {
             title: "Sublinea agregada con exito!",
             text: "La sublinea ha sido agregada con éxito.",
             icon: "success",
+            timer: 1000,
           });
         } catch (error) {
           console.error("Error adding the linea or sublinea:", error);
@@ -104,22 +105,22 @@ const Linea = () => {
     });
   };
 
-  const handleOpenDrawerExistedSL = async () => {
-    setSubLineaDrawerExisted(true);
-  };
-  const handleAddExistedSL = async () => {
-    try {
-      await axios.post(`http://localhost:3001/addSubLineaByID`, {
-        subLinea_id: subLinea.sublinea_id,
-        linea_id: subLinea.linea_id,
-      });
-      window.location.reload();
-      setSubLineaDrawerExisted(false);
-      setOpenSubLineaDrawer(false);
-    } catch (error) {
-      console.error("Error adding the linea or sublinea:", error);
-    }
-  };
+  // const handleOpenDrawerExistedSL = async () => {
+  //   setSubLineaDrawerExisted(true);
+  // };
+  // const handleAddExistedSL = async () => {
+  //   try {
+  //     await axios.post(`http://localhost:3001/addSubLineaByID`, {
+  //       subLinea_id: subLinea.sublinea_id,
+  //       linea_id: subLinea.linea_id,
+  //     });
+  //     window.location.reload();
+  //     setSubLineaDrawerExisted(false);
+  //     setOpenSubLineaDrawer(false);
+  //   } catch (error) {
+  //     console.error("Error adding the linea or sublinea:", error);
+  //   }
+  // };
   const handleToggleState = async (id, currentState) => {
     console.log(currentState);
     try {
@@ -319,14 +320,14 @@ const Linea = () => {
             style={{ padding: 0 }}
           />
         </div>
-        <div style={{ display: "flex", marginBottom: 10, marginTop: 10 }}>
+        {/* <div style={{ display: "flex", marginBottom: 10, marginTop: 10 }}>
           <Button
             style={{ backgroundColor: "#FF9800", borderColor: "#FF9800" }}
             onClick={handleOpenDrawerExistedSL}
           >
             Agregar a SubLinea existente
           </Button>
-        </div>
+        </div> */}
         <div>
           <Button
             type="primary"
@@ -342,7 +343,7 @@ const Linea = () => {
         onClose={() => setSubLineaDrawerExisted(false)}
         title="Añadir a Sublínea existente"
       >
-        <div style={{ display: "flex", marginBottom: 10 }}>
+        {/* <div style={{ display: "flex", marginBottom: 10 }}>
           <strong>Añadir a SubLinea Existente</strong>
         </div>
         <SubLineasInput
@@ -359,7 +360,7 @@ const Linea = () => {
           style={{ marginTop: 20 }}
         >
           Guardar
-        </Button>
+        </Button> */}
       </Drawer>
       <Drawer
         open={OpenEditDrawer}
