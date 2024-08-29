@@ -24,11 +24,7 @@ function Articulos() {
   const [currentFilter, setCurrentFilter] = useState(null);
   const [openIncreaseDrawer, setOpenIncreaseDrawer] = useState(false);
   const [currentIncrease, setCurrentIncrease] = useState(null);
-  const [openAddLineaDrawer, setOpenAddLineaDrawer] = useState(false);
-  const [linea, setLinea] = useState([]);
-  const [isSubLineaEnabled, setIsSubLineaEnabled] = useState(false);
-  const [subLinea, setSubLinea] = useState("");
-  const [openAddSubLineaDrawer, setOpenAddSubLineaDrawer] = useState(false);
+  const [subLineaExists, setSubLineaExists] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -183,7 +179,6 @@ function Articulos() {
   };
 
   const handleToggleState = async (id, currentState) => {
-    console.log(currentState);
     try {
       if (currentState === 1) {
         Swal.fire({
@@ -249,6 +244,14 @@ function Articulos() {
   };
 
   const handleEditedArticulo = async () => {
+    if (!subLineaExists) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No cargaste una sublinea perteneciente a la linea seleccionada.",
+        icon: "error",
+      });
+      return;
+    }
     Swal.fire({
       title: "¿Estás seguro de hacer este cambio?",
       icon: "warning",
@@ -285,6 +288,7 @@ function Articulos() {
             title: "¡Artículo editado!",
             text: "El artículo ha sido editado con éxito.",
             icon: "success",
+            timer: 1000,
           });
         } catch (error) {
           console.error("Error editing the articulo:", error);
@@ -385,56 +389,12 @@ function Articulos() {
     setOpenEditProveedorDrawer(false);
   };
   const handleCloseEditLineaDrawer = async () => {
+    setSubLineaExists(false);
     setOpenEditLineaDrawer(false);
   };
 
   const handleCloseEditSubLineaDrawer = async () => {
     setOpenEditSubLineaDrawer(false);
-  };
-  const handleLineaChange = (e) => {
-    const newLinea = e.target.value;
-    setLinea((prev) => ({
-      ...prev,
-      linea: newLinea,
-      sublinea_id: null,
-    }));
-    if (newLinea) {
-      setIsSubLineaEnabled(true);
-    } else {
-      setIsSubLineaEnabled(false);
-    }
-  };
-
-  const handleAddLinea = async () => {
-    try {
-      await axios.post(`http://localhost:3001/addLinea`, {
-        nombre: linea.linea,
-      });
-
-      const response = await axios.get("http://localhost:3001/getLastLinea");
-      const lastLinea = response.data;
-
-      // Finalmente, agrega la sublínea con el ID de la línea recién creada
-      await axios.post(`http://localhost:3001/addSubLinea`, {
-        nombre: subLinea,
-        linea_id: lastLinea.id,
-      });
-
-      setOpenAddLineaDrawer(false);
-    } catch (error) {
-      console.error("Error adding the linea or sublinea:", error);
-    }
-  };
-  const handleAddSubLinea = async () => {
-    try {
-      await axios.post(`http://localhost:3001/addSubLinea`, {
-        nombre: subLinea,
-        linea_id: linea.linea_id,
-      });
-      setOpenAddSubLineaDrawer(false);
-    } catch (error) {
-      console.error("Error adding the linea or sublinea:", error);
-    }
   };
 
   return (
@@ -505,6 +465,8 @@ function Articulos() {
           Aplicar
         </Button>
       </Drawer>
+
+      {/* agregado de articulo */}
       <Drawer
         open={openAddArticulo}
         onClose={() => setOpenAddArticulo(false)}
@@ -632,6 +594,8 @@ function Articulos() {
           </Button>
         </div>
       </Drawer>
+
+      {/* Editar articulo */}
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
@@ -761,7 +725,6 @@ function Articulos() {
               onClick={handleEditedArticulo}
               style={{ display: "flex", marginTop: 10 }}
               type="primary"
-              disabled={!currentArticulo.sublinea_id}
             >
               Confirmar cambios
             </Button>
@@ -769,71 +732,6 @@ function Articulos() {
         ) : (
           <p>Loading...</p>
         )}
-      </Drawer>
-      <Drawer
-        open={openAddLineaDrawer}
-        onClose={() => setOpenAddLineaDrawer(false)}
-        title="Añadir Línea"
-      >
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip title="Línea">Línea</Tooltip>
-        </div>
-        <Input
-          value={linea?.linea}
-          onChange={handleLineaChange}
-          style={{ padding: 0 }}
-        />
-
-        {isSubLineaEnabled && (
-          <div style={{ marginTop: 20 }}>
-            <Tooltip title="SubLínea">SubLínea</Tooltip>
-            <Input
-              value={subLinea}
-              onChange={(e) => setSubLinea(e.target.value)}
-              style={{ padding: 0 }}
-            />
-          </div>
-        )}
-        <Button
-          onClick={handleAddLinea}
-          type="primary"
-          style={{ marginTop: 10 }}
-        >
-          Guardar
-        </Button>
-      </Drawer>
-      <Drawer
-        open={openAddSubLineaDrawer}
-        onClose={() => setOpenAddSubLineaDrawer(false)}
-        title="Añadir SubLínea"
-      >
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Linea</Tooltip>
-        </div>
-        <LineaInput
-          onChangeLinea={(value) =>
-            setLinea((prev) => ({
-              ...prev,
-              linea_id: value.id,
-              linea_nombre: value.nombre,
-            }))
-          }
-        />
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>SubLinea</Tooltip>
-        </div>
-        <Input
-          value={subLinea}
-          onChange={(e) => setSubLinea(e.target.value)}
-          style={{ padding: 0 }}
-        />
-        <Button
-          onClick={handleAddSubLinea}
-          style={{ marginTop: 10 }}
-          type="primary"
-        >
-          Guardar
-        </Button>
       </Drawer>
       <Drawer
         open={openEditProveedorDrawer}
@@ -880,6 +778,7 @@ function Articulos() {
               sublinea_id: value.id,
               sublinea_nombre: value.nombre,
             }));
+            setSubLineaExists(true);
             setOpenEditSubLineaDrawer(false);
           }}
         />
