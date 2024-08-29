@@ -24,7 +24,7 @@ const addClient = async (
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
-    const cuilValue = cuil ?? null;
+    const cuilValue = cuil ?? "";
 
     const query = queriesClients.addClient;
     await db.query(query, [

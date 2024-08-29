@@ -22,7 +22,7 @@ const addClient = async (req, res) => {
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
-    const cuilValue = cuil ?? null;
+    const cuilValue = cuil ?? "";
 
     const client = await clientModels.addClient(
       nombre,
