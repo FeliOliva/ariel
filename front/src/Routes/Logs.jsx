@@ -5,7 +5,7 @@ import MenuLayout from "../components/MenuLayout";
 import { useParams } from "react-router-dom";
 import { Button } from "antd";
 import { format } from "date-fns";
-
+import Swal from "sweetalert2";
 function Logs() {
   const { id } = useParams();
   const [data, setData] = useState([]);
@@ -75,17 +75,33 @@ function Logs() {
   ];
 
   const handledDeshacer = async (row) => {
-    console.log(row);
-    try {
-      await axios.put(`http://localhost:3001/deshacerCambios/${row.id}`, {
-        costo_antiguo: row.costo_antiguo,
-        precio_monotributista_antiguo: row.precio_monotributista_antiguo,
-        articulo_id: row.articulo_id,
-      });
-      window.history.back();
-    } catch (error) {
-      console.error("Error fetching the data:", error);
-    }
+    Swal.fire({
+      title: "¿Estás seguro de deshacer este cambio?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.put(`http://localhost:3001/deshacerCambios/${row.id}`, {
+            costo_antiguo: row.costo_antiguo,
+            precio_monotributista_antiguo: row.precio_monotributista_antiguo,
+            articulo_id: row.articulo_id,
+          });
+          Swal.fire({
+            title: "Cambio deshecho",
+            icon: "success",
+            timer: 1000,
+          });
+          window.history.back();
+        } catch (error) {
+          console.error("Error fetching the data:", error);
+        }
+      }
+    });
   };
   return (
     <MenuLayout>

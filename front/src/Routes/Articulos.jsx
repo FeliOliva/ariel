@@ -8,7 +8,8 @@ import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-
+import "../style/style.css";
+import CustomPagination from "../components/CustomPagination";
 function Articulos() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,11 @@ function Articulos() {
   }, []);
 
   const columns = [
-    { name: "Codigo", selector: (row) => row.codigo_producto, sortable: true },
+    {
+      name: "Codigo",
+      selector: (row) => row.codigo_producto,
+      sortable: true,
+    },
     {
       name: "Nombre",
       selector: (row) => (
@@ -91,14 +96,12 @@ function Articulos() {
       sortable: true,
     },
     {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
-      sortable: true,
-    },
-    {
       name: "Editar",
       cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
+        <Button
+          className="custom-button"
+          onClick={() => handleOpenEditDrawer(row.id)}
+        >
           Editar
         </Button>
       ),
@@ -107,23 +110,26 @@ function Articulos() {
       name: "Logs",
       cell: (row) => (
         <Link to={`/Logs/${row.id}`}>
-          <Button type="primary">Logs</Button>
+          <Button className="custom-button">Logs</Button>
         </Link>
       ),
     },
     {
       name: "Aumentos",
       cell: (row) => (
-        <Button type="primary" onClick={() => handleIncrease(row.id)}>
+        <Button
+          className="custom-button"
+          onClick={() => handleIncrease(row.id)}
+        >
           Aumentar
         </Button>
       ),
     },
     {
-      name: "Habilitar/Deshabilitar",
+      name: "Activar/Desactivar",
       cell: (row) => (
         <Button
-          type="primary"
+          className="custom-button"
           onClick={() => handleToggleState(row.id, row.estado)}
         >
           {row.estado ? "Desactivar" : "Activar"}
@@ -140,42 +146,69 @@ function Articulos() {
   };
 
   const handleIncreaseChange = async () => {
-    try {
-      if (!currentIncrease?.percentage || isNaN(currentIncrease.percentage)) {
-        throw new Error("El porcentaje es inválido o no está definido");
-      }
-
-      const response = await axios.get(
-        `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
-      );
-      const articuloAntiguo = response.data;
-
-      await axios.put(
-        `http://localhost:3001/increasePrice/${currentIncrease.id}`,
-        {
-          percentage: currentIncrease.percentage,
-        }
-      );
-
-      const response2 = await axios.get(
-        `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
-      );
-      const articuloNuevo = response2.data;
-
-      await axios.post(`http://localhost:3001/updateLog`, {
-        articulo_id: currentIncrease.id,
-        costo_nuevo: articuloNuevo.costo,
-        costo_antiguo: articuloAntiguo.costo,
-        precio_monotributista_nuevo: articuloNuevo.precio_monotributista,
-        precio_monotributista_antiguo: articuloAntiguo.precio_monotributista,
-        porcentaje: currentIncrease.percentage,
+    if (
+      currentIncrease.percentage < 0 ||
+      currentIncrease.percentage > 100 ||
+      currentIncrease.percentage === null
+    ) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "El porcentaje debe estar entre 0 y 100",
+        icon: "error",
       });
-
-      fetchData();
-      setOpenIncreaseDrawer(false);
-    } catch (error) {
-      console.error("Error updating prices:", error);
+      return;
     }
+    Swal.fire({
+      title: "¿Esta seguro realizar este aumento?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Si, confirmar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await axios.get(
+            `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
+          );
+          const articuloAntiguo = response.data;
+
+          await axios.put(
+            `http://localhost:3001/increasePrice/${currentIncrease.id}`,
+            {
+              percentage: currentIncrease.percentage,
+            }
+          );
+
+          const response2 = await axios.get(
+            `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
+          );
+          const articuloNuevo = response2.data;
+
+          await axios.post(`http://localhost:3001/updateLog`, {
+            articulo_id: currentIncrease.id,
+            costo_nuevo: articuloNuevo.costo,
+            costo_antiguo: articuloAntiguo.costo,
+            precio_monotributista_nuevo: articuloNuevo.precio_monotributista,
+            precio_monotributista_antiguo:
+              articuloAntiguo.precio_monotributista,
+            porcentaje: currentIncrease.percentage,
+          });
+
+          fetchData();
+          setOpenIncreaseDrawer(false);
+          Swal.fire({
+            title: "Aumento realizado con exito",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } catch (error) {
+          console.error("Error updating prices:", error);
+        }
+      }
+    });
   };
 
   const handleToggleState = async (id, currentState) => {
@@ -368,55 +401,88 @@ function Articulos() {
   };
 
   const handleFilterChange = async () => {
-    try {
-      if (!currentFilter.percentage || isNaN(currentFilter.percentage)) {
-        throw new Error("El porcentaje es inválido o no está definido");
-      }
+    if (
+      currentFilter.percentage < 0 ||
+      currentFilter.percentage > 100 ||
+      currentFilter.percentage === null
+    ) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "El porcentaje debe estar entre 0 y 100",
+        icon: "error",
+      });
+      return;
+    }
+    Swal.fire({
+      title: "¿Esta seguro de aplicar este aumento?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Si, confirmar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          if (!currentFilter.percentage || isNaN(currentFilter.percentage)) {
+            throw new Error("El porcentaje es inválido o no está definido");
+          }
 
-      // Obtener los artículos antes de actualizar los precios
-      const responseAntiguos = await axios.get(
-        `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
-      );
-      const articulosAntiguos = responseAntiguos.data;
+          // Obtener los artículos antes de actualizar los precios
+          const responseAntiguos = await axios.get(
+            `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
+          );
+          const articulosAntiguos = responseAntiguos.data;
 
-      // Actualizar los precios
-      await axios.put(
-        `http://localhost:3001/increasePrices/${currentFilter.proveedor_id}`,
-        { percentage: currentFilter.percentage }
-      );
+          // Actualizar los precios
+          await axios.put(
+            `http://localhost:3001/increasePrices/${currentFilter.proveedor_id}`,
+            { percentage: currentFilter.percentage }
+          );
 
-      // Obtener los artículos después de actualizar los precios
-      const responseNuevos = await axios.get(
-        `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
-      );
-      const articulosNuevos = responseNuevos.data;
+          // Obtener los artículos después de actualizar los precios
+          const responseNuevos = await axios.get(
+            `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
+          );
+          const articulosNuevos = responseNuevos.data;
 
-      // Crear un mapa de artículos antiguos para referencia rápida
-      const articulosAntiguosMap = new Map(
-        articulosAntiguos.map((articulo) => [articulo.id, articulo])
-      );
+          // Crear un mapa de artículos antiguos para referencia rápida
+          const articulosAntiguosMap = new Map(
+            articulosAntiguos.map((articulo) => [articulo.id, articulo])
+          );
 
-      // Insertar logs para cada artículo actualizado
-      for (const articuloNuevo of articulosNuevos) {
-        const articuloAntiguo = articulosAntiguosMap.get(articuloNuevo.id);
-        if (articuloAntiguo) {
-          await axios.post(`http://localhost:3001/updateLog`, {
-            articulo_id: articuloNuevo.id,
-            costo_nuevo: articuloNuevo.costo,
-            costo_antiguo: articuloAntiguo.costo,
-            precio_monotributista_nuevo: articuloNuevo.precio_monotributista,
-            precio_monotributista_antiguo:
-              articuloAntiguo.precio_monotributista,
-            porcentaje: currentFilter.percentage,
+          // Insertar logs para cada artículo actualizado
+          for (const articuloNuevo of articulosNuevos) {
+            const articuloAntiguo = articulosAntiguosMap.get(articuloNuevo.id);
+            if (articuloAntiguo) {
+              await axios.post(`http://localhost:3001/updateLog`, {
+                articulo_id: articuloNuevo.id,
+                costo_nuevo: articuloNuevo.costo,
+                costo_antiguo: articuloAntiguo.costo,
+                precio_monotributista_nuevo:
+                  articuloNuevo.precio_monotributista,
+                precio_monotributista_antiguo:
+                  articuloAntiguo.precio_monotributista,
+                porcentaje: currentFilter.percentage,
+              });
+            }
+          }
+
+          setData(articulosNuevos);
+          setOpenFilterDrawer(false);
+          Swal.fire({
+            title: "¡Filtro aplicado!",
+            text: "El filtro ha sido aplicado con exito.",
+            icon: "success",
           });
+        } catch (error) {
+          console.error(
+            "Error updating prices or fetching filtered data:",
+            error
+          );
         }
       }
-
-      setData(articulosNuevos);
-      setOpenFilterDrawer(false);
-    } catch (error) {
-      console.error("Error updating prices or fetching filtered data:", error);
-    }
+    });
   };
 
   const handleCloseEditProveedorDrawer = async () => {
@@ -452,27 +518,36 @@ function Articulos() {
         title="Filtrar"
         style={{ padding: 0 }}
       >
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Proveedor</Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <Tooltip>
+            Aplicar aumento por <strong>Proveedor</strong>
+          </Tooltip>
         </div>
-        <ProveedorInput
-          onChangeProveedor={(value) =>
-            setCurrentFilter((prev) => ({
-              ...prev,
-              proveedor_id: value.id,
-              proveedor_nombre: value.label,
-            }))
-          }
-        />
-        <InputNumber
-          value={currentFilter?.percentage}
-          onChange={(value) =>
-            setCurrentFilter((prev) => ({
-              ...prev,
-              percentage: value,
-            }))
-          }
-        />{" "}
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <ProveedorInput
+            onChangeProveedor={(value) =>
+              setCurrentFilter((prev) => ({
+                ...prev,
+                proveedor_id: value.id,
+                proveedor_nombre: value.label,
+              }))
+            }
+          />
+        </div>
+        <Tooltip>
+          <strong>Porcentaje</strong>
+        </Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={currentFilter?.percentage}
+            onChange={(value) =>
+              setCurrentFilter((prev) => ({
+                ...prev,
+                percentage: value,
+              }))
+            }
+          />{" "}
+        </div>
         <Button type="primary" onClick={handleFilterChange}>
           Aplicar
         </Button>
@@ -483,18 +558,22 @@ function Articulos() {
         title="Aumentar precio"
         style={{ padding: 0 }}
       >
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Porcentaje</Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <Tooltip>
+            <strong>Porcentaje</strong>
+          </Tooltip>
         </div>
-        <InputNumber
-          value={currentIncrease?.percentage}
-          onChange={(value) =>
-            setCurrentIncrease((prev) => ({
-              ...prev,
-              percentage: value,
-            }))
-          }
-        />
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={currentIncrease?.percentage}
+            onChange={(value) =>
+              setCurrentIncrease((prev) => ({
+                ...prev,
+                percentage: value,
+              }))
+            }
+          />
+        </div>
         <Button type="primary" onClick={handleIncreaseChange}>
           Aplicar
         </Button>
@@ -823,17 +902,18 @@ function Articulos() {
           columns={columns}
           data={data}
           pagination={true}
+          paginationComponent={CustomPagination}
           responsive={true}
           customStyles={{
             rows: {
               style: {
-                fontSize: "11px", // Cambia este valor para reducir el tamaño del texto
-                padding: "2px 4px", // Ajusta el padding para reducir el tamaño general de las filas
+                fontSize: "14px", // Cambia este valor para reducir el tamaño del texto
+                padding: "1px 2px", // Ajusta el padding para reducir el tamaño general de las filas
               },
             },
             headCells: {
               style: {
-                fontSize: "10px", // Tamaño del texto en los encabezados
+                fontSize: "14px", // Tamaño del texto en los encabezados
               },
             },
             cells: {

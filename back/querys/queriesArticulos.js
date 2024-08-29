@@ -23,7 +23,9 @@ module.exports = {
   LEFT JOIN 
       sublinea s ON a.subLinea_id = s.id
   LEFT JOIN 
-      proveedor p ON a.proveedor_id = p.id;
+      proveedor p ON a.proveedor_id = p.id
+    ORDER BY 
+        a.fecha_ingreso DESC;
   `,
   addArticulo: `INSERT INTO articulo (nombre, mediciones, stock, codigo_producto, proveedor_id, precio_monotributista, costo, linea_id, subLinea_id, fecha_ingreso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());`,
   dropArticulo: `UPDATE articulo SET estado = 0 WHERE id = ?;`,

@@ -6,6 +6,7 @@ import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input, Row, Tooltip, message } from "antd";
 // import SubLineasInput from "../components/InputSubLineas";
 import Swal from "sweetalert2";
+import "../style/style.css";
 
 const Linea = () => {
   const [lineas, setLineas] = useState([]);
@@ -126,12 +127,12 @@ const Linea = () => {
     try {
       if (currentState === 1) {
         Swal.fire({
-          title: "¿Estas seguro de desactivar esta Linea?",
+          title: "¿Estas seguro de deshabilitar esta Linea?",
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#3085d6",
           cancelButtonColor: "#d33",
-          confirmButtonText: "Si, desactivar",
+          confirmButtonText: "Si, deshabilitar",
           cancelButtonText: "Cancelar",
         }).then(async (result) => {
           if (result.isConfirmed) {
@@ -147,12 +148,12 @@ const Linea = () => {
         });
       } else {
         Swal.fire({
-          title: "¿Estas seguro de activar esta Linea?",
+          title: "¿Estas seguro de habilitar esta Linea?",
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#3085d6",
           cancelButtonColor: "#d33",
-          confirmButtonText: "Si, activar",
+          confirmButtonText: "Si, habilitar",
           cancelButtonText: "Cancelar",
         }).then(async (result) => {
           if (result.isConfirmed) {
@@ -217,41 +218,51 @@ const Linea = () => {
     });
   };
   const columns = [
-    { name: "Nombre", selector: (row) => row.nombre, sortable: true },
     {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitada" : "Deshabilitada"),
-      sortable: true,
-    },
-    {
-      name: "Sublíneas",
-      cell: (row) => (
-        <Link to={`/linea/${row.id}`} style={{ textDecoration: "none" }}>
-          <Button type="primary">Ver Sublíneas</Button>
-        </Link>
+      name: "Nombre",
+      selector: (row) => (
+        <Tooltip title={row.nombre}>
+          <span>{row.nombre}</span>
+        </Tooltip>
       ),
+      sortable: true,
     },
     {
       name: "Añadir Sublineas",
       cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenSubLineaDrawer(row.id)}>
+        <Button
+          onClick={() => handleOpenSubLineaDrawer(row.id)}
+          className="custom-button"
+        >
           Añadir SubLineas
         </Button>
+      ),
+    },
+
+    {
+      name: "Sublíneas",
+      cell: (row) => (
+        <Link to={`/linea/${row.id}`} style={{ textDecoration: "none" }}>
+          <Button className="custom-button">Ver Sublíneas</Button>
+        </Link>
       ),
     },
     {
       name: "Editar",
       cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
+        <Button
+          className="custom-button"
+          onClick={() => handleOpenEditDrawer(row.id)}
+        >
           Editar
         </Button>
       ),
     },
     {
-      name: "Habilitar/Deshabilitar",
+      name: "Activar/Desactivar",
       cell: (row) => (
         <Button
-          type="primary"
+          className="custom-button"
           onClick={() => handleToggleState(row.id, row.estado)}
         >
           {row.estado ? "Desactivar" : "Activar"}
@@ -277,7 +288,7 @@ const Linea = () => {
             style={{ width: "100%" }}
             columns={columns}
             data={lineas}
-            pagination
+            pagination={true}
           />
         )}
       </div>
