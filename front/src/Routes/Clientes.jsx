@@ -56,6 +56,14 @@ const Clientes = () => {
   };
 
   const handleAddCliente = async () => {
+    if (!newClient.nombre || !newClient.apellido || !zona) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Los campos Nombre, Apellido y Zona son obligatorios",
+      });
+      return;
+    }
     const nuevoCliente = {
       nombre: newClient.nombre,
       apellido: newClient.apellido,
@@ -90,40 +98,54 @@ const Clientes = () => {
             icon: "success",
             confirmButtonText: "OK",
           });
-        } catch (error) {
-          console.error("Error adding the cliente:", error);
-        } finally {
           setTimeout(() => {
             window.location.reload();
           }, 1000);
+        } catch (error) {
+          console.error("Error adding the cliente:", error);
         }
       }
     });
   };
 
   const handleEditCliente = async () => {
-    const { nombre, apellido, cuil, email, telefono, direccion } =
-      currentCliente;
-
-    if (!nombre || !apellido || !zona) {
-      alert("Los campos Nombre, Apellido y Zona son obligatorios");
+    if (!currentCliente.nombre || !currentCliente.apellido) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Los campos Nombre y Apellido son obligatorios",
+      });
       return;
     }
 
-    const cuilToSend = cuil !== undefined && cuil !== "" ? cuil : null;
-    const emailToSend = email !== undefined && email !== "" ? email : "";
+    const cuilToSend =
+      currentCliente.cuil !== undefined && currentCliente.cuil !== ""
+        ? currentCliente.cuil
+        : null;
+    const emailToSend =
+      currentCliente.email !== undefined && currentCliente.email !== ""
+        ? currentCliente.email
+        : "";
     const telefonoToSend =
-      telefono !== undefined && telefono !== "" ? telefono : "";
+      currentCliente.telefono !== undefined && currentCliente.telefono !== ""
+        ? currentCliente.telefono
+        : "";
     const direccionToSend =
-      direccion !== undefined && direccion !== "" ? direccion : "";
+      currentCliente.direccion !== undefined && currentCliente.direccion !== ""
+        ? currentCliente.direccion
+        : "";
 
     const clienteActualizado = {
-      nombre,
-      apellido,
-      email: emailToSend,
-      telefono: telefonoToSend,
-      direccion: direccionToSend,
-      cuil: cuilToSend,
+      nombre: currentCliente.nombre,
+      apellido: currentCliente.apellido,
+      email: currentCliente.email ? currentCliente.email : emailToSend,
+      telefono: currentCliente.telefono
+        ? currentCliente.telefono
+        : telefonoToSend,
+      direccion: currentCliente.direccion
+        ? currentCliente.direccion
+        : direccionToSend,
+      cuil: currentCliente.cuil ? currentCliente.cuil : cuilToSend,
       zona_id: zona.id,
       es_responsable_inscripto: responsableInscripto ? 1 : 0,
       ID: currentCliente.id,
@@ -463,13 +485,15 @@ const Clientes = () => {
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Cuil</Tooltip>
         </div>
-        <InputNumber
-          value={currentCliente?.cuil}
-          onChange={(value) =>
-            setCurrentCliente((prev) => ({ ...prev, cuil: value }))
-          }
+        <Input
           placeholder="CUIL"
-          style={{ marginBottom: 10, display: "flex" }}
+          value={currentCliente?.cuil}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({
+              ...prev,
+              cuil: formatCuil(e.target.value),
+            }))
+          }
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Responsable Inscripto</Tooltip>
