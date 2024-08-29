@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import DynamicList from "../components/DynamicList"; // Asegúrate de tener este componente
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 function Ofertas() {
   const [data, setData] = useState([]);
@@ -273,6 +274,11 @@ function Ofertas() {
         title="Ofertas"
         highlightOnHover
         width="720px"
+        customStyles={{
+          headCells: {
+            style: customHeaderStyles,
+          },
+        }}
       />
     </MenuLayout>
   );

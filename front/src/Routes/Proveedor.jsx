@@ -4,6 +4,8 @@ import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input } from "antd";
 import Swal from "sweetalert2";
+import CustomPagination from "../components/CustomPagination";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 const Proveedores = () => {
   const [data, setData] = useState([]);
@@ -258,6 +260,12 @@ const Proveedores = () => {
           data={data}
           progressPending={loading}
           pagination
+          paginationComponent={CustomPagination}
+          customStyles={{
+            headCells: {
+              style: customHeaderStyles,
+            },
+          }}
         />
       </div>
     </MenuLayout>

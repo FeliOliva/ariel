@@ -10,3 +10,13 @@
   background-color: blue; /* Fondo azul al hacer hover */
   color: white; /* Cambia el color del texto a blanco al hacer hover */
 }
+/* src/style/style.css */
+.custom-header {
+  font-size: 14px; /* Tamaño del texto en los encabezados */
+  background-color: #007bff; /* Fondo azul para los encabezados */
+  color: #fff; /* Texto blanco para los encabezados */
+  font-weight: bold; /* Texto en negrita */
+  text-transform: uppercase; /* Texto en mayúsculas */
+  padding: 10px 15px; /* Padding adicional para un mejor espaciado */
+  border-bottom: 2px solid #0056b3; /* Borde inferior para resaltar separación */
+}

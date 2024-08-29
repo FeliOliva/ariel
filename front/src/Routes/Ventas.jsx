@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import ClienteInput from "../components/ClienteInput";
 import DynamicList from "../components/DynamicList";
+import CustomPagination from "../components/CustomPagination";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 function Ventas() {
   const [data, setData] = useState([]);
@@ -203,7 +205,17 @@ function Ventas() {
       >
         Nueva Venta
       </Button>
-      <DataTable columns={columns} data={data} pagination />
+      <DataTable
+        columns={columns}
+        data={data}
+        pagination
+        paginationComponent={CustomPagination}
+        customStyles={{
+          headCells: {
+            style: customHeaderStyles,
+          },
+        }}
+      />
 
       <Drawer
         open={open}
