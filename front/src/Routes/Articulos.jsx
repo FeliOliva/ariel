@@ -396,6 +396,7 @@ function Articulos() {
     setLinea((prev) => ({
       ...prev,
       linea: newLinea,
+      sublinea_id: null,
     }));
     if (newLinea) {
       setIsSubLineaEnabled(true);
@@ -637,130 +638,137 @@ function Articulos() {
         title="Editar Articulo"
         style={{ padding: 0 }}
       >
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Codigo</Tooltip>
-        </div>
-        <Input
-          value={currentArticulo?.codigo_producto}
-          onChange={(e) =>
-            setCurrentArticulo((prev) => ({
-              ...prev,
-              codigo_producto: e.target.value,
-            }))
-          }
-        ></Input>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Nombre</Tooltip>
-        </div>
-        <Input
-          value={currentArticulo?.nombre}
-          onChange={(e) =>
-            setCurrentArticulo((prev) => ({
-              ...prev,
-              nombre: e.target.value,
-            }))
-          }
-        ></Input>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Stock</Tooltip>
-        </div>
-        <InputNumber
-          value={currentArticulo?.stock}
-          onChange={(value) =>
-            setCurrentArticulo((prev) => ({
-              ...prev,
-              stock: value,
-            }))
-          }
-        ></InputNumber>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Medición</Tooltip>
-        </div>
-        <Input
-          value={currentArticulo?.mediciones}
-          onChange={(e) =>
-            setCurrentArticulo((prev) => ({
-              ...prev,
-              mediciones: e.target.value,
-            }))
-          }
-        ></Input>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Linea</Tooltip>
-        </div>
-        <Input
-          value={currentArticulo?.linea_nombre}
-          readOnly
-          style={{ padding: 0 }}
-        ></Input>
-        <Button
-          onClick={() => setOpenEditLineaDrawer(true)}
-          title="Editar Linea"
-          style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
-        >
-          Cambiar linea
-        </Button>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>SubLinea</Tooltip>
-        </div>
-        <Input
-          value={currentArticulo?.sublinea_nombre}
-          readOnly
-          style={{ padding: 0 }}
-        ></Input>
-        <Button
-          onClick={() => setOpenEditSubLineaDrawer(true)}
-          title="Editar subLinea"
-          style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
-        >
-          Cambiar Sublinea
-        </Button>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Proveedor</Tooltip>
-        </div>
-        <Input
-          value={currentArticulo?.proveedor_nombre}
-          readOnly
-          style={{ padding: 0 }}
-        ></Input>
-        <Button
-          onClick={() => setOpenEditProveedorDrawer(true)}
-          title="Editar proveedor"
-          style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
-        >
-          Cambiar proveedor
-        </Button>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Precio</Tooltip>
-        </div>
-        <InputNumber
-          value={currentArticulo?.precio_monotributista}
-          onChange={(value) =>
-            setCurrentArticulo((prev) => ({
-              ...prev,
-              precio_monotributista: value,
-            }))
-          }
-        ></InputNumber>
-        <div style={{ display: "flex", marginTop: 10 }}>
-          <Tooltip>Costo</Tooltip>
-        </div>
-        <InputNumber
-          value={currentArticulo?.costo}
-          onChange={(value) =>
-            setCurrentArticulo((prev) => ({
-              ...prev,
-              costo: value,
-            }))
-          }
-        ></InputNumber>
-        <Button
-          onClick={handleEditedArticulo}
-          style={{ display: "flex", marginTop: 10 }}
-          type="primary"
-        >
-          Confirmar cambios
-        </Button>
+        {currentArticulo ? (
+          <>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Codigo</Tooltip>
+            </div>
+            <Input
+              value={currentArticulo?.codigo_producto}
+              onChange={(e) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  codigo_producto: e.target.value,
+                }))
+              }
+            ></Input>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Nombre</Tooltip>
+            </div>
+            <Input
+              value={currentArticulo?.nombre}
+              onChange={(e) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  nombre: e.target.value,
+                }))
+              }
+            ></Input>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Stock</Tooltip>
+            </div>
+            <InputNumber
+              value={currentArticulo?.stock}
+              onChange={(value) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  stock: value,
+                }))
+              }
+            ></InputNumber>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Medición</Tooltip>
+            </div>
+            <Input
+              value={currentArticulo?.mediciones}
+              onChange={(e) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  mediciones: e.target.value,
+                }))
+              }
+            ></Input>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Linea</Tooltip>
+            </div>
+            <Input
+              value={currentArticulo?.linea_nombre}
+              readOnly
+              style={{ padding: 0 }}
+            ></Input>
+            <Button
+              onClick={() => setOpenEditLineaDrawer(true)}
+              title="Editar Linea"
+              style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
+            >
+              Cambiar linea
+            </Button>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>SubLinea</Tooltip>
+            </div>
+            <Input
+              value={currentArticulo?.sublinea_nombre}
+              readOnly
+              style={{ padding: 0 }}
+            ></Input>
+            <Button
+              onClick={() => setOpenEditSubLineaDrawer(true)}
+              title="Editar subLinea"
+              style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
+            >
+              Cambiar Sublinea
+            </Button>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Proveedor</Tooltip>
+            </div>
+            <Input
+              value={currentArticulo?.proveedor_nombre}
+              readOnly
+              style={{ padding: 0 }}
+            ></Input>
+            <Button
+              onClick={() => setOpenEditProveedorDrawer(true)}
+              title="Editar proveedor"
+              style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
+            >
+              Cambiar proveedor
+            </Button>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Precio</Tooltip>
+            </div>
+            <InputNumber
+              value={currentArticulo?.precio_monotributista}
+              onChange={(value) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  precio_monotributista: value,
+                }))
+              }
+            ></InputNumber>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Costo</Tooltip>
+            </div>
+            <InputNumber
+              value={currentArticulo?.costo}
+              onChange={(value) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  costo: value,
+                }))
+              }
+            ></InputNumber>
+            <Button
+              onClick={handleEditedArticulo}
+              style={{ display: "flex", marginTop: 10 }}
+              type="primary"
+              disabled={!currentArticulo.sublinea_id}
+            >
+              Confirmar cambios
+            </Button>
+          </>
+        ) : (
+          <p>Loading...</p>
+        )}
       </Drawer>
       <Drawer
         open={openAddLineaDrawer}
