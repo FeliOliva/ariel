@@ -7,6 +7,8 @@ import { Button, Drawer, Input, Row, Tooltip, message } from "antd";
 // import SubLineasInput from "../components/InputSubLineas";
 import Swal from "sweetalert2";
 import "../style/style.css";
+import CustomPagination from "../components/CustomPagination";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 const Linea = () => {
   const [lineas, setLineas] = useState([]);
@@ -38,6 +40,15 @@ const Linea = () => {
   };
 
   const handleGuardarLinea = async () => {
+    if (linea.nombre === "") {
+      Swal.fire({
+        title: "Error",
+        text: "El campo de nombre es obligatorio",
+        icon: "error",
+        timer: 1500,
+      });
+      return;
+    }
     Swal.fire({
       title: "¿Estás seguro de agregar esta linea?",
       icon: "warning",
@@ -76,6 +87,15 @@ const Linea = () => {
     setOpenSubLineaDrawer(true);
   };
   const handleAddSubLinea = async () => {
+    if (subLinea.nombre === undefined) {
+      Swal.fire({
+        title: "Error",
+        text: "El campo de nombre es obligatorio",
+        icon: "error",
+        timer: 1500,
+      });
+      return;
+    }
     Swal.fire({
       title: "¿Estás seguro de agregar esta sublinea?",
       icon: "warning",
@@ -191,6 +211,16 @@ const Linea = () => {
       nombre: currentLinea.nombre,
       ID: currentLinea.id,
     };
+    console.log(editedLinea.nombre);
+    if (!editedLinea.nombre) {
+      Swal.fire({
+        title: "Error",
+        text: "El campo de nombre es obligatorio",
+        icon: "error",
+        timer: 1500,
+      });
+      return;
+    }
     Swal.fire({
       title: "¿Estas seguro de editar esta Linea?",
       icon: "warning",
@@ -289,6 +319,12 @@ const Linea = () => {
             columns={columns}
             data={lineas}
             pagination={true}
+            paginationComponent={CustomPagination}
+            customStyles={{
+              headCells: {
+                style: customHeaderStyles,
+              },
+            }}
           />
         )}
       </div>
@@ -349,12 +385,12 @@ const Linea = () => {
           </Button>
         </div>
       </Drawer>
-      <Drawer
+      {/* <Drawer
         open={subLineaExisted}
         onClose={() => setSubLineaDrawerExisted(false)}
         title="Añadir a Sublínea existente"
-      >
-        {/* <div style={{ display: "flex", marginBottom: 10 }}>
+      > */}
+      {/* <div style={{ display: "flex", marginBottom: 10 }}>
           <strong>Añadir a SubLinea Existente</strong>
         </div>
         <SubLineasInput
@@ -372,7 +408,7 @@ const Linea = () => {
         >
           Guardar
         </Button> */}
-      </Drawer>
+      {/* </Drawer> */}
       <Drawer
         open={OpenEditDrawer}
         onClose={() => setOpenEditDrawer(false)}

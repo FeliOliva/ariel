@@ -9,7 +9,9 @@ import SubLineaInput from "../components/SubLineaInput";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/style.css";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import CustomPagination from "../components/CustomPagination";
+
 function Articulos() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -339,7 +341,14 @@ function Articulos() {
       });
       return;
     }
-
+    if (articulo.proveedor_id === undefined) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No cargaste un proveedor.",
+        icon: "error",
+      });
+      return;
+    }
     if (articulo.linea_id === undefined) {
       Swal.fire({
         title: "Advertencia",
@@ -356,14 +365,7 @@ function Articulos() {
       });
       return;
     }
-    if (articulo.proveedor_id === undefined) {
-      Swal.fire({
-        title: "Advertencia",
-        text: "No cargaste un proveedor.",
-        icon: "error",
-      });
-      return;
-    }
+
     console.log(articulo);
     Swal.fire({
       title: "¿Estás seguro de agregar este artículo?",
@@ -401,10 +403,19 @@ function Articulos() {
   };
 
   const handleFilterChange = async () => {
+    if (currentFilter === null) {
+      Swal.fire({
+        title: "Advertencia",
+        text: "No seleccionaste un proveedor.",
+        icon: "error",
+      });
+      return;
+    }
     if (
       currentFilter.percentage < 0 ||
       currentFilter.percentage > 100 ||
-      currentFilter.percentage === null
+      currentFilter.percentage === null ||
+      currentFilter.percentage === undefined
     ) {
       Swal.fire({
         title: "Advertencia",
@@ -470,10 +481,12 @@ function Articulos() {
 
           setData(articulosNuevos);
           setOpenFilterDrawer(false);
+          setCurrentFilter(null);
           Swal.fire({
             title: "¡Filtro aplicado!",
             text: "El filtro ha sido aplicado con exito.",
             icon: "success",
+            timer: 1000,
           });
         } catch (error) {
           console.error(
@@ -912,9 +925,7 @@ function Articulos() {
               },
             },
             headCells: {
-              style: {
-                fontSize: "14px", // Tamaño del texto en los encabezados
-              },
+              style: customHeaderStyles,
             },
             cells: {
               style: {

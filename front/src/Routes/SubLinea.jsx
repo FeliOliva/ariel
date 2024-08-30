@@ -5,6 +5,8 @@ import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Tooltip, Input } from "antd";
 import Swal from "sweetalert2";
+import CustomPagination from "../components/CustomPagination";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 const SubLinea = () => {
   const { id } = useParams();
@@ -99,6 +101,16 @@ const SubLinea = () => {
       nombre: currentSubLinea.nombre,
       ID: currentSubLinea.id,
     };
+    console.log(editedSubLinea);
+    if (!editedSubLinea.nombre) {
+      Swal.fire({
+        title: "Error",
+        text: "El nombre es obligatorio.",
+        icon: "error",
+        timer: 1000,
+      });
+      return;
+    }
     Swal.fire({
       title: "¿Estas seguro de editar esta sublinea?",
       icon: "warning",
@@ -131,11 +143,6 @@ const SubLinea = () => {
   const columns = [
     { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
     { name: "Nombre", selector: (row) => row.nombre, sortable: true },
-    {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitada" : "Deshabilitada"),
-      sortable: true,
-    },
     {
       name: "Editar",
       cell: (row) => (
@@ -191,6 +198,12 @@ const SubLinea = () => {
           data={subLineas}
           progressPending={loading}
           pagination
+          paginationComponent={CustomPagination}
+          customStyles={{
+            headCells: {
+              style: customHeaderStyles,
+            },
+          }}
         />
       </div>
     </MenuLayout>

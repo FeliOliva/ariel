@@ -3,6 +3,8 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Button, Drawer, Input } from "antd";
+import CustomPagination from "../components/CustomPagination";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 const Zonas = () => {
   const [data, setData] = useState([]);
@@ -161,6 +163,12 @@ const Zonas = () => {
           data={data}
           progressPending={loading}
           pagination
+          paginationComponent={CustomPagination}
+          customStyles={{
+            headCells: {
+              style: customHeaderStyles,
+            },
+          }}
         />
       </div>
     </MenuLayout>

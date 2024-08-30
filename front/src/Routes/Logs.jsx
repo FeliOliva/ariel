@@ -5,7 +5,10 @@ import MenuLayout from "../components/MenuLayout";
 import { useParams } from "react-router-dom";
 import { Button } from "antd";
 import { format } from "date-fns";
+import CustomPagination from "../components/CustomPagination";
 import Swal from "sweetalert2";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+
 function Logs() {
   const { id } = useParams();
   const [data, setData] = useState([]);
@@ -109,14 +112,23 @@ function Logs() {
       <Button
         onClick={() => window.history.back()}
         type="primary"
-        style={{ float: "right" }}
+        style={{ float: "right", marginBottom: "10px" }}
       >
         Volver
       </Button>
       {loading ? (
         <p>Cargando...</p>
       ) : (
-        <DataTable columns={colums} data={data} />
+        <DataTable
+          columns={colums}
+          data={data}
+          paginationComponent={CustomPagination}
+          customStyles={{
+            headCells: {
+              style: customHeaderStyles,
+            },
+          }}
+        />
       )}
     </MenuLayout>
   );

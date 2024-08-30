@@ -13,6 +13,8 @@ import {
 } from "antd";
 import ZonasInput from "../components/ZonasInput";
 import Swal from "sweetalert2";
+import CustomPagination from "../components/CustomPagination";
+import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -537,6 +539,12 @@ const Clientes = () => {
         progressPending={loading}
         keyField="id"
         pagination
+        paginationComponent={CustomPagination}
+        customStyles={{
+          headCells: {
+            style: customHeaderStyles,
+          },
+        }}
       />
     </MenuLayout>
   );
