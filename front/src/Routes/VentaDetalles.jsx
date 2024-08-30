@@ -38,63 +38,72 @@ const VentaDetalles = () => {
     if (data.length > 0) {
       const venta = data[0];
 
-      // Encabezado de la factura
-      pdf.setFontSize(10);
-      pdf.text(`N° ${venta.nroVenta}`, 160, 20);
-      pdf.text(`Fecha: ${new Date(venta.fecha).toLocaleDateString()}`, 160, 25);
-
+      // Encabezado
+      pdf.setFontSize(14);
+      pdf.text("PRESUPUESTO", 10, 20);
       pdf.setFontSize(12);
-      pdf.text(`( ${venta.id} ) - ${venta.nombre_cliente_completo}`, 10, 30);
-      pdf.text(`${venta.direccion}`, 10, 35);
-      pdf.text(`CUIL: ${venta.cuil}`, 10, 40);
-
-      const estadoFiscal = venta.es_responsable_inscripto
-        ? "RESPONSABLE INSCRIPTO"
-        : "RESPONSABLE MONOTRIBUTO";
-      pdf.text(estadoFiscal, 10, 45);
-
-      pdf.text("CUENTA CORRIENTE", 10, 50);
+      pdf.text("DOCUMENTO NO VÁLIDO COMO FACTURA", 10, 25);
+      pdf.text("X", 100, 20);
 
       pdf.setFontSize(10);
-      pdf.text("01-beto", 160, 45);
+      pdf.line(10, 30, 200, 30); // Encima de "Señor/es"
+      pdf.text(`Señor/es: ${venta.nombre_cliente_completo}`, 10, 35);
+      pdf.text(`Dirección: ${venta.direccion}`, 10, 40);
+      pdf.text(`Localidad: ${venta.direccion}`, 10, 45); // Puedes separar localidad si es necesario
 
-      // Preparación de los datos de la tabla
-      const headers = [
-        { title: "Cantidad", dataKey: "cantidad" },
-        { title: "Artículo", dataKey: "nombre_articulo" },
-        { title: "Unidades", dataKey: "Unidades" },
-        { title: "P. Unitario", dataKey: "precio_monotributista" },
-        { title: "Total", dataKey: "total_precio_monotributista" },
-      ];
+      // Fecha
+      const fecha = new Date(venta.fecha);
+      pdf.line(160, 30, 160, 50); // División entre fecha y demás datos
+      const dia = fecha.getDate();
+      const mes = fecha.getMonth() + 1; // Mes es 0-indexado
+      const año = fecha.getFullYear();
 
+      pdf.text(`Día: ${dia}`, 160, 35);
+      pdf.text(`Mes: ${mes}`, 160, 40);
+      pdf.text(`Año: ${año}`, 160, 45);
+
+      // Tabla
+      pdf.line(10, 50, 200, 50); // Encima de la tabla
       const tableData = data.map((row) => ({
         cantidad: row.cantidad,
-        nombre_articulo: row.nombre_articulo,
-        Unidades: row.cantidad, // Ajustar según sea necesario
-        precio_monotributista: parseFloat(row.precio_monotributista).toFixed(2),
-        total_precio_monotributista: parseFloat(
-          row.total_precio_monotributista
-        ).toFixed(2),
+        descripcion: row.nombre_articulo,
+        precio_unitario: parseFloat(row.precio_monotributista).toFixed(2),
+        importe: parseFloat(row.total_precio_monotributista).toFixed(2),
       }));
 
-      console.log("Datos de la tabla:", tableData); // Verifica el contenido antes de generar el PDF
-
       pdf.autoTable({
-        head: [headers.map((header) => header.title)],
-        body: tableData.map((row) =>
-          headers.map((header) => row[header.dataKey])
-        ),
-        startY: 60,
-        theme: "plain",
+        startY: 55,
+        head: [["CANTIDAD", "DESCRIPCIÓN", "PRECIO UNITARIO", "IMPORTE"]],
+        body: tableData.map((row) => [
+          row.cantidad,
+          row.descripcion,
+          row.precio_unitario,
+          row.importe,
+        ]),
+        theme: "grid",
         styles: {
           fontSize: 10,
           cellPadding: 2,
+          halign: "center",
         },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 45 },
+        },
+        headStyles: {
+          fillColor: [255, 255, 255],
+          textColor: [0, 0, 0],
+          lineWidth: 0.1,
+        },
+        bodyStyles: { lineWidth: 0.1 },
+        tableLineWidth: 0.1,
       });
 
-      pdf.setFontSize(12);
+      // Total
       pdf.text(
-        `Total: ${parseFloat(venta.total_importe).toFixed(2)}`,
+        `TOTAL: ${parseFloat(venta.total_importe).toFixed(2)}`,
         160,
         pdf.lastAutoTable.finalY + 10
       );
