@@ -143,23 +143,27 @@ const getVentaByID = async (req, res) => {
   try {
     const venta_id = req.params.ID;
     const detalleVentas = await ventasModel.getVentaByID(venta_id);
-    let data = {
-      nombre_cliente: detalleVentas[0].nombre_cliente_completo,
-      id: detalleVentas[0].id,
-      nroVenta: detalleVentas[0].nroVenta,
-      fecha: detalleVentas[0].fecha,
-      zona_nombre: detalleVentas[0].nombre_zona,
-      direccion : detalleVentas[0].direccion,
-      total: detalleVentas[0].total_importe,
-      detalles: detalleVentas.map((detalle) => ({
-        id: detalle.articulo_id,
-        nombre: detalle.nombre_articulo,
-        cantidad: detalle.cantidad,
-        precio_monotributista: detalle.precio_monotributista,
-        subtotal: detalle.total_precio_monotributista,
-      })),
-    };
-    res.json(data);
+    if (detalleVentas.length <= 0) {
+      return res.status(404).json({ error: "Venta no encontrada" });
+    } else {
+      let data = {
+        nombre_cliente: detalleVentas[0].nombre_cliente_completo,
+        id: detalleVentas[0].id,
+        nroVenta: detalleVentas[0].nroVenta,
+        fecha: detalleVentas[0].fecha,
+        zona_nombre: detalleVentas[0].nombre_zona,
+        direccion: detalleVentas[0].direccion,
+        total: detalleVentas[0].total_importe,
+        detalles: detalleVentas.map((detalle) => ({
+          id: detalle.articulo_id,
+          nombre: detalle.nombre_articulo,
+          cantidad: detalle.cantidad,
+          precio_monotributista: detalle.precio_monotributista,
+          subtotal: detalle.total_precio_monotributista,
+        })),
+      };
+      res.json(data);
+    }
   } catch (error) {
     console.error("Error al obtener la venta por ID:", error);
     res.status(500).json({ error: "Error al obtener la venta por ID" });
