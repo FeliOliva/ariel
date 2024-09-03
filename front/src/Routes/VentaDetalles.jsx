@@ -11,6 +11,14 @@ const VentaDetalles = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ventaInfo, setVentaInfo] = useState({
+    nombre_cliente: "",
+    nroVenta: "",
+    fecha: "",
+    zona_nombre: "",
+    total: "",
+    direccion: "", // Asegúrate de inicializar dirección aquí
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,9 +26,30 @@ const VentaDetalles = () => {
         const response = await axios.get(
           `http://localhost:3001/getVentaByID/${id}`
         );
-        if (response.data && response.data.length > 0) {
-          setData(response.data);
+
+        const {
+          detalles,
+          nombre_cliente,
+          nroVenta,
+          fecha,
+          zona_nombre,
+          total,
+          direccion, // Asegúrate de que dirección se extraiga
+        } = response.data;
+
+        if (Array.isArray(detalles)) {
+          setData(detalles);
+          setVentaInfo({
+            nombre_cliente,
+            nroVenta,
+            fecha,
+            zona_nombre,
+            total,
+            direccion,
+          });
           console.log(response.data);
+        } else {
+          console.error("Expected 'detalles' to be an array");
         }
       } catch (error) {
         console.error("Error fetching the data:", error);
@@ -36,8 +65,6 @@ const VentaDetalles = () => {
     const pdf = new jsPDF("p", "mm", "a4");
 
     if (data.length > 0) {
-      const venta = data[0];
-
       // Encabezado
       pdf.setFontSize(14);
       pdf.text("PRESUPUESTO", 10, 20);
@@ -46,29 +73,38 @@ const VentaDetalles = () => {
       pdf.text("X", 100, 20);
 
       pdf.setFontSize(10);
-      pdf.line(10, 30, 200, 30); // Encima de "Señor/es"
-      pdf.text(`Señor/es: ${venta.nombre_cliente_completo}`, 10, 35);
-      pdf.text(`Dirección: ${venta.direccion}`, 10, 40);
-      pdf.text(`Localidad: ${venta.direccion}`, 10, 45); // Puedes separar localidad si es necesario
+      pdf.text(`Señor/es: ${ventaInfo.nombre_cliente}`, 10, 35);
+      pdf.text(`Dirección: ${ventaInfo.direccion}`, 10, 40); // Se muestra la dirección correctamente
+      pdf.text(`Localidad: ${ventaInfo.zona_nombre}`, 10, 45);
 
-      // Fecha
-      const fecha = new Date(venta.fecha);
-      pdf.line(160, 30, 160, 50); // División entre fecha y demás datos
+      const fecha = new Date(ventaInfo.fecha);
       const dia = fecha.getDate();
-      const mes = fecha.getMonth() + 1; // Mes es 0-indexado
+      const mes = fecha.getMonth() + 1;
       const año = fecha.getFullYear();
+      pdf.text(`_________________`, 160, 31);
+      pdf.text(` | DIA | MES | AÑO  |`, 160, 35);
+      pdf.text(`_________________`, 160, 36);
+      pdf.text(` |  ${dia}  |    ${mes}    |${año}  |`, 160, 40);
+      pdf.text(`_________________`, 160, 41);
 
-      pdf.text(`Día: ${dia}`, 160, 35);
-      pdf.text(`Mes: ${mes}`, 160, 40);
-      pdf.text(`Año: ${año}`, 160, 45);
+      pdf.line(10, 30, 200, 30);
+      pdf.line(10, 50, 200, 50);
+      pdf.line(160, 30, 160, 50);
 
-      // Tabla
-      pdf.line(10, 50, 200, 50); // Encima de la tabla
       const tableData = data.map((row) => ({
         cantidad: row.cantidad,
-        descripcion: row.nombre_articulo,
-        precio_unitario: parseFloat(row.precio_monotributista).toFixed(2),
-        importe: parseFloat(row.total_precio_monotributista).toFixed(2),
+        descripcion: row.nombre,
+        precio_unitario: parseFloat(row.precio_monotributista).toLocaleString(
+          "es-ES",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }
+        ),
+        importe: parseFloat(row.subtotal).toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
       }));
 
       pdf.autoTable({
@@ -83,14 +119,15 @@ const VentaDetalles = () => {
         theme: "grid",
         styles: {
           fontSize: 10,
-          cellPadding: 2,
+          cellPadding: 3,
           halign: "center",
+          valign: "middle",
         },
         columnStyles: {
-          0: { cellWidth: 20 },
+          0: { cellWidth: 25 },
           1: { cellWidth: 80 },
           2: { cellWidth: 45 },
-          3: { cellWidth: 45 },
+          3: { cellWidth: 35 }, // Elimina los cuadros del costado de "Importe"
         },
         headStyles: {
           fillColor: [255, 255, 255],
@@ -101,36 +138,27 @@ const VentaDetalles = () => {
         tableLineWidth: 0.1,
       });
 
-      // Total
+      pdf.setFontSize(12);
       pdf.text(
-        `TOTAL: ${parseFloat(venta.total_importe).toFixed(2)}`,
+        `TOTAL: ${parseFloat(ventaInfo.total).toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
         160,
         pdf.lastAutoTable.finalY + 10
       );
 
-      pdf.save(`${venta.nroVenta}.pdf`);
+      pdf.save(`${ventaInfo.nroVenta}.pdf`);
     }
   };
 
   const columns = [
     {
-      name: "Código",
-      selector: (row) => row.cod_articulo,
-      sortable: true,
-      cell: (row) => (
-        <div style={{ padding: "5px", fontSize: "30px" }}>
-          {row.cod_articulo}
-        </div>
-      ),
-    },
-    {
       name: "Descripción",
-      selector: (row) => row.nombre_articulo,
+      selector: (row) => row.nombre,
       sortable: true,
       cell: (row) => (
-        <div style={{ padding: "5px", fontSize: "30px" }}>
-          {row.nombre_articulo}
-        </div>
+        <div style={{ padding: "5px", fontSize: "30px" }}>{row.nombre}</div>
       ),
     },
     {
@@ -147,30 +175,37 @@ const VentaDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "30px" }}>
-          {parseFloat(row.precio_monotributista).toFixed(2)}
+          {parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </div>
       ),
     },
     {
       name: "Importe",
-      selector: (row) => row.total_precio_monotributista,
+      selector: (row) => row.subtotal,
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "30px" }}>
-          {parseFloat(row.total_precio_monotributista).toFixed(2)}
+          {parseFloat(row.subtotal).toLocaleString("es-ES", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </div>
       ),
     },
   ];
 
-  const totalImporte = data.reduce(
-    (acc, item) => acc + parseFloat(item.total_precio_monotributista),
-    0
-  );
-
+  const totalImporte = data
+    .reduce((acc, item) => acc + parseFloat(item.subtotal), 0)
+    .toLocaleString("es-ES", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   return (
     <MenuLayout>
-      <h1>Detalle de Venta {data.length > 0 ? data[0].nroVenta : ""}</h1>
+      <h1>Detalle de Venta {ventaInfo.nroVenta}</h1>
       <div>
         <Button onClick={() => window.history.back()} type="primary">
           Volver
@@ -193,19 +228,19 @@ const VentaDetalles = () => {
               customStyles={{
                 rows: {
                   style: {
-                    minHeight: "60px", // Ajusta la altura mínima de las filas
+                    minHeight: "60px",
                   },
                 },
                 headCells: {
                   style: {
-                    fontSize: "30px", // Tamaño de fuente para los encabezados
-                    padding: "12px", // Padding para las celdas de encabezado
+                    fontSize: "30px",
+                    padding: "12px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "20px", // Tamaño de fuente para las celdas
-                    padding: "10px", // Padding para las celdas
+                    fontSize: "20px",
+                    padding: "10px",
                   },
                 },
               }}
@@ -217,7 +252,7 @@ const VentaDetalles = () => {
                 fontSize: "30px",
               }}
             >
-              <strong>Total Importe: </strong> {totalImporte.toFixed(2)}
+              <strong>Total Importe: </strong> {totalImporte}
             </div>
           </div>
         )}
