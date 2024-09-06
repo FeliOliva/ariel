@@ -6,6 +6,7 @@ import MenuLayout from "../components/MenuLayout";
 import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
+import { CloseOutlined } from "@ant-design/icons"; // Importa el ícono para borrar
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/style.css";
@@ -15,6 +16,8 @@ import CustomPagination from "../components/CustomPagination";
 function Articulos() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filteredData, setFilteredData] = useState([]); // Artículos filtrados por la búsqueda
+  const [searchValue, setSearchValue] = useState(""); // Valor del input de búsqueda
   const [open, setOpen] = useState(false);
   const [currentArticulo, setCurrentArticulo] = useState(null);
   const [openEditProveedorDrawer, setOpenEditProveedorDrawer] = useState(false);
@@ -287,6 +290,7 @@ function Articulos() {
       });
       return;
     }
+
     Swal.fire({
       title: "¿Estás seguro de hacer este cambio?",
       icon: "warning",
@@ -317,14 +321,25 @@ function Articulos() {
             `http://localhost:3001/updateArticulos/`,
             articuloEdited
           );
-          fetchData();
-          setOpen(false);
+
+          // Actualizar datos
+          const updatedData = data.map((articulo) =>
+            articulo.id === currentArticulo.id
+              ? { ...currentArticulo, ...articuloEdited }
+              : articulo
+          );
+
+          setData(updatedData); // Actualizar el estado con los datos completos
+          setOpen(false); // Cerrar el drawer
           Swal.fire({
             title: "¡Artículo editado!",
             text: "El artículo ha sido editado con éxito.",
             icon: "success",
             timer: 1000,
           });
+
+          // Refiltrar los datos después de la edición
+          filterData(searchValue);
         } catch (error) {
           console.error("Error editing the articulo:", error);
         }
@@ -510,6 +525,43 @@ function Articulos() {
     setOpenEditSubLineaDrawer(false);
   };
 
+  // Actualizar datos filtrados según la búsqueda
+  useEffect(() => {
+    filterData(searchValue);
+  }, [data, searchValue]);
+
+  // Filtrar los datos según el valor de búsqueda
+  const filterData = (search) => {
+    if (search) {
+      const filtered = data.filter((articulo) =>
+        articulo.nombre.toLowerCase().includes(search.toLowerCase())
+      );
+      setFilteredData(filtered);
+    } else {
+      setFilteredData(data);
+    }
+    setCurrentPage(1); // Reinicia la página actual al buscar
+  };
+
+  // Manejar el cambio en el input de búsqueda
+  const handleSearchChange = (e) => {
+    setSearchValue(e.target.value);
+  };
+  const handleClearSearch = () => {
+    setSearchValue("");
+    filterData(""); // Limpiar el filtro y mostrar todos los datos
+  };
+  const handleRowsPerPageChange = (rows) => {
+    setRowsPerPage(rows);
+    setCurrentPage(1); // Reinicia la página actual al cambiar la cantidad de filas por página
+  };
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <MenuLayout>
       <h1>Listado de articulos</h1>
@@ -524,6 +576,20 @@ function Articulos() {
         <Button type="primary" onClick={setOpenFilterDrawer}>
           Aumentos
         </Button>
+      </div>
+      {/* Input de búsqueda */}
+      <div className="search-container" style={{ marginBottom: 10 }}>
+        <Input
+          placeholder="Buscar artículos"
+          value={searchValue}
+          onChange={handleSearchChange}
+          style={{ width: 300, marginRight: "8px" }} // Ajusta el ancho para dejar espacio al botón
+        />
+        <Button
+          icon={<CloseOutlined />}
+          onClick={handleClearSearch}
+          style={{ width: "40px" }} // Ajusta el tamaño del botón
+        />
       </div>
       <Drawer
         open={openFilterDrawer}
@@ -913,9 +979,16 @@ function Articulos() {
       <div>
         <DataTable
           columns={columns}
-          data={data}
+          data={filteredData}
           pagination={true}
-          paginationComponent={CustomPagination}
+          paginationComponent={
+            <CustomPagination
+              rowsPerPage={rowsPerPage}
+              rowCount={filteredData.length} // Usa el tamaño filtrado para la paginación
+              onChangePage={handlePageChange}
+              currentPage={currentPage}
+            />
+          }
           responsive={true}
           customStyles={{
             rows: {
