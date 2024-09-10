@@ -13,6 +13,7 @@ import Logs from "./Routes/Logs";
 import Ofertas from "./Routes/Ofertas";
 import OfertasDetalles from "./Routes/OfertasDetalles";
 import Compras from "./Routes/Compras";
+import CompraDetalles from "./Routes/CompraDetalles";
 function App() {
   return (
     <Routes>
@@ -29,6 +30,7 @@ function App() {
       <Route path="/ofertas" element={<Ofertas />} />
       <Route path="/ofertas/:id" element={<OfertasDetalles />} />
       <Route path="/compras" element={<Compras />} />
+      <Route path="/compras/:id" element={<CompraDetalles />} />
     </Routes>
   );
 }

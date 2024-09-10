@@ -3,6 +3,7 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Drawer, Button, Input, Tooltip, Select, InputNumber } from "antd";
+import { Link } from "react-router-dom";
 import ProveedoresInput from "../components/ProveedoresInput";
 import CustomPagination from "../components/CustomPagination";
 import { customHeaderStyles } from "../style/dataTableStyles";
@@ -156,6 +157,14 @@ function Compras() {
       name: "Total",
       selector: (row) => row.total,
       sortable: true,
+    },
+    {
+      name: "Detalle",
+      selector: (row) => (
+        <Link to={`/compras/${row.id}`}>
+          <button>Ver detalles</button>
+        </Link>
+      ),
     },
   ];
 
