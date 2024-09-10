@@ -12,6 +12,7 @@ import Zonas from "./Routes/Zonas";
 import Logs from "./Routes/Logs";
 import Ofertas from "./Routes/Ofertas";
 import OfertasDetalles from "./Routes/OfertasDetalles";
+import Compras from "./Routes/Compras";
 function App() {
   return (
     <Routes>
@@ -27,6 +28,7 @@ function App() {
       <Route path="/zonas" element={<Zonas />} />
       <Route path="/ofertas" element={<Ofertas />} />
       <Route path="/ofertas/:id" element={<OfertasDetalles />} />
+      <Route path="/compras" element={<Compras />} />
     </Routes>
   );
 }

@@ -10,6 +10,7 @@ import {
   SisternodeOutlined,
   HomeOutlined,
   SubnodeOutlined,
+  ShoppingOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, theme, Button } from "antd";
 
@@ -42,15 +43,18 @@ const MenuLayout = ({ children }) => {
         navigate("/Ventas");
         break;
       case "5":
-        navigate("/Linea");
+        navigate("/Compras");
         break;
       case "6":
-        navigate("/Proveedor");
+        navigate("/Linea");
         break;
       case "7":
-        navigate("/Zonas");
+        navigate("/Proveedor");
         break;
       case "8":
+        navigate("/Zonas");
+        break;
+      case "9":
         navigate("/Ofertas");
         break;
       default:
@@ -68,14 +72,16 @@ const MenuLayout = ({ children }) => {
         return ["3"];
       case "/Ventas":
         return ["4"];
-      case "/Linea":
+      case "/Compras":
         return ["5"];
-      case "/Proveedor":
+      case "/Linea":
         return ["6"];
-      case "/Zonas":
+      case "/Proveedor":
         return ["7"];
-      case "/Ofertas":
+      case "/Zonas":
         return ["8"];
+      case "/Ofertas":
+        return ["9"];
       default:
         return ["1"];
     }
@@ -113,21 +119,26 @@ const MenuLayout = ({ children }) => {
             },
             {
               key: "5",
+              icon: <ShoppingOutlined />,
+              label: "Compras",
+            },
+            {
+              key: "6",
               icon: <SisternodeOutlined />,
               label: "Linea",
             },
             {
-              key: "6",
+              key: "7",
               icon: <TeamOutlined />,
               label: "Proveedor",
             },
             {
-              key: "7",
+              key: "8",
               icon: <SubnodeOutlined />,
               label: "Zonas",
             },
             {
-              key: "8",
+              key: "9",
               icon: <SubnodeOutlined />,
               label: "Ofertas",
             },

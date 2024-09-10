@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import { Drawer, Button, InputNumber, Input, Tooltip } from "antd";
+import { CloseOutlined } from "@ant-design/icons"; // Importa el ícono para borrar
 import MenuLayout from "../components/MenuLayout";
 import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
-import { CloseOutlined } from "@ant-design/icons"; // Importa el ícono para borrar
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/style.css";
@@ -340,6 +340,9 @@ function Articulos() {
 
           // Refiltrar los datos después de la edición
           filterData(searchValue);
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } catch (error) {
           console.error("Error editing the articulo:", error);
         }
@@ -503,6 +506,7 @@ function Articulos() {
             icon: "success",
             timer: 1000,
           });
+          window.location.reload();
         } catch (error) {
           console.error(
             "Error updating prices or fetching filtered data:",
@@ -540,7 +544,6 @@ function Articulos() {
     } else {
       setFilteredData(data);
     }
-    setCurrentPage(1); // Reinicia la página actual al buscar
   };
 
   // Manejar el cambio en el input de búsqueda
@@ -550,16 +553,6 @@ function Articulos() {
   const handleClearSearch = () => {
     setSearchValue("");
     filterData(""); // Limpiar el filtro y mostrar todos los datos
-  };
-  const handleRowsPerPageChange = (rows) => {
-    setRowsPerPage(rows);
-    setCurrentPage(1); // Reinicia la página actual al cambiar la cantidad de filas por página
-  };
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
   };
 
   return (
@@ -981,14 +974,7 @@ function Articulos() {
           columns={columns}
           data={filteredData}
           pagination={true}
-          paginationComponent={
-            <CustomPagination
-              rowsPerPage={rowsPerPage}
-              rowCount={filteredData.length} // Usa el tamaño filtrado para la paginación
-              onChangePage={handlePageChange}
-              currentPage={currentPage}
-            />
-          }
+          paginationComponent={CustomPagination}
           responsive={true}
           customStyles={{
             rows: {
