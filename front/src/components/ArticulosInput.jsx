@@ -23,12 +23,11 @@ export default function ArticulosInput({
   }, []);
 
   const handleChangeArticulo = (value) => {
-    const selectedArticulo = articulos.find(
-      (articulo) => articulo.id === value
-    );
-    onChangeArticulo(selectedArticulo);
-    onInputChange(value); // Actualiza el valor del input en el componente padre
+    const selectedArticulo = articulos.find((articulo) => articulo.id === value);
+    onChangeArticulo(selectedArticulo); // Pasa el artículo completo
+    onInputChange(value); // También actualiza el valor de entrada si lo necesitas
   };
+  
 
   const handleSearchArticulo = (value) => {
     console.log("search:", value);

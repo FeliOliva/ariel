@@ -19,6 +19,7 @@ function Ofertas() {
     productos: [],
   });
   const [articuloValue, setArticuloValue] = useState(null);
+  const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [cantidad, setCantidad] = useState(1);
 
   const fetchData = async () => {
@@ -29,10 +30,6 @@ function Ofertas() {
       console.error("Error fetching the data:", error);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const handleOpenEditDrawer = async (id) => {
     try {
@@ -49,41 +46,50 @@ function Ofertas() {
   const handleEditOfert = async () => {
     try {
       const updatedOfert = {
-        id: currentOfert.id,
+        id: currentOfert.id, // Asegúrate de que este ID es el correcto
         nombre: currentOfert.nombre,
         productos: currentOfert.productos.map((producto) => ({
-          articulo_id: producto.id,
+          articulo_id: producto.id, // Asegúrate de que esto es lo que espera el backend
           cantidad: producto.cantidad,
-          precio: producto.precio,
+          precio: parseFloat(producto.precio).toFixed(2), // Convierte a número y asegura que es un precio decimal
         })),
       };
 
-      await axios.put(`http://localhost:3001/updateOferta`, updatedOfert);
+      console.log(updatedOfert); // Verifica que los datos sean correctos antes de enviarlos
 
+      await axios.put("http://localhost:3001/updateOferta", updatedOfert);
       setOpenEditDrawer(false);
-      fetchData();
+      fetchData(); // Refresca los datos tras la actualización
     } catch (error) {
       console.error("Error updating the offer:", error);
     }
   };
 
   const handleAddArticulo = () => {
-    if (articuloValue && cantidad > 0) {
-      setNewOfert((prev) => ({
-        ...prev,
-        productos: [
-          ...prev.productos,
-          {
-            ...articuloValue,
-            cantidad,
-            precio: articuloValue.precio, // Si necesitas ajustar el precio aquí
-          },
-        ],
-      }));
-      setArticuloValue(null);
-      setCantidad(1);
+    console.log(articuloValue, cantidad);
+    if (selectedArticulo.precio_oferta === null) {
+      alert("El articulo no tiene oferta");
+      return;
     } else {
-      alert("Seleccione un artículo y una cantidad válida");
+      if (selectedArticulo && cantidad > 0) {
+        setNewOfert((prev) => ({
+          ...prev,
+          productos: [
+            ...prev.productos,
+            {
+              ...selectedArticulo,
+              quantity: cantidad,
+              label: selectedArticulo.nombre,
+              value: selectedArticulo.id,
+            },
+          ],
+        }));
+        setSelectedArticulo(null);
+        setArticuloValue(""); // Reinicia la selección del artículo
+        setCantidad(1); // Reinicia la cantidad
+      } else {
+        alert("Seleccione un artículo y una cantidad válida");
+      }
     }
   };
 
@@ -95,17 +101,29 @@ function Ofertas() {
   };
 
   const handleSaveOfert = async () => {
+    console.log(newOfert);
     try {
-      await axios.post("http://localhost:3001/addOferta", newOfert);
+      const ofertaData = {
+        nombre: newOfert.nombre,
+        detalles: newOfert.productos.map((producto) => ({
+          articulo_id: producto.id,
+          cantidad: producto.quantity,
+          precioOferta: producto.precio_oferta, // Ajuste para cumplir con el formato del endpoint
+        })),
+      };
+      console.log(ofertaData);
+
+      await axios.post("http://localhost:3001/addOferta", ofertaData);
       setOpen(false);
       fetchData();
     } catch (error) {
       console.error("Error saving the offer:", error);
     }
   };
+
   const handleArticuloChange = (articulo) => {
-    setArticuloValue(articulo);
-    setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
+    setSelectedArticulo(articulo); // Guarda todo el objeto del artículo
+    setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del producto
   };
 
   const columns = [
@@ -142,11 +160,15 @@ function Ofertas() {
       ),
     },
   ];
-
+  useEffect(() => {
+    fetchData();
+  }, []);
   return (
     <MenuLayout>
       <h1>Listado de ofertas</h1>
-      <Button onClick={() => setOpen(true)}>Añadir oferta</Button>
+      <Button type="primary" onClick={() => setOpen(true)}>
+        Añadir oferta
+      </Button>
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
@@ -170,6 +192,12 @@ function Ofertas() {
             onChangeArticulo={handleArticuloChange}
             onInputChange={setArticuloValue}
           />
+          <InputNumber
+            min={1}
+            value={cantidad}
+            onChange={(value) => setCantidad(value)}
+            style={{ marginBottom: 10 }}
+          />
           <Button
             type="primary"
             onClick={handleAddArticulo}
@@ -177,12 +205,6 @@ function Ofertas() {
           >
             Agregar Artículo
           </Button>
-          <InputNumber
-            min={1}
-            value={cantidad}
-            onChange={(value) => setCantidad(value)}
-            style={{ marginBottom: 10 }}
-          />
           <DynamicList
             items={newOfert.productos}
             onDelete={handleDeleteArticulo}

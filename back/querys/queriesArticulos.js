@@ -27,10 +27,10 @@ module.exports = {
     ORDER BY 
         a.fecha_ingreso DESC;
   `,
-  addArticulo: `INSERT INTO articulo (nombre, mediciones, stock, codigo_producto, proveedor_id, precio_monotributista, costo, linea_id, subLinea_id, fecha_ingreso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());`,
+  addArticulo: `INSERT INTO articulo (nombre, mediciones, stock, codigo_producto, proveedor_id, precio_monotributista, costo, linea_id, subLinea_id, fecha_ingreso, precio_oferta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(),?);`,
   dropArticulo: `UPDATE articulo SET estado = 0 WHERE id = ?;`,
   upArticulo: `UPDATE articulo SET estado = 1 WHERE id = ?;`,
-  updateArticulo: `UPDATE articulo SET nombre = ?, stock = ?, codigo_producto = ?, proveedor_id = ?, precio_monotributista = ?, costo = ?, subLinea_id = ?, linea_id = ?, mediciones = ?, fecha_ingreso = NOW() WHERE id = ?;`,
+  updateArticulo: `UPDATE articulo SET nombre = ?, stock = ?, codigo_producto = ?, proveedor_id = ?, precio_monotributista = ?, costo = ?, subLinea_id = ?, linea_id = ?, mediciones = ?, fecha_ingreso = NOW(), precio_oferta = ? WHERE id = ?;`,
   getArticuloByID: `SELECT 
       a.id,
       a.nombre,

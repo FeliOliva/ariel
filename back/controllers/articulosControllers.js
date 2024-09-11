@@ -21,6 +21,7 @@ const addArticulo = async (req, res) => {
       costo,
       linea_id,
       subLinea_id,
+      precio_oferta,
     } = req.body;
 
     if (!linea_id) {
@@ -38,7 +39,8 @@ const addArticulo = async (req, res) => {
       precio_monotributista,
       costo,
       linea_id,
-      subLinea_id
+      subLinea_id,
+      precio_oferta
     );
 
     res.status(201).json({ message: "Articulo agregado con éxito" });
@@ -80,6 +82,7 @@ const updateArticulo = async (req, res) => {
       subLinea_id,
       linea_id,
       mediciones,
+      precio_oferta,
       ID,
     } = req.body;
     const products = await articuloModel.updateArticulo(
@@ -92,6 +95,7 @@ const updateArticulo = async (req, res) => {
       subLinea_id,
       linea_id,
       mediciones,
+      precio_oferta,
       ID
     );
     res.json(products);

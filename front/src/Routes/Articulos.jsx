@@ -92,6 +92,12 @@ function Articulos() {
       sortable: true,
     },
     {
+      name: "Precio Oferta",
+      selector: (row) =>
+        row.precio_oferta !== null ? row.precio_oferta : "Inexistente",
+      sortable: true,
+    },
+    {
       name: "Proveedor",
       selector: (row) => (
         <Tooltip title={row.proveedor_nombre}>
@@ -314,6 +320,7 @@ function Articulos() {
           subLinea_id: currentArticulo?.sublinea_id,
           mediciones: currentArticulo.mediciones,
           linea_id: currentArticulo?.linea_id,
+          precio_oferta: currentArticulo.precio_oferta,
           ID: currentArticulo.id,
         };
         try {
@@ -742,6 +749,18 @@ function Articulos() {
           }
         ></InputNumber>
         <div style={{ display: "flex", marginTop: 10 }}>
+          <Tooltip>Precio Oferta</Tooltip>
+        </div>
+        <InputNumber
+          value={articulo?.precio_oferta}
+          onChange={(value) =>
+            setArticulo((prev) => ({
+              ...prev,
+              precio_oferta: value,
+            }))
+          }
+        ></InputNumber>
+        <div style={{ display: "flex", marginTop: 10 }}>
           <Tooltip>Linea</Tooltip>
         </div>
         <LineaInput
@@ -903,6 +922,18 @@ function Articulos() {
                 setCurrentArticulo((prev) => ({
                   ...prev,
                   costo: value,
+                }))
+              }
+            ></InputNumber>
+            <div style={{ display: "flex", marginTop: 10 }}>
+              <Tooltip>Precio de oferta</Tooltip>
+            </div>
+            <InputNumber
+              value={currentArticulo?.precio_oferta}
+              onChange={(value) =>
+                setCurrentArticulo((prev) => ({
+                  ...prev,
+                  precio_oferta: value,
                 }))
               }
             ></InputNumber>

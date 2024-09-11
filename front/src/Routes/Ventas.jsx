@@ -74,6 +74,7 @@ function Ventas() {
   };
 
   const handleAddArticulo = () => {
+    console.log(selectedArticulo, cantidad);
     if (selectedArticulo && cantidad > 0) {
       setVenta((prev) => ({
         ...prev,

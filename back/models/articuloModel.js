@@ -20,7 +20,8 @@ const addArticulo = async (
   precio_monotributista,
   costo,
   linea_id,
-  subLinea_id
+  subLinea_id,
+  precio_oferta
 ) => {
   try {
     const query = queriesArticulos.addArticulo;
@@ -34,6 +35,7 @@ const addArticulo = async (
       costo,
       linea_id,
       subLinea_id,
+      precio_oferta,
     ]);
     console.log("Articulo agregado");
   } catch (err) {
@@ -68,6 +70,7 @@ const updateArticulo = async (
   subLinea_id,
   linea_id,
   mediciones,
+  precio_oferta,
   ID
 ) => {
   try {
@@ -82,6 +85,7 @@ const updateArticulo = async (
       subLinea_id,
       linea_id,
       mediciones,
+      precio_oferta,
       ID,
     ]);
   } catch (err) {
