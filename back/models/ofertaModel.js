@@ -51,23 +51,23 @@ const upOferta = async (ID) => {
   }
 };
 
-const updateOferta = async (nombre, productos, ID) => {
+const updateOferta = async (nombre, id) => {
   try {
     const query = queriesOfertas.updateOferta;
-    await db.query(query, [nombre, ID]);
+    await db.query(query, [nombre, id]);
+  } catch (err) {
+    throw err;
+  }
+};
 
-    const queryDeleteDetalles = queriesOfertas.deleteDetallesOferta;
-    await db.query(queryDeleteDetalles, [ID]);
-
-    for (const detalle of productos) {
-      const queryDetalle = queriesOfertas.addDetalleOferta;
-      await db.query(queryDetalle, [
-        ID,
-        detalle.articulo_id,
-        detalle.cantidad,
-        detalle.precioOferta,
-      ]);
-    }
+const updateCantidadDetalleOferta = async (
+  cantidad,
+  articulo_id,
+  oferta_id
+) => {
+  try {
+    const query = queriesOfertas.updateCantidadDetalleOferta;
+    await db.query(query, [cantidad, articulo_id, oferta_id]);
   } catch (err) {
     throw err;
   }
@@ -82,6 +82,7 @@ const getOfertaById = async (oferta_id) => {
     throw err;
   }
 };
+
 module.exports = {
   getAllOfertas,
   addOferta,
@@ -89,4 +90,5 @@ module.exports = {
   upOferta,
   updateOferta,
   getOfertaById,
+  updateCantidadDetalleOferta,
 };

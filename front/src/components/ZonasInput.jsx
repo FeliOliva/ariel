@@ -9,7 +9,8 @@ export default function ZonasInput({ onChangeZona }) {
     const fetchZonas = async () => {
       try {
         const response = await axios.get("http://localhost:3001/zonas");
-        setZonas(response.data);
+        // Guardar las zonas que tienen estado igual a 1
+        setZonas(response.data.filter((zona) => zona.estado === 1));
       } catch (error) {
         console.error("Error fetching zonas:", error);
       }
@@ -20,16 +21,14 @@ export default function ZonasInput({ onChangeZona }) {
 
   const handleChangeZona = (value) => {
     const selectedZona = zonas.find((zona) => zona.id === value);
-    onChangeZona(selectedZona);
+    onChangeZona(selectedZona); // Llama la función de callback con la zona seleccionada
   };
 
   const handleSearchZona = (value) => {
-    console.log("search:", value);
+    console.log("search:", value); // Puedes agregar lógica de búsqueda personalizada aquí si lo necesitas
   };
 
-  const options = zonas
-  .filter((zona) => zona.estado === 1)
-  .map((zona) => ({
+  const options = zonas.map((zona) => ({
     label: zona.nombre,
     value: zona.id,
   }));
@@ -38,10 +37,10 @@ export default function ZonasInput({ onChangeZona }) {
     <Select
       showSearch
       placeholder="Select a zone"
-      optionFilterProp="label"
+      optionFilterProp="label" // Para que el filtro funcione por label
       onChange={handleChangeZona}
       onSearch={handleSearchZona}
-      options={options}
+      options={options} // Carga las opciones filtradas
       style={{ width: "70%" }}
     />
   );

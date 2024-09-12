@@ -11,7 +11,11 @@ import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los es
 
 function Ofertas() {
   const [data, setData] = useState([]);
-  const [currentOfert, setCurrentOfert] = useState({});
+  const [currentOfert, setCurrentOfert] = useState({
+    id: null,
+    nombre: "",
+    productos: [],
+  });
   const [open, setOpen] = useState(false);
   const [openEditDrawer, setOpenEditDrawer] = useState(false);
   const [newOfert, setNewOfert] = useState({
@@ -46,20 +50,17 @@ function Ofertas() {
   const handleEditOfert = async () => {
     try {
       const updatedOfert = {
-        id: currentOfert.id, // Asegúrate de que este ID es el correcto
+        id: currentOfert.id,
         nombre: currentOfert.nombre,
         productos: currentOfert.productos.map((producto) => ({
-          articulo_id: producto.id, // Asegúrate de que esto es lo que espera el backend
+          articulo_id: producto.id, // Asegúrate de que este ID es correcto en el backend
           cantidad: producto.cantidad,
-          precio: parseFloat(producto.precio).toFixed(2), // Convierte a número y asegura que es un precio decimal
         })),
       };
 
-      console.log(updatedOfert); // Verifica que los datos sean correctos antes de enviarlos
-
       await axios.put("http://localhost:3001/updateOferta", updatedOfert);
       setOpenEditDrawer(false);
-      fetchData(); // Refresca los datos tras la actualización
+      fetchData(); // Refresca la tabla con los nuevos datos
     } catch (error) {
       console.error("Error updating the offer:", error);
     }
@@ -251,14 +252,13 @@ function Ofertas() {
                 <strong>Cantidad:</strong>
                 <InputNumber
                   value={valueProd?.cantidad}
-                  onChange={(value) =>
+                  onChange={(value) => {
                     setCurrentOfert((prev) => {
                       const updatedProducts = [...prev.productos];
                       updatedProducts[indexProd].cantidad = value;
                       return { ...prev, productos: updatedProducts };
-                    })
-                  }
-                  placeholder="Cantidad"
+                    });
+                  }}
                   min={1}
                   required
                   style={{ width: "100%" }}
@@ -268,17 +268,9 @@ function Ofertas() {
                 <strong>Precio:</strong>
                 <InputNumber
                   value={valueProd?.precio}
-                  onChange={(value) =>
-                    setCurrentOfert((prev) => {
-                      const updatedProducts = [...prev.productos];
-                      updatedProducts[indexProd].precio = value;
-                      return { ...prev, productos: updatedProducts };
-                    })
-                  }
                   placeholder="Precio"
-                  min={0}
                   step={0.01}
-                  required
+                  readOnly
                   style={{ width: "100%" }}
                 />
               </div>

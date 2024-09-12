@@ -17,7 +17,8 @@ const addClient = async (req, res) => {
       telefono,
       cuil,
       zona_id,
-      es_responsable_inscripto,
+      tipo_cliente,
+      localidad,
     } = req.body;
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
@@ -32,7 +33,8 @@ const addClient = async (req, res) => {
       telefonoValue,
       cuilValue,
       zona_id,
-      es_responsable_inscripto
+      tipo_cliente,
+      localidad
     );
     res
       .status(201)
@@ -72,7 +74,8 @@ const updateClients = async (req, res) => {
       telefono,
       cuil,
       zona_id,
-      es_responsable_inscripto,
+      tipo_cliente,
+      localidad,
       ID,
     } = req.body;
 
@@ -89,7 +92,8 @@ const updateClients = async (req, res) => {
       telefonoValue,
       cuilValue,
       zona_id,
-      es_responsable_inscripto,
+      tipo_cliente,
+      localidad,
       ID
     );
 

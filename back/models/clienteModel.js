@@ -18,7 +18,8 @@ const addClient = async (
   telefono,
   cuil,
   zona_id,
-  es_responsable_inscripto
+  tipo_cliente,
+  localidad
 ) => {
   try {
     const emailValue = email ?? "";
@@ -35,7 +36,8 @@ const addClient = async (
       telefonoValue,
       cuilValue,
       zona_id,
-      es_responsable_inscripto,
+      tipo_cliente,
+      localidad,
     ]);
   } catch (err) {
     throw err;

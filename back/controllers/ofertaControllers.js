@@ -46,10 +46,16 @@ const updateOferta = async (req, res) => {
   const { id, nombre, productos } = req.body;
 
   try {
-    // Actualiza el nombre de la oferta
-    await ofertaModel.updateOferta(nombre, productos, id);
+    await ofertaModel.updateOferta(nombre, id);
 
-    // Envía la respuesta de éxito
+    for (const detalle of productos) {
+      await ofertaModel.updateCantidadDetalleOferta(
+        detalle.cantidad,
+        detalle.articulo_id,
+        id
+      );
+    }
+
     res.status(200).json({ message: "Oferta actualizada correctamente" });
   } catch (error) {
     console.error("Error al actualizar la oferta:", error.message);
@@ -82,6 +88,7 @@ const getOfertaById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 module.exports = {
   getAllOfertas,
   addOferta,

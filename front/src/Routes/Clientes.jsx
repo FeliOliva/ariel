@@ -2,19 +2,12 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import {
-  Button,
-  Drawer,
-  Input,
-  InputNumber,
-  Radio,
-  Tooltip,
-  Switch,
-} from "antd";
+import { Button, Drawer, Input, InputNumber, Tooltip } from "antd";
 import ZonasInput from "../components/ZonasInput";
 import Swal from "sweetalert2";
 import CustomPagination from "../components/CustomPagination";
 import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import TipoClienteInput from "../components/TipoClienteInput";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -29,21 +22,16 @@ const Clientes = () => {
     telefono: "",
     direccion: "",
     cuil: "",
-    responsableInscripto: false,
+    localidad: "",
   });
   const [zona, setZona] = useState("");
-  const [responsableInscripto, setResponsableInscripto] = useState(false);
+  const [tipoCliente, setTipoCliente] = useState("");
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
+  const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
-
-  useEffect(() => {
-    if (currentCliente) {
-      setResponsableInscripto(currentCliente.es_responsable_inscripto === 1);
-    }
-  }, [currentCliente]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -74,7 +62,8 @@ const Clientes = () => {
       direccion: newClient.direccion,
       cuil: newClient.cuil,
       zona_id: zona.id,
-      es_responsable_inscripto: newClient.responsableInscripto,
+      tipo_cliente: tipoCliente.id,
+      localidad: newClient.localidad,
     };
     Swal.fire({
       title: "¿Estas seguro de agregar este cliente?",
@@ -149,7 +138,8 @@ const Clientes = () => {
         : direccionToSend,
       cuil: currentCliente.cuil ? currentCliente.cuil : cuilToSend,
       zona_id: zona.id,
-      es_responsable_inscripto: responsableInscripto ? 1 : 0,
+      localidad: currentCliente.localidad,
+      tipo_cliente: tipoCliente.id,
       ID: currentCliente.id,
     };
     Swal.fire({
@@ -245,13 +235,8 @@ const Clientes = () => {
   const handleEditedZona = () => {
     setOpenEditZonaDrawer(false);
   };
-
-  const onChange = (checked) => {
-    console.log(`switch to ${checked ? 1 : 0}`);
-    setNewClient((prev) => ({
-      ...prev,
-      responsableInscripto: checked ? 1 : 0,
-    }));
+  const handleEditedTipo = () => {
+    setOpenEditTipoDrawer(false);
   };
 
   const columns = [
@@ -264,8 +249,13 @@ const Clientes = () => {
     { name: "CUIL", selector: (row) => row.cuil, sortable: true },
     { name: "Zona", selector: (row) => row.zona_nombre, sortable: true },
     {
-      name: "Responasable Incripto",
-      selector: (row) => (row.es_responsable_inscripto ? "Si" : "No"),
+      name: "Tipo de cliente",
+      selector: (row) => row.nombre_tipo_cliente,
+      sortable: true,
+    },
+    {
+      name: "Localidad",
+      selector: (row) => row.localidad,
       sortable: true,
     },
     {
@@ -301,6 +291,10 @@ const Clientes = () => {
       );
       setCurrentCliente(response.data);
       setZona({ id: response.data.zona_id, nombre: response.data.zona_nombre });
+      setTipoCliente({
+        id: response.data.tipo_cliente_id,
+        nombre: response.data.nombre_tipo_cliente,
+      });
       setOpenEditDrawer(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -395,6 +389,17 @@ const Clientes = () => {
           style={{ marginBottom: 10, display: "flex" }}
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Localidad</Tooltip>
+        </div>
+        <Input
+          value={newClient?.localidad}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, localidad: e.target.value }))
+          }
+          placeholder="Localidad"
+          style={{ marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Cuil</Tooltip>
         </div>
         <Input
@@ -405,12 +410,9 @@ const Clientes = () => {
           }
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
-          <Tooltip>Responsable Inscripto</Tooltip>
+          <Tooltip>Tipo Cliente</Tooltip>
         </div>
-        <Switch
-          defaultChecked={newClient?.responsableInscripto}
-          onChange={onChange}
-        />
+        <TipoClienteInput onChangeTipoCliente={setTipoCliente} />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
@@ -498,12 +500,21 @@ const Clientes = () => {
           }
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
-          <Tooltip>Responsable Inscripto</Tooltip>
+          <Tooltip>Tipo Cliente</Tooltip>
         </div>
-        <Switch
-          checked={responsableInscripto}
-          onChange={(checked) => setResponsableInscripto(checked)}
-        />
+        <Input
+          value={currentCliente?.nombreTipo}
+          readOnly
+          style={{ width: "40%" }}
+        ></Input>
+        <Button
+          onClick={() => setOpenEditTipoDrawer(true)}
+          type="primary"
+          style={{ marginBottom: 10 }}
+        >
+          Cambiar Tipo
+        </Button>
+
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
@@ -526,6 +537,16 @@ const Clientes = () => {
         >
           <ZonasInput onChangeZona={setCurrentCliente.zona_id} />
           <Button onClick={handleEditedZona} type="primary">
+            Guardar Cambios
+          </Button>
+        </Drawer>
+        <Drawer
+          open={openEditTipoDrawer}
+          title="Editar Tipo"
+          onClose={() => setOpenEditTipoDrawer(false)}
+        >
+          <TipoClienteInput onChangeTipoCliente={setCurrentCliente} />
+          <Button onClick={handleEditedTipo} type="primary">
             Guardar Cambios
           </Button>
         </Drawer>
