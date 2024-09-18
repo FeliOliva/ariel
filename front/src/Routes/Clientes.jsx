@@ -289,12 +289,14 @@ const Clientes = () => {
       const response = await axios.get(
         `http://localhost:3001/getClientsByID/${id}`
       );
+      console.log(response.data);
       setCurrentCliente(response.data);
       setZona({ id: response.data.zona_id, nombre: response.data.zona_nombre });
       setTipoCliente({
-        id: response.data.tipo_cliente_id,
-        nombre: response.data.nombre_tipo_cliente,
+        id: response.data.tipo_cliente,
+        nombre: response.data.nombreTipoCliente,
       });
+      console.log(tipoCliente);
       setOpenEditDrawer(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -503,7 +505,7 @@ const Clientes = () => {
           <Tooltip>Tipo Cliente</Tooltip>
         </div>
         <Input
-          value={currentCliente?.nombreTipo}
+          value={tipoCliente?.nombre}
           readOnly
           style={{ width: "40%" }}
         ></Input>
@@ -545,7 +547,15 @@ const Clientes = () => {
           title="Editar Tipo"
           onClose={() => setOpenEditTipoDrawer(false)}
         >
-          <TipoClienteInput onChangeTipoCliente={setCurrentCliente} />
+          <TipoClienteInput
+            onChangeTipoCliente={(selectedTipoCliente) =>
+              setCurrentCliente((prev) => ({
+                ...prev,
+                tipo_cliente: selectedTipoCliente.id,
+                nombre_tipo_cliente: selectedTipoCliente.nombre_tipo,
+              }))
+            }
+          />
           <Button onClick={handleEditedTipo} type="primary">
             Guardar Cambios
           </Button>
