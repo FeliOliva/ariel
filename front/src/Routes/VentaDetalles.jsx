@@ -9,6 +9,7 @@ import "jspdf-autotable";
 
 const VentaDetalles = () => {
   const { id } = useParams();
+  console.log(id);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ventaInfo, setVentaInfo] = useState({

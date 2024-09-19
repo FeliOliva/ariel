@@ -24,8 +24,6 @@ const Clientes = () => {
     cuil: "",
     localidad: "",
   });
-  const [zona, setZona] = useState("");
-  const [tipoCliente, setTipoCliente] = useState("");
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
   const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
 
@@ -46,7 +44,7 @@ const Clientes = () => {
   };
 
   const handleAddCliente = async () => {
-    if (!newClient.nombre || !newClient.apellido || !zona) {
+    if (!newClient.nombre || !newClient.apellido) {
       Swal.fire({
         icon: "error",
         title: "Oops...",
@@ -54,17 +52,6 @@ const Clientes = () => {
       });
       return;
     }
-    const nuevoCliente = {
-      nombre: newClient.nombre,
-      apellido: newClient.apellido,
-      email: newClient.email,
-      telefono: newClient.telefono,
-      direccion: newClient.direccion,
-      cuil: newClient.cuil,
-      zona_id: zona.id,
-      tipo_cliente: tipoCliente.id,
-      localidad: newClient.localidad,
-    };
     Swal.fire({
       title: "¿Estas seguro de agregar este cliente?",
       icon: "warning",
@@ -78,10 +65,9 @@ const Clientes = () => {
         try {
           const response = await axios.post(
             "http://localhost:3001/addClient",
-            nuevoCliente
+            newClient
           );
           setData([...data, response.data]);
-          console.log(nuevoCliente);
           setOpenAddDrawer(false);
           fetchData(); //revisar para usar esto y resetear los inputs de cliente a vacio
           Swal.fire({
@@ -109,37 +95,33 @@ const Clientes = () => {
       return;
     }
 
-    const cuilToSend =
-      currentCliente.cuil !== undefined && currentCliente.cuil !== ""
-        ? currentCliente.cuil
-        : null;
-    const emailToSend =
-      currentCliente.email !== undefined && currentCliente.email !== ""
-        ? currentCliente.email
-        : "";
-    const telefonoToSend =
-      currentCliente.telefono !== undefined && currentCliente.telefono !== ""
-        ? currentCliente.telefono
-        : "";
-    const direccionToSend =
-      currentCliente.direccion !== undefined && currentCliente.direccion !== ""
-        ? currentCliente.direccion
-        : "";
+    // const cuilToSend =
+    //   currentCliente.cuil !== undefined && currentCliente.cuil !== ""
+    //     ? currentCliente.cuil
+    //     : null;
+    // const emailToSend =
+    //   currentCliente.email !== undefined && currentCliente.email !== ""
+    //     ? currentCliente.email
+    //     : "";
+    // const telefonoToSend =
+    //   currentCliente.telefono !== undefined && currentCliente.telefono !== ""
+    //     ? currentCliente.telefono
+    //     : "";
+    // const direccionToSend =
+    //   currentCliente.direccion !== undefined && currentCliente.direccion !== ""
+    //     ? currentCliente.direccion
+    //     : "";
 
     const clienteActualizado = {
       nombre: currentCliente.nombre,
       apellido: currentCliente.apellido,
-      email: currentCliente.email ? currentCliente.email : emailToSend,
-      telefono: currentCliente.telefono
-        ? currentCliente.telefono
-        : telefonoToSend,
-      direccion: currentCliente.direccion
-        ? currentCliente.direccion
-        : direccionToSend,
-      cuil: currentCliente.cuil ? currentCliente.cuil : cuilToSend,
-      zona_id: zona.id,
+      email: currentCliente.email,
+      telefono: currentCliente.telefono,
+      direccion: currentCliente.direccion,
+      cuil: currentCliente.cuil,
+      zona_id: currentCliente.zona_id,
       localidad: currentCliente.localidad,
-      tipo_cliente: tipoCliente.id,
+      tipo_cliente: currentCliente.tipo_cliente,
       ID: currentCliente.id,
     };
     Swal.fire({
@@ -289,14 +271,9 @@ const Clientes = () => {
       const response = await axios.get(
         `http://localhost:3001/getClientsByID/${id}`
       );
-      console.log(response.data);
       setCurrentCliente(response.data);
-      setZona({ id: response.data.zona_id, nombre: response.data.zona_nombre });
-      setTipoCliente({
-        id: response.data.tipo_cliente,
-        nombre: response.data.nombreTipoCliente,
-      });
-      console.log(tipoCliente);
+      console.log("data");
+      console.log(response.data);
       setOpenEditDrawer(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -414,11 +391,19 @@ const Clientes = () => {
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Tipo Cliente</Tooltip>
         </div>
-        <TipoClienteInput onChangeTipoCliente={setTipoCliente} />
+        <TipoClienteInput
+          onChangeTipoCliente={(value) => {
+            setNewClient((prev) => ({ ...prev, tipo_cliente: value.id }));
+          }}
+        />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
-        <ZonasInput onChangeZona={setZona} />
+        <ZonasInput
+          onChangeZona={(value) =>
+            setNewClient({ ...newClient, zona_id: value.id })
+          }
+        />
         <Button onClick={handleAddCliente} type="primary">
           Guardar
         </Button>
@@ -502,10 +487,24 @@ const Clientes = () => {
           }
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Localidad</Tooltip>
+        </div>
+        <Input
+          value={currentCliente?.localidad}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({
+              ...prev,
+              localidad: e.target.value,
+            }))
+          }
+          placeholder="Localidad"
+          style={{ marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Tipo Cliente</Tooltip>
         </div>
         <Input
-          value={tipoCliente?.nombre}
+          value={currentCliente?.nombre_tipo}
           readOnly
           style={{ width: "40%" }}
         ></Input>
@@ -537,22 +536,30 @@ const Clientes = () => {
           title="Editar Zona"
           onClose={() => setOpenEditZonaDrawer(false)}
         >
-          <ZonasInput onChangeZona={setCurrentCliente.zona_id} />
+          <ZonasInput
+            onChangeZona={(value) =>
+              setCurrentCliente((prev) => ({
+                ...prev,
+                zona_id: value.id,
+                nombreZona: value.nombreZona,
+              }))
+            }
+          />
           <Button onClick={handleEditedZona} type="primary">
             Guardar Cambios
           </Button>
         </Drawer>
         <Drawer
           open={openEditTipoDrawer}
-          title="Editar Tipo"
           onClose={() => setOpenEditTipoDrawer(false)}
+          title="Editar Tipo"
         >
           <TipoClienteInput
-            onChangeTipoCliente={(selectedTipoCliente) =>
+            onChangeTipoCliente={(value) =>
               setCurrentCliente((prev) => ({
                 ...prev,
-                tipo_cliente: selectedTipoCliente.id,
-                nombre_tipo_cliente: selectedTipoCliente.nombre_tipo,
+                tipo_cliente: value.id,
+                nombre_tipo: value.nombre_tipo,
               }))
             }
           />

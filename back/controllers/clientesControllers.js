@@ -24,6 +24,7 @@ const addClient = async (req, res) => {
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
     const cuilValue = cuil ?? "";
+    const localidadValue = localidad ?? "";
 
     const client = await clientModels.addClient(
       nombre,
@@ -34,7 +35,7 @@ const addClient = async (req, res) => {
       cuilValue,
       zona_id,
       tipo_cliente,
-      localidad
+      localidadValue
     );
     res
       .status(201)
@@ -82,7 +83,8 @@ const updateClients = async (req, res) => {
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
     const direccionValue = direccion ?? "";
-    const cuilValue = cuil ?? null;
+    const cuilValue = cuil ?? "";
+    const localidadValue = localidad ?? "";
 
     await clientModels.updateClients(
       nombre,
@@ -93,7 +95,7 @@ const updateClients = async (req, res) => {
       cuilValue,
       zona_id,
       tipo_cliente,
-      localidad,
+      localidadValue,
       ID
     );
 

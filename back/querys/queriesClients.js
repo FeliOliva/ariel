@@ -29,7 +29,7 @@ ORDER BY
   getClientsByID: `SELECT 
   C.*, 
   Z.nombre AS nombreZona, 
-  T.nombre_tipo AS nombreTipoCliente
+  T.nombre_tipo AS nombre_tipo
 FROM 
   cliente C 
 LEFT JOIN 

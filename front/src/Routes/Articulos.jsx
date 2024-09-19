@@ -281,6 +281,7 @@ function Articulos() {
         `http://localhost:3001/getArticuloByID/${id}`
       );
       setCurrentArticulo(response.data);
+      console.log(response.data);
       setOpen(true);
     } catch (error) {
       console.error("Error fetching the data:", error);

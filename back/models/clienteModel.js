@@ -13,20 +13,15 @@ const getAllClients = async () => {
 const addClient = async (
   nombre,
   apellido,
-  direccion,
-  email,
-  telefono,
-  cuil,
+  direccionValue,
+  emailValue,
+  telefonoValue,
+  cuilValue,
   zona_id,
   tipo_cliente,
-  localidad
+  localidadValue
 ) => {
   try {
-    const emailValue = email ?? "";
-    const telefonoValue = telefono ?? "";
-    const direccionValue = direccion ?? "";
-    const cuilValue = cuil ?? "";
-
     const query = queriesClients.addClient;
     await db.query(query, [
       nombre,
@@ -37,7 +32,7 @@ const addClient = async (
       cuilValue,
       zona_id,
       tipo_cliente,
-      localidad,
+      localidadValue,
     ]);
   } catch (err) {
     throw err;
@@ -62,20 +57,16 @@ const upClient = async (ID) => {
 const updateClients = async (
   nombre,
   apellido,
-  direccion,
-  email,
-  telefono,
-  cuil,
+  direccionValue,
+  emailValue,
+  telefonoValue,
+  cuilValue,
   zona_id,
-  es_responsable_inscripto,
+  tipo_cliente,
+  localidadValue,
   ID
 ) => {
   try {
-    const emailValue = email ?? "";
-    const telefonoValue = telefono ?? "";
-    const direccionValue = direccion ?? "";
-    const cuilValue = cuil ?? null;
-
     const query = queriesClients.updateClients;
 
     await db.query(query, [
@@ -86,7 +77,8 @@ const updateClients = async (
       telefonoValue,
       cuilValue,
       zona_id,
-      es_responsable_inscripto,
+      tipo_cliente,
+      localidadValue,
       ID,
     ]);
   } catch (err) {
