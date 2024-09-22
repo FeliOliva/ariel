@@ -18,7 +18,8 @@ const VentaDetalles = () => {
     fecha: "",
     zona_nombre: "",
     total: "",
-    direccion: "", // Asegúrate de inicializar dirección aquí
+    direccion: "",
+    nombre_tipo_cliente: "",
   });
 
   useEffect(() => {
@@ -35,7 +36,8 @@ const VentaDetalles = () => {
           fecha,
           zona_nombre,
           total,
-          direccion, // Asegúrate de que dirección se extraiga
+          direccion,
+          nombre_tipo_cliente,
         } = response.data;
 
         if (Array.isArray(detalles)) {
@@ -47,8 +49,10 @@ const VentaDetalles = () => {
             zona_nombre,
             total,
             direccion,
+            nombre_tipo_cliente,
           });
           console.log(response.data);
+          console.log(response.data.nombre_tipo_cliente);
         } else {
           console.error("Expected 'detalles' to be an array");
         }
@@ -74,9 +78,10 @@ const VentaDetalles = () => {
       pdf.text("X", 100, 20);
 
       pdf.setFontSize(10);
-      pdf.text(`Señor/es: ${ventaInfo.nombre_cliente}`, 10, 35);
-      pdf.text(`Dirección: ${ventaInfo.direccion}`, 10, 40); // Se muestra la dirección correctamente
-      pdf.text(`Localidad: ${ventaInfo.zona_nombre}`, 10, 45);
+      pdf.text(`${ventaInfo.nombre_cliente}`, 10, 35);
+      pdf.text(` ${ventaInfo.direccion}`, 10, 40); // Se muestra la dirección correctamente
+      pdf.text(`${ventaInfo.zona_nombre}`, 10, 45);
+      pdf.text(`${ventaInfo.nombre_tipo_cliente}`, 10, 50);
 
       const fecha = new Date(ventaInfo.fecha);
       const dia = fecha.getDate();
@@ -89,8 +94,8 @@ const VentaDetalles = () => {
       pdf.text(`_________________`, 160, 41);
 
       pdf.line(10, 30, 200, 30);
-      pdf.line(10, 50, 200, 50);
-      pdf.line(160, 30, 160, 50);
+      pdf.line(10, 53, 200, 53);
+      pdf.line(160, 30, 160, 53);
 
       const tableData = data.map((row) => ({
         cantidad: row.cantidad,

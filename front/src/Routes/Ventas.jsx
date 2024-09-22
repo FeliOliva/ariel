@@ -21,7 +21,7 @@ function Ventas() {
     nroVenta: "",
   });
   const [selectedArticulo, setSelectedArticulo] = useState(null);
-  const [cantidad, setCantidad] = useState(1);
+  const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState(""); // Estado para el valor del input del artículo
   const [clienteValue, setClienteValue] = useState(""); // Estado para el valor del input del cliente
 
@@ -46,7 +46,7 @@ function Ventas() {
       } else {
         setVenta((prev) => ({
           ...prev,
-          nroVenta: "V004", // Establece el valor inicial a V004 si no hay ventas previas
+          nroVenta: "V00001", // Establece el valor inicial a V004 si no hay ventas previas
         }));
       }
     } catch (error) {
@@ -89,7 +89,7 @@ function Ventas() {
         ],
       }));
       setSelectedArticulo(null); // Reset selected article after adding
-      setCantidad(1); // Reset quantity to 1 after adding
+      setCantidad(0); // Reset quantity to 1 after adding
       setArticuloValue(""); // Reset input value
     } else {
       alert("Seleccione un artículo y una cantidad válida");
@@ -132,7 +132,7 @@ function Ventas() {
           setVenta({ articulos: [], cliente: null, nroVenta: "" });
           setArticuloValue("");
           setClienteValue("");
-          setCantidad(1);
+          setCantidad(0);
           setOpen(false);
           alert("Venta registrada con éxito");
           fetchData();

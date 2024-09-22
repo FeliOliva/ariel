@@ -148,6 +148,51 @@ const getVentaByID = async (venta_id) => {
   }
 };
 
+const addCuentaCorriente = async (cliente_id, saldo_total) => {
+  const query = queriesVentas.addCuentaCorriente;
+  await db.query(query, [cliente_id, saldo_total]);
+};
+
+const getTotal = async (venta_id) => {
+  try {
+    const query = queriesVentas.getTotal;
+    const [rows] = await db.query(query, [venta_id]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+const getCuentaCorrienteByClienteId = async (cliente_id) => {
+  const query = queriesVentas.getCuentaCorrienteByClienteId;
+  const [rows] = await db.query(query, [cliente_id]);
+  return rows.length ? rows[0] : null;
+};
+
+const updatePagoCuentaCorriente = async (cliente_id, monto_total) => {
+  const query = queriesVentas.updatePagoCuentaCorriente;
+  await db.query(query, [monto_total, cliente_id]);
+};
+const updateCuentaCorriente = async (cliente_id, saldo_total) => {
+  const query = queriesVentas.updateCuentaCorriente;
+  await db.query(query, [saldo_total, cliente_id]);
+};
+
+const getPagoCuentaCorrienteByClienteId = async (cliente_id) => {
+  const query = queriesVentas.getPagoCuentaCorrienteByClienteId;
+  const [rows] = await db.query(query, [cliente_id]);
+  return rows.length ? rows[0] : null;
+};
+
+const addPagoCuentaCorriente = async (cliente_id, monto_total) => {
+  const query = queriesVentas.addPagoCuentaCorriente;
+  await db.query(query, [cliente_id, monto_total]);
+};
+const getSaldoTotalCuentaCorriente = async (cliente_id) => {
+  const query = queriesVentas.getSaldoTotalCuentaCorriente;
+  const [rows] = await db.query(query, [cliente_id]);
+  return rows[0].saldo_acumulado || 0;
+};
+
 module.exports = {
   getAllVentas,
   addVenta,
@@ -162,4 +207,12 @@ module.exports = {
   getVentasByZona,
   getVentasByProducto,
   getVentaByID,
+  addCuentaCorriente,
+  getTotal,
+  getCuentaCorrienteByClienteId,
+  addPagoCuentaCorriente,
+  getPagoCuentaCorrienteByClienteId,
+  updatePagoCuentaCorriente,
+  updateCuentaCorriente,
+  getSaldoTotalCuentaCorriente,
 };

@@ -9,20 +9,11 @@ const getAllVentas = async (req, res) => {
     res.status(500).json({ error: "Error al obtener todas las ventas" });
   }
 };
-
 const addVenta = async (req, res) => {
   try {
     const { cliente_id, nroVenta, zona_id, pago, detalles } = req.body;
 
-    // Crear la venta y obtener el ID generado
-    const ventaId = await ventasModel.addVenta(
-      cliente_id,
-      nroVenta,
-      zona_id,
-      pago
-    );
-
-    // Verificar el stock de cada artículo
+    // Verificar el stock de cada artículo primero
     for (const detalle of detalles) {
       const result = await ventasModel.checkStock(
         detalle.articulo_id,
@@ -34,10 +25,18 @@ const addVenta = async (req, res) => {
           detalle.articulo_id
         );
         return res.status(203).json({
-          error_code: result.nombre,
+          error_code: result.nombre, // Puedes personalizar el mensaje de error aquí
         });
       }
     }
+
+    // Crear la venta
+    const ventaId = await ventasModel.addVenta(
+      cliente_id,
+      nroVenta,
+      zona_id,
+      pago
+    );
 
     // Agregar detalles de la venta y descontar el stock
     for (const detalle of detalles) {
@@ -48,7 +47,6 @@ const addVenta = async (req, res) => {
         detalle.cantidad,
         detalle.precio_monotributista
       );
-
       // Descontar el stock del artículo
       await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
 
@@ -58,6 +56,27 @@ const addVenta = async (req, res) => {
         detalle.articulo_id,
         detalle.cantidad
       );
+    }
+
+    // Obtener el total de la venta
+    const response = await ventasModel.getTotal(ventaId);
+    const ventaTotal = response[0].total;
+
+    await ventasModel.addCuentaCorriente(cliente_id, ventaTotal);
+
+    // Calcular el saldo acumulado para este cliente en pagos_cuenta_corriente
+    const saldoTotal = await ventasModel.getSaldoTotalCuentaCorriente(
+      cliente_id
+    );
+
+    // Actualizar el monto total en pagos_cuenta_corriente
+    const pagoExistente = await ventasModel.getPagoCuentaCorrienteByClienteId(
+      cliente_id
+    );
+    if (pagoExistente) {
+      await ventasModel.updatePagoCuentaCorriente(cliente_id, saldoTotal);
+    } else {
+      await ventasModel.addPagoCuentaCorriente(cliente_id, saldoTotal);
     }
 
     res.status(201).json({ message: "Venta agregada con éxito" });
@@ -153,6 +172,7 @@ const getVentaByID = async (req, res) => {
         fecha: detalleVentas[0].fecha,
         zona_nombre: detalleVentas[0].nombre_zona,
         direccion: detalleVentas[0].direccion,
+        nombre_tipo_cliente: detalleVentas[0].nombre_tipo_cliente,
         total: detalleVentas[0].total_importe,
         detalles: detalleVentas.map((detalle) => ({
           id: detalle.articulo_id,

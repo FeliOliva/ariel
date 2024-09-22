@@ -55,8 +55,9 @@ ORDER BY v.id;
   c.direccion, -- Dirección del cliente
   c.cuil, -- CUIL del cliente
   c.telefono, -- Teléfono del cliente
-  c.email, -- Email del cliente
-  c.es_responsable_inscripto, -- Responsabilidad fiscal
+  c.email, 
+  c.tipo_cliente,  -- ID del tipo de cliente
+  tc.nombre_tipo AS nombre_tipo_cliente,  -- Nombre del tipo de cliente
   z.nombre AS nombre_zona,
   (dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista, -- Importe de cada detalle
   (SELECT SUM(dv1.precio_monotributista * dv1.cantidad)
@@ -67,10 +68,19 @@ INNER JOIN articulo a ON dv.articulo_id = a.id
 INNER JOIN venta v ON dv.venta_id = v.id
 INNER JOIN cliente c ON v.cliente_id = c.id
 INNER JOIN zona z ON c.zona_id = z.id
+INNER JOIN tipo_cliente tc ON c.tipo_cliente = tc.id  -- Unión con tipo_cliente
 WHERE dv.venta_id = ?;
   `,
   checkStock: "SELECT stock, nombre FROM articulo WHERE id = ?",
   descontarStock: "UPDATE articulo SET stock = stock - ? WHERE id = ?",
   updateLogVenta:
     "INSERT INTO stock_log(cliente_id, articulo_id, cantidad, fecha) VALUES (?, ?, ?, NOW())",
+  getTotal: `select total, cliente_id from venta where id = ?`,
+  addCuentaCorriente: `INSERT INTO cuenta_corriente (cliente_id, saldo_total, fecha_ultima_actualizacion) VALUES (?, ?, NOW())`,
+  getCuentaCorrienteByClienteId: `SELECT * FROM cuenta_corriente WHERE cliente_id = ?`,
+  updateCuentaCorriente: `UPDATE cuenta_corriente SET saldo_total = ? WHERE cliente_id = ?`,
+  addPagoCuentaCorriente: `INSERT INTO pagos_cuenta_corriente (cliente_id, monto_total, fecha_pago) VALUES (?, ?, NOW())`,
+  getPagoCuentaCorrienteByClienteId: `SELECT * FROM pagos_cuenta_corriente WHERE cliente_id = ?`,
+  updatePagoCuentaCorriente: `UPDATE pagos_cuenta_corriente SET monto_total = ? WHERE cliente_id = ?`,
+  getSaldoTotalCuentaCorriente: `SELECT SUM(saldo_total) as saldo_acumulado FROM cuenta_corriente WHERE cliente_id = ?`,
 };
