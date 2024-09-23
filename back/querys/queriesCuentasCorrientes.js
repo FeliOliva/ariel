@@ -27,4 +27,20 @@ WHERE c.id = ?;
   payCuentaByTotal: `UPDATE pagos_cuenta_corriente SET monto_total = monto_total - ? WHERE cliente_id = ?;`,
   getTotalCuentaCorriente: `SELECT saldo_total FROM cuenta_corriente WHERE id = ?;`,
   getTotalPagoCuentCorriente: `SELECT monto_total FROM pagos_cuenta_corriente WHERE cliente_id = ?;`,
+  getCuentasByClienteOrdenadas: `
+    SELECT id, saldo_total 
+    FROM cuenta_corriente 
+    WHERE cliente_id = ? 
+    ORDER BY saldo_total ASC;
+  `,
+  actualizarSaldoCuentaCorriente: `
+    UPDATE cuenta_corriente 
+    SET saldo_total = ? 
+    WHERE id = ?;
+  `,
+  actualizarMontoTotalPagos: `
+    UPDATE pagos_cuenta_corriente 
+    SET monto_total = monto_total - ? 
+    WHERE cliente_id = ?;
+  `,
 };
