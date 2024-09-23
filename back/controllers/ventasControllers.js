@@ -37,9 +37,12 @@ const addVenta = async (req, res) => {
       zona_id,
       pago
     );
+    let totalVenta = 0;
 
     // Agregar detalles de la venta y descontar el stock
     for (const detalle of detalles) {
+      const subtotal = detalle.cantidad * detalle.precio_monotributista;
+      totalVenta += subtotal;
       await ventasModel.addDetalleVenta(
         ventaId,
         detalle.articulo_id,
@@ -47,6 +50,7 @@ const addVenta = async (req, res) => {
         detalle.cantidad,
         detalle.precio_monotributista
       );
+
       // Descontar el stock del artículo
       await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
 
@@ -56,6 +60,7 @@ const addVenta = async (req, res) => {
         detalle.articulo_id,
         detalle.cantidad
       );
+      await ventasModel.updateVentaTotal(ventaId, totalVenta);
     }
 
     // Obtener el total de la venta

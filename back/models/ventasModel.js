@@ -192,6 +192,10 @@ const getSaldoTotalCuentaCorriente = async (cliente_id) => {
   const [rows] = await db.query(query, [cliente_id]);
   return rows[0].saldo_acumulado || 0;
 };
+const updateVentaTotal = async (ventaId, total) => {
+  const query = queriesVentas.updateVentaTotal;
+  await db.query(query, [total, ventaId]);
+};
 
 module.exports = {
   getAllVentas,
@@ -215,4 +219,5 @@ module.exports = {
   updatePagoCuentaCorriente,
   updateCuentaCorriente,
   getSaldoTotalCuentaCorriente,
+  updateVentaTotal,
 };
