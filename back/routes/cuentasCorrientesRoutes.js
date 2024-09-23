@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 const cuentaCorrienteControllers = require("../controllers/cuentaCorrienteControllers");
 
-router.get("/cuentascorrientes", cuentaCorrienteControllers.getAllCuentas);
+router.get(
+  "/cuentascorrientesByCliente/:ID",
+  cuentaCorrienteControllers.getAllCuentasCorrientesByCliente
+);
 router.put(
   "/payByCuentaCorriente",
   cuentaCorrienteControllers.payByCuentaCorriente

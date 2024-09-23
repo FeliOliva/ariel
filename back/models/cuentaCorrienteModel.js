@@ -1,10 +1,11 @@
+const { response } = require("express");
 const db = require("../database");
 const queriesCuentasCorrientes = require("../querys/queriesCuentasCorrientes");
 
-const getAllCuentas = async () => {
+const getAllCuentasCorrientesByCliente = async (cliente_id) => {
   try {
-    const query = queriesCuentasCorrientes.getAllCuentas;
-    const [rows] = await db.query(query);
+    const query = queriesCuentasCorrientes.getAllCuentasCorrientesByCliente;
+    const [rows] = await db.query(query, [cliente_id]);
     return rows;
   } catch (err) {
     throw err;
@@ -46,7 +47,7 @@ const getTotalCuentaCorriente = async (ID) => {
     throw err;
   }
 };
-const getTotalPagoCuentCorriente = async (cliente_id) => {
+const getTotalPagoCuentaCorriente = async (cliente_id) => {
   try {
     const query = queriesCuentasCorrientes.getTotalPagoCuentCorriente;
     const total = await db.query(query, [cliente_id]);
@@ -56,10 +57,10 @@ const getTotalPagoCuentCorriente = async (cliente_id) => {
   }
 };
 module.exports = {
-  getAllCuentas,
+  getAllCuentasCorrientesByCliente,
   getCuentasByCliente,
   payByCuentaCorriente,
   payCuentaByTotal,
   getTotalCuentaCorriente,
-  getTotalPagoCuentCorriente,
+  getTotalPagoCuentaCorriente,
 };

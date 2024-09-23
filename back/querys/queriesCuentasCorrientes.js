@@ -1,5 +1,5 @@
 module.exports = {
-  getAllCuentas: `SELECT 
+  getAllCuentasCorrientesByCliente: `SELECT 
     cc.id, 
     cc.cliente_id, 
     c.nombre AS nombre_cliente, 
@@ -8,7 +8,8 @@ module.exports = {
 FROM 
     cuenta_corriente cc
 JOIN 
-    cliente c ON cc.cliente_id = c.id;
+    cliente c ON cc.cliente_id = c.id
+    WHERE c.id = ?;
 `,
   getCuentaByID: `SELECT 
     cc.id, 

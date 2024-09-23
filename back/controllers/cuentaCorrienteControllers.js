@@ -1,31 +1,40 @@
 const cuentaCorrienteModel = require("../models/cuentaCorrienteModel");
 
-const getAllCuentas = async (req, res) => {
-  const cuentas = await cuentaCorrienteModel.getAllCuentas();
-  res.json(cuentas);
+const getAllCuentasCorrientesByCliente = async (req, res) => {
+  try {
+    const cliente_id = req.params.ID;
+    const cuenta = await cuentaCorrienteModel.getAllCuentasCorrientesByCliente(
+      cliente_id
+    );
+    res.json(cuenta);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 const payByCuentaCorriente = async (req, res) => {
   const { monto, ID } = req.body;
-  const total = await getTotalCuentaCorriente(ID);
+  const total = await cuentaCorrienteModel.getTotalCuentaCorriente(ID);
   if (total < monto) {
     return res
       .status(400)
       .json({ message: "El monto supera el total de la cuenta corriente" });
   } else {
-    const pago = await cuentaCorrienteModel.payByCuentaCorriente(monto, ID);
-    res.json(pago);
+    await cuentaCorrienteModel.payByCuentaCorriente(monto, ID);
+    res.status(200).json("Cuenta corriente pagada con exito");
   }
 };
 const payCuentaByTotal = async (req, res) => {
   const { monto, cliente_id } = req.body;
-  const total = await getTotalPagoCuentCorriente(cliente_id);
+  const total = await cuentaCorrienteModel.getTotalPagoCuentaCorriente(
+    cliente_id
+  );
   if (total < monto) {
     return res
       .status(400)
       .json({ message: "El monto supera el total de la cuenta corriente" });
   } else {
-    const pago = await cuentaCorrienteModel.payCuentaByTotal(monto, cliente_id);
-    res.json(pago);
+    await cuentaCorrienteModel.payCuentaByTotal(monto, cliente_id);
+    res.status(200).json("Cuenta corriente pagada con exito");
   }
 };
 const getCuentasByCliente = async (req, res) => {
@@ -35,7 +44,7 @@ const getCuentasByCliente = async (req, res) => {
 };
 
 module.exports = {
-  getAllCuentas,
+  getAllCuentasCorrientesByCliente,
   getCuentasByCliente,
   payByCuentaCorriente,
   payCuentaByTotal,
