@@ -285,7 +285,7 @@ function Ventas() {
         footer={"Zona de ventas"}
         width={700}
       >
-        <div style={{ display: "flex", marginTop: 10 }}>
+        <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Nro de Venta</Tooltip>
         </div>
         <Input
@@ -293,7 +293,7 @@ function Ventas() {
           style={{ marginBottom: 10 }}
           readOnly // Deshabilitar el input para el número de venta
         />
-        <div style={{ display: "flex", marginTop: 10 }}>
+        <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Seleccione el cliente</Tooltip>
         </div>
         <ClienteInput

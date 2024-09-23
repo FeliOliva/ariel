@@ -24,6 +24,7 @@ const RoutesFilter = require("./routes/filterRoutes");
 const RoutesCompras = require("./routes/comprasRoutes");
 const RoutesTipoCliente = require("./routes/tipoClienteRoutes");
 const RoutesCuentaCorrientes = require("./routes/cuentasCorrientesRoutes");
+const RoutesGastos = require("./routes/GatosRoutes");
 
 app.use(
   "/",
@@ -40,7 +41,8 @@ app.use(
   RoutesFilter,
   RoutesCompras,
   RoutesTipoCliente,
-  RoutesCuentaCorrientes
+  RoutesCuentaCorrientes,
+  RoutesGastos
 );
 
 app.listen(PORT, () => {
