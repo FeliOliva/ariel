@@ -7,7 +7,7 @@ import MenuLayout from "../components/MenuLayout";
 import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "../style/style.css";
 import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
@@ -31,6 +31,7 @@ function Articulos() {
   const [openIncreaseDrawer, setOpenIncreaseDrawer] = useState(false);
   const [currentIncrease, setCurrentIncrease] = useState(null);
   const [subLineaExists, setSubLineaExists] = useState(true);
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -563,6 +564,10 @@ function Articulos() {
     filterData(""); // Limpiar el filtro y mostrar todos los datos
   };
 
+  const handleGoToProveedores = () => {
+    navigate("/proveedor");
+  };
+
   return (
     <MenuLayout>
       <h1>Listado de articulos</h1>
@@ -576,6 +581,9 @@ function Articulos() {
         </Button>
         <Button type="primary" onClick={setOpenFilterDrawer}>
           Aumentos
+        </Button>
+        <Button type="primary" onClick={handleGoToProveedores}>
+          Ver Proveedores
         </Button>
       </div>
       {/* Input de búsqueda */}

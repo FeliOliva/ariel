@@ -46,16 +46,13 @@ const MenuLayout = ({ children }) => {
         navigate("/Compras");
         break;
       case "6":
-        navigate("/Linea");
+        navigate("/Ofertas");
         break;
       case "7":
-        navigate("/Proveedor");
+        navigate("/CuentasCorrientes");
         break;
       case "8":
-        navigate("/Zonas");
-        break;
-      case "9":
-        navigate("/Ofertas");
+        navigate("/Linea");
         break;
       default:
     }
@@ -74,14 +71,12 @@ const MenuLayout = ({ children }) => {
         return ["4"];
       case "/Compras":
         return ["5"];
-      case "/Linea":
-        return ["6"];
-      case "/Proveedor":
-        return ["7"];
-      case "/Zonas":
-        return ["8"];
       case "/Ofertas":
-        return ["9"];
+        return ["6"];
+      case "/CuentasCorrientes":
+        return ["7"];
+      case "/Linea":
+        return ["8"];
       default:
         return ["1"];
     }
@@ -124,23 +119,18 @@ const MenuLayout = ({ children }) => {
             },
             {
               key: "6",
-              icon: <SisternodeOutlined />,
-              label: "Linea",
+              icon: <SubnodeOutlined />,
+              label: "Ofertas",
             },
             {
               key: "7",
-              icon: <TeamOutlined />,
-              label: "Proveedor",
+              icon: <SubnodeOutlined />,
+              label: "Cuentas Corrientes",
             },
             {
               key: "8",
-              icon: <SubnodeOutlined />,
-              label: "Zonas",
-            },
-            {
-              key: "9",
-              icon: <SubnodeOutlined />,
-              label: "Ofertas",
+              icon: <SisternodeOutlined />,
+              label: "Linea",
             },
           ]}
         />

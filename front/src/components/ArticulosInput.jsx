@@ -23,11 +23,12 @@ export default function ArticulosInput({
   }, []);
 
   const handleChangeArticulo = (value) => {
-    const selectedArticulo = articulos.find((articulo) => articulo.id === value);
+    const selectedArticulo = articulos.find(
+      (articulo) => articulo.id === value
+    );
     onChangeArticulo(selectedArticulo); // Pasa el artículo completo
     onInputChange(value); // También actualiza el valor de entrada si lo necesitas
   };
-  
 
   const handleSearchArticulo = (value) => {
     console.log("search:", value);
@@ -36,7 +37,12 @@ export default function ArticulosInput({
   const options = articulos
     .filter((articulo) => articulo.estado === 1)
     .map((articulo) => ({
-      label: articulo.nombre,
+      label:
+        articulo.nombre +
+        " - " +
+        articulo.linea_nombre +
+        " - " +
+        articulo.sublinea_nombre,
       value: articulo.id,
     }));
 

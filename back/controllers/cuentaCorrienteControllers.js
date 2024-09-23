@@ -83,7 +83,16 @@ const payCuentaByTotal = async (req, res) => {
 
 const getCuentasByCliente = async (req, res) => {
   const cliente_id = req.params.ID;
-  const cuenta = await cuentaCorrienteModel.getCuentasByCliente(cliente_id);
+  const cuenta = await cuentaCorrienteModel.getCuentasByClienteOrdenadas(
+    cliente_id
+  );
+  res.json(cuenta);
+};
+const getTotalCuentasByCliente = async (req, res) => {
+  const cliente_id = req.params.ID;
+  const cuenta = await cuentaCorrienteModel.getTotalPagoCuentaCorriente(
+    cliente_id
+  );
   res.json(cuenta);
 };
 
@@ -92,4 +101,5 @@ module.exports = {
   getCuentasByCliente,
   payByCuentaCorriente,
   payCuentaByTotal,
+  getTotalCuentasByCliente,
 };

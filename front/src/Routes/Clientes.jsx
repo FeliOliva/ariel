@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 import CustomPagination from "../components/CustomPagination";
 import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import TipoClienteInput from "../components/TipoClienteInput";
+import { useNavigate } from "react-router-dom";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -26,6 +27,7 @@ const Clientes = () => {
   });
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
   const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -294,17 +296,25 @@ const Clientes = () => {
       return part1;
     }
   };
+  const handleGoToZonas = () => {
+    navigate("/zonas");
+  };
 
   return (
     <MenuLayout>
       <h1>Listado de clientes</h1>
-      <Button
-        style={{ marginBottom: 10 }}
-        onClick={() => setOpenAddDrawer(true)}
-        type="primary"
-      >
-        Agregar Cliente
-      </Button>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Button
+          style={{ marginBottom: 10 }}
+          onClick={() => setOpenAddDrawer(true)}
+          type="primary"
+        >
+          Agregar Cliente
+        </Button>
+        <Button onClick={handleGoToZonas} type="primary">
+          Ver Zonas
+        </Button>
+      </div>
       <Drawer
         open={openAddDrawer}
         title="Agregar Cliente"

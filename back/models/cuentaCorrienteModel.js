@@ -29,15 +29,6 @@ const payCuentaByTotal = async (monto, cliente_id) => {
     throw err;
   }
 };
-const getCuentasByCliente = async (cliente_id) => {
-  try {
-    const query = queriesCuentasCorrientes.getCuentasByCliente;
-    const [rows] = await db.query(query, [cliente_id]);
-    return rows;
-  } catch (err) {
-    throw err;
-  }
-};
 const getTotalCuentaCorriente = async (ID) => {
   try {
     const query = queriesCuentasCorrientes.getTotalCuentaCorriente;
@@ -83,7 +74,6 @@ const actualizarSaldoCuentaCorriente = async (cuenta_id, nuevo_saldo) => {
 
 module.exports = {
   getAllCuentasCorrientesByCliente,
-  getCuentasByCliente,
   payByCuentaCorriente,
   payCuentaByTotal,
   getTotalCuentaCorriente,

@@ -15,5 +15,9 @@ router.get(
   "/cuentasCorrientesByCliente/:ID",
   cuentaCorrienteControllers.getCuentasByCliente
 );
+router.get(
+  "/TotalCuentasByCliente/:ID",
+  cuentaCorrienteControllers.getTotalCuentasByCliente
+);
 
 module.exports = router;

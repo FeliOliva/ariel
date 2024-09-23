@@ -78,6 +78,8 @@ const getOfertaById = async (req, res) => {
           id: oferta.articulo_id,
           nombre: oferta.nombre_articulo,
           cod: oferta.cod_articulo,
+          nombre_linea: oferta.nombre_linea,
+          nombre_sublinea: oferta.nombre_sublinea,
           precio: oferta.precioOferta,
           cantidad: oferta.cantidad,
         })),

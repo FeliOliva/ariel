@@ -4,12 +4,13 @@ import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { Drawer, Button, Input, Spin, Tooltip, InputNumber } from "antd";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import ClienteInput from "../components/ClienteInput";
 import DynamicList from "../components/DynamicList";
 import CustomPagination from "../components/CustomPagination";
 import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import OfertasInput from "../components/OfertasInput";
 
 function Ventas() {
   const [data, setData] = useState([]);
@@ -24,6 +25,8 @@ function Ventas() {
   const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState(""); // Estado para el valor del input del artículo
   const [clienteValue, setClienteValue] = useState(""); // Estado para el valor del input del cliente
+  const [ofertaValue, setOfertaValue] = useState(""); // Estado para el valor del input de la oferta
+  const [selectedOferta, setSelectedOferta] = useState(""); // Estado para el valor del input de la oferta
 
   const fetchData = async () => {
     try {
@@ -63,6 +66,8 @@ function Ventas() {
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
+    console.log(selectedArticulo);
+    console.log(articulo);
   };
 
   const handleClienteChange = (cliente) => {
@@ -83,7 +88,12 @@ function Ventas() {
           {
             ...selectedArticulo,
             quantity: cantidad,
-            label: selectedArticulo.nombre,
+            label:
+              selectedArticulo.nombre +
+              " - " +
+              selectedArticulo.linea_nombre +
+              " - " +
+              selectedArticulo.sublinea_nombre,
             value: selectedArticulo.id,
           },
         ],
@@ -112,8 +122,8 @@ function Ventas() {
           zona_id: venta.cliente.zona_id,
           pago: 0,
           detalles: venta.articulos.map((articulo) => ({
-            articulo_id: articulo.value,
-            costo: articulo.costo,
+            articulo_id: articulo.value, // Usamos el ID del artículo
+            costo: articulo.costo, // Asegúrate de que este campo esté presente
             cantidad: articulo.quantity,
             precio_monotributista: articulo.precio_monotributista,
           })),
@@ -123,10 +133,10 @@ function Ventas() {
           "http://localhost:3001/addVenta",
           ventaData
         );
+
         if (response.status === 203) {
-          console.log(response.data.error_code);
           const articuloFaltante = response.data.error_code;
-          alert(`stock insuficiente para ${articuloFaltante} `);
+          alert(`Stock insuficiente para ${articuloFaltante}`);
           return;
         } else {
           setVenta({ articulos: [], cliente: null, nroVenta: "" });
@@ -138,11 +148,59 @@ function Ventas() {
           fetchData();
         }
       } catch (error) {
-        console.error("Error sending venta:", error);
+        console.error("Error al enviar la venta:", error);
         alert("Error al registrar la venta");
       }
     } else {
       alert("Seleccione un cliente y agregue al menos un artículo");
+    }
+  };
+
+  const handleOfertaChange = (oferta) => {
+    setSelectedOferta(oferta);
+    setOfertaValue(oferta?.id || "");
+    console.log(ofertaValue);
+    console.log(selectedOferta);
+  };
+  const handleAddOferta = async () => {
+    if (selectedOferta) {
+      try {
+        // Realiza la solicitud al backend para obtener los productos de la oferta seleccionada
+        const response = await axios.get(
+          `http://localhost:3001/detalleOferta/${selectedOferta.id}`
+        );
+        const { productos } = response.data;
+
+        // Itera sobre los productos y agrega cada uno a la lista de artículos de la venta
+        productos.forEach((producto) => {
+          setVenta((prev) => ({
+            ...prev,
+            articulos: [
+              ...prev.articulos,
+              {
+                id: producto.id,
+                nombre: producto.nombre,
+                precio: parseFloat(producto.precio), // Convierte el precio a número
+                cantidad: producto.cantidad, // La cantidad que viene en el producto de la oferta
+                costo: producto.precio * 0.8, // Ejemplo de cálculo de costo, ajusta según tu lógica
+                precio_monotributista: parseFloat(producto.precio), // Puedes modificar este valor si es diferente
+                label: `${producto.nombre} - ${producto.nombre_linea} - ${producto.nombre_sublinea}`,
+                value: producto.id,
+                quantity: producto.cantidad, // O la cantidad que desees usar por defecto
+              },
+            ],
+          }));
+        });
+
+        // Reiniciar el valor de la oferta seleccionada
+        setSelectedOferta(null);
+        setOfertaValue("");
+      } catch (error) {
+        console.error("Error fetching oferta details:", error);
+        alert("Error al agregar la oferta");
+      }
+    } else {
+      alert("Seleccione una oferta válida");
     }
   };
 
@@ -225,6 +283,7 @@ function Ventas() {
         maskClosable={false}
         onClose={() => setOpen(false)}
         footer={"Zona de ventas"}
+        width={700}
       >
         <div style={{ display: "flex", marginTop: 10 }}>
           <Tooltip>Nro de Venta</Tooltip>
@@ -242,7 +301,7 @@ function Ventas() {
           onChangeCliente={handleClienteChange}
           onInputChange={setClienteValue} // Update input value
         />
-        <div style={{ display: "flex", marginTop: 10 }}>
+        <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Seleccione los artículos</Tooltip>
         </div>
         <ArticulosInput
@@ -257,12 +316,28 @@ function Ventas() {
           style={{ marginBottom: 10 }}
         />
         <Button
-          type="primary"
+          className="custom-button"
           onClick={handleAddArticulo}
           style={{ marginBottom: 20 }}
         >
           Agregar Artículo
         </Button>
+        <div style={{ display: "flex", margin: 10 }}>
+          <Tooltip>Seleccione una oferta</Tooltip>
+        </div>
+        <OfertasInput
+          value={ofertaValue}
+          onChangeOferta={handleOfertaChange}
+          onInputChange={setOfertaValue} // Update input value
+        />
+        <Button
+          className="custom-button"
+          onClick={handleAddOferta} // Asigna el evento onClick
+          style={{ display: "flex", marginTop: 10 }}
+        >
+          Agregar oferta
+        </Button>
+
         <DynamicList items={venta.articulos} onDelete={handleDeleteArticulo} />
         <Button onClick={handleAddVenta} type="primary">
           Registrar Venta

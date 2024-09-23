@@ -114,17 +114,22 @@ const Zonas = () => {
       console.error("Error fetching the data:", error);
     }
   };
-
+  const handleBack = () => {
+    window.history.back();
+  };
   return (
     <MenuLayout>
       <h1>Lista de Zonas</h1>
-      <Button
-        style={{ marginBottom: 10 }}
-        onClick={() => setOpenAddDrawer(true)}
-        type="primary"
-      >
-        Agregar Zona
-      </Button>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Button
+          style={{ marginBottom: 10 }}
+          onClick={() => setOpenAddDrawer(true)}
+          type="primary"
+        >
+          Agregar Zona
+        </Button>
+        <Button onClick={handleBack}>Volver</Button>
+      </div>
       <Drawer
         open={openAddDrawer}
         title="Agregar Zona"

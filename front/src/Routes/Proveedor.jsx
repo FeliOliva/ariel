@@ -212,16 +212,22 @@ const Proveedores = () => {
     }
   };
 
+  const handleBack = () => {
+    window.history.back();
+  };
   return (
     <MenuLayout>
       <h1>Lista de Proveedores</h1>
-      <Button
-        style={{ marginBottom: 10 }}
-        onClick={() => setOpenAddDrawer(true)}
-        type="primary"
-      >
-        Agregar Proveedor
-      </Button>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Button
+          style={{ marginBottom: 10 }}
+          onClick={() => setOpenAddDrawer(true)}
+          type="primary"
+        >
+          Agregar Proveedor
+        </Button>
+        <Button onClick={handleBack}>Volver</Button>
+      </div>
       <Drawer
         open={openAddDrawer}
         title="Agregar Proveedor"

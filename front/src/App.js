@@ -14,6 +14,7 @@ import Ofertas from "./Routes/Ofertas";
 import OfertasDetalles from "./Routes/OfertasDetalles";
 import Compras from "./Routes/Compras";
 import CompraDetalles from "./Routes/CompraDetalles";
+import CuentasCorrientes from "./Routes/CuentasCorrientes";
 function App() {
   return (
     <Routes>
@@ -31,6 +32,7 @@ function App() {
       <Route path="/ofertas/:id" element={<OfertasDetalles />} />
       <Route path="/compras" element={<Compras />} />
       <Route path="/compras/:id" element={<CompraDetalles />} />
+      <Route path="/CuentasCorrientes" element={<CuentasCorrientes />} />
     </Routes>
   );
 }
