@@ -17,6 +17,9 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
 
     fetchClientes();
   }, []);
+  const handleSearchCliente = (value) => {
+    console.log("search:", value);
+  };
 
   const handleChangeCliente = (value) => {
     const selectedCliente = clientes.find((cliente) => cliente.id === value);
@@ -27,7 +30,7 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
   const options = clientes
     .filter((cliente) => cliente.estado === 1)
     .map((cliente) => ({
-      label: `${cliente.nombre} ${cliente.apellido}`,
+      label: cliente.nombre + " " + cliente.apellido,
       value: cliente.id,
     }));
 
@@ -36,16 +39,12 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
       value={value}
       showSearch
       placeholder="Selecciona un cliente"
+      onSearch={handleSearchCliente}
+      options={options}
       optionFilterProp="label"
       onChange={handleChangeCliente}
       style={{ width: "100%" }}
-    >
-      {options.map((option) => (
-        <Select.Option key={option.value} value={option.value}>
-          {option.label}
-        </Select.Option>
-      ))}
-    </Select>
+    />
   );
 };
 

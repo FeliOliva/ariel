@@ -2,12 +2,22 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Drawer, Button, Input, Tooltip, Select, InputNumber } from "antd";
+import {
+  Drawer,
+  Button,
+  Input,
+  Tooltip,
+  Select,
+  InputNumber,
+  notification,
+  Modal,
+} from "antd";
 import { Link } from "react-router-dom";
 import ProveedoresInput from "../components/ProveedoresInput";
 import CustomPagination from "../components/CustomPagination";
 import { customHeaderStyles } from "../style/dataTableStyles";
 import { format } from "date-fns";
+import { WarningOutlined } from "@ant-design/icons";
 
 function Compras() {
   const [data, setData] = useState([]);
@@ -21,7 +31,7 @@ function Compras() {
   const [selectedProveedor, setSelectedProveedor] = useState(null);
   const [articulosFiltrados, setArticulosFiltrados] = useState([]);
   const [selectedArticulo, setSelectedArticulo] = useState(null);
-
+  const { confirm } = Modal;
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/compras");
@@ -57,6 +67,30 @@ function Compras() {
   const handleProveedorChange = async (proveedor) => {
     setSelectedProveedor(proveedor);
 
+    if (!proveedor) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "No cargaste un proveedor.",
+        icon: "error",
+      });
+      return;
+    }
+    confirm({
+      title: "¿Estas seguro de agregar este proveedor?",
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
+          );
+          setArticulosFiltrados(response.data);
+        } catch (error) {
+          console.error("Error fetching filtered articles:", error);
+        }
+      },
+    });
     try {
       const response = await axios.get(
         `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
@@ -73,8 +107,11 @@ function Compras() {
         (articulo) => articulo.id === selectedArticulo
       );
       if (!articuloSeleccionado) {
-        alert("Artículo no válido");
-        return;
+        Modal.warning({
+          title: "Advertencia",
+          content: "No cargaste un articulo.",
+          icon: <WarningOutlined />,
+        });
       }
 
       setCompra((prev) => ({
@@ -92,7 +129,11 @@ function Compras() {
       setSelectedArticulo(null); // Reinicia la selección de artículo
       setCompra((prev) => ({ ...prev, cantidad: 1 })); // Reinicia la cantidad
     } else {
-      alert("Seleccione un artículo y una cantidad válida");
+      Modal.warning({
+        title: "Advertencia",
+        content: "No seleccionaste un articulo.",
+        icon: <WarningOutlined />,
+      });
     }
   };
 
@@ -105,7 +146,11 @@ function Compras() {
 
   const handleRegistrarCompra = async () => {
     if (!selectedProveedor || compra.articulos.length === 0) {
-      alert("Seleccione un proveedor y añada al menos un artículo.");
+      Modal.warning({
+        title: "Advertencia",
+        content: "No cargaste un proveedor o no agregaste articulos.",
+        icon: <WarningOutlined />,
+      });
       return;
     }
 
@@ -122,19 +167,29 @@ function Compras() {
         costo: articulo.costo,
       })),
     };
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3001/addCompra",
-        payload
-      );
-      alert("Compra registrada exitosamente.");
-      setOpen(false);
-      fetchData(); // Actualiza la tabla de compras
-    } catch (error) {
-      console.error("Error registrando la compra:", error);
-      alert("Hubo un error al registrar la compra.");
-    }
+    confirm({
+      title: "¿Estas seguro de registrar esta compra?",
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        try {
+          const response = await axios.post(
+            "http://localhost:3001/addCompra",
+            payload
+          );
+          notification.success({
+            message: "Registro exitoso",
+            description: "La compra se registro correctamente.",
+          });
+          setOpen(false);
+          fetchData(); // Actualiza la tabla de compras
+        } catch (error) {
+          console.error("Error registrando la compra:", error);
+          alert("Hubo un error al registrar la compra.");
+        }
+      },
+    });
   };
 
   const columns = [

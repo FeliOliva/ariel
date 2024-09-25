@@ -2,13 +2,21 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Input, InputNumber, Tooltip } from "antd";
+import {
+  Button,
+  Drawer,
+  Input,
+  InputNumber,
+  Tooltip,
+  Modal,
+  notification,
+} from "antd";
 import ZonasInput from "../components/ZonasInput";
-import Swal from "sweetalert2";
 import CustomPagination from "../components/CustomPagination";
 import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import TipoClienteInput from "../components/TipoClienteInput";
 import { useNavigate } from "react-router-dom";
+import { WarningOutlined } from "@ant-design/icons";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -28,6 +36,7 @@ const Clientes = () => {
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
   const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
   const navigate = useNavigate();
+  const { confirm } = Modal;
 
   useEffect(() => {
     fetchData();
@@ -47,23 +56,19 @@ const Clientes = () => {
 
   const handleAddCliente = async () => {
     if (!newClient.nombre || !newClient.apellido) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Los campos Nombre, Apellido y Zona son obligatorios",
+      Modal.warning({
+        title: "Error",
+        content: "Todos los campos son obligatorios",
+        icon: <WarningOutlined />,
       });
       return;
     }
-    Swal.fire({
+    confirm({
       title: "¿Estas seguro de agregar este cliente?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           const response = await axios.post(
             "http://localhost:3001/addClient",
@@ -72,10 +77,11 @@ const Clientes = () => {
           setData([...data, response.data]);
           setOpenAddDrawer(false);
           fetchData(); //revisar para usar esto y resetear los inputs de cliente a vacio
-          Swal.fire({
-            title: "¡Cliente agregado con exito!",
-            icon: "success",
-            confirmButtonText: "OK",
+          notification.success({
+            message: "Cliente agregado",
+            description: "El cliente se agrego correctamente",
+            duration: 2,
+            placement: "topRight",
           });
           setTimeout(() => {
             window.location.reload();
@@ -83,36 +89,19 @@ const Clientes = () => {
         } catch (error) {
           console.error("Error adding the cliente:", error);
         }
-      }
+      },
     });
   };
 
   const handleEditCliente = async () => {
     if (!currentCliente.nombre || !currentCliente.apellido) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Los campos Nombre y Apellido son obligatorios",
+      Modal.warning({
+        title: "Error",
+        content: "Todos los campos son obligatorios",
+        icon: <WarningOutlined />,
       });
       return;
     }
-
-    // const cuilToSend =
-    //   currentCliente.cuil !== undefined && currentCliente.cuil !== ""
-    //     ? currentCliente.cuil
-    //     : null;
-    // const emailToSend =
-    //   currentCliente.email !== undefined && currentCliente.email !== ""
-    //     ? currentCliente.email
-    //     : "";
-    // const telefonoToSend =
-    //   currentCliente.telefono !== undefined && currentCliente.telefono !== ""
-    //     ? currentCliente.telefono
-    //     : "";
-    // const direccionToSend =
-    //   currentCliente.direccion !== undefined && currentCliente.direccion !== ""
-    //     ? currentCliente.direccion
-    //     : "";
 
     const clienteActualizado = {
       nombre: currentCliente.nombre,
@@ -126,39 +115,36 @@ const Clientes = () => {
       tipo_cliente: currentCliente.tipo_cliente,
       ID: currentCliente.id,
     };
-    Swal.fire({
+    confirm({
       title: "¿Estas seguro de actualizar este cliente?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Si, actualizar",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           const response = await axios.put(
             `http://localhost:3001/updateClients`,
             clienteActualizado
           );
-
           const updatedData = data.map((cliente) =>
             cliente.id === currentCliente.id ? response.data : cliente
           );
-
           setData(updatedData);
           setOpenEditDrawer(false);
           fetchData();
-          Swal.fire({
-            title: "Cliente actualizado",
-            icon: "success",
-            showConfirmButton: false,
-            timer: 1000,
+          notification.success({
+            message: "Cliente actualizado",
+            description: "El cliente se actualizo correctamente",
+            duration: 2,
+            placement: "topRight",
           });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } catch (error) {
           console.error("Error updating the cliente:", error);
         }
-      }
+      },
     });
   };
 
@@ -166,46 +152,38 @@ const Clientes = () => {
     console.log(currentState);
     try {
       if (currentState === 1) {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de desactivar este Cliente?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, desactivar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/dropClient/${id}`);
-            Swal.fire({
-              title: "Cliente desactivado",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "Cliente desactivado",
+              description: "El cliente se desactivo correctamente",
+              duration: 2,
+              placement: "topRight",
             });
             fetchData();
-          }
+          },
         });
       } else {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de activar este Cliente?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, activar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/upClient/${id}`);
-            Swal.fire({
-              title: "Cliente activado",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "Cliente activado",
+              description: "El cliente se activo correctamente",
+              duration: 2,
+              placement: "topRight",
             });
             fetchData();
-          }
+          },
         });
       }
     } catch (error) {
@@ -398,7 +376,7 @@ const Clientes = () => {
             setNewClient({ ...newClient, cuil: formatCuil(e.target.value) })
           }
         />
-        <div style={{ display: "flex", marginBottom: 10 }}>
+        <div style={{ display: "flex", marginBottom: 10, marginTop: 10 }}>
           <Tooltip>Tipo Cliente</Tooltip>
         </div>
         <TipoClienteInput
@@ -406,7 +384,7 @@ const Clientes = () => {
             setNewClient((prev) => ({ ...prev, tipo_cliente: value.id }));
           }}
         />
-        <div style={{ display: "flex", marginBottom: 10 }}>
+        <div style={{ display: "flex", marginBottom: 10, marginTop: 10 }}>
           <Tooltip>Zona</Tooltip>
         </div>
         <ZonasInput

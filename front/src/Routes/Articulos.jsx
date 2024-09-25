@@ -1,16 +1,34 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
-import { Drawer, Button, InputNumber, Input, Tooltip } from "antd";
-import { CloseOutlined } from "@ant-design/icons"; // Importa el ícono para borrar
+import {
+  Drawer,
+  Button,
+  InputNumber,
+  Input,
+  Tooltip,
+  Modal,
+  notification,
+} from "antd";
+import {
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  PlusCircleOutlined,
+} from "@ant-design/icons"; // Importa el ícono para borrar
 import MenuLayout from "../components/MenuLayout";
 import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
 import { Link, useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
 import "../style/style.css";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import CustomPagination from "../components/CustomPagination";
 
 function Articulos() {
@@ -32,6 +50,7 @@ function Articulos() {
   const [currentIncrease, setCurrentIncrease] = useState(null);
   const [subLineaExists, setSubLineaExists] = useState(true);
   const navigate = useNavigate();
+  const { confirm } = Modal;
 
   const fetchData = async () => {
     try {
@@ -113,16 +132,18 @@ function Articulos() {
         <Button
           className="custom-button"
           onClick={() => handleOpenEditDrawer(row.id)}
-        >
-          Editar
-        </Button>
+          icon={<EditOutlined />}
+        ></Button>
       ),
     },
     {
       name: "Logs",
       cell: (row) => (
         <Link to={`/Logs/${row.id}`}>
-          <Button className="custom-button">Logs</Button>
+          <Button
+            icon={<FileTextOutlined />}
+            className="custom-button"
+          ></Button>
         </Link>
       ),
     },
@@ -130,21 +151,29 @@ function Articulos() {
       name: "Aumentos",
       cell: (row) => (
         <Button
+          icon={<PlusCircleOutlined />}
           className="custom-button"
           onClick={() => handleIncrease(row.id)}
-        >
-          Aumentar
-        </Button>
+        ></Button>
       ),
     },
     {
-      name: "Activar/Desactivar",
+      name: "Accion",
+
       cell: (row) => (
         <Button
           className="custom-button"
           onClick={() => handleToggleState(row.id, row.estado)}
         >
-          {row.estado ? "Desactivar" : "Activar"}
+          {row.estado ? (
+            <>
+              <DeleteOutlined />
+            </>
+          ) : (
+            <>
+              <CheckCircleOutlined />
+            </>
+          )}
         </Button>
       ),
     },
@@ -163,23 +192,18 @@ function Articulos() {
       currentIncrease.percentage > 100 ||
       currentIncrease.percentage === null
     ) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "El porcentaje debe estar entre 0 y 100",
-        icon: "error",
+        content: "El porcentaje debe estar entre 0 y 100",
       });
       return;
     }
-    Swal.fire({
+    confirm({
       title: "¿Esta seguro realizar este aumento?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Si, confirmar",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           const response = await axios.get(
             `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
@@ -210,62 +234,51 @@ function Articulos() {
 
           fetchData();
           setOpenIncreaseDrawer(false);
-          Swal.fire({
-            title: "Aumento realizado con exito",
-            icon: "success",
-            showConfirmButton: false,
-            timer: 1500,
+          notification.success({
+            message: "Aumento exitoso",
+            description: "El aumento se realizo exitosamente",
+            duration: 1,
           });
         } catch (error) {
           console.error("Error updating prices:", error);
         }
-      }
+      },
     });
   };
 
   const handleToggleState = async (id, currentState) => {
     try {
       if (currentState === 1) {
-        Swal.fire({
-          title: "¿Estas seguro de desactivar este articulo?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, desactivar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+        confirm({
+          title: "¿Esta seguro de desactivar este articulo?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/dropArticulo/${id}`);
-            Swal.fire({
-              title: "Articulo desactivado",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "Articulo desactivado",
+              description: "El articulo se desactivo exitosamente",
+              duration: 1,
             });
             fetchData();
-          }
+          },
         });
       } else {
-        Swal.fire({
-          title: "¿Estas seguro de activar este articulo?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, activar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+        confirm({
+          title: "¿Esta seguro de activar este articulo?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/upArticulo/${id}`);
-            Swal.fire({
-              title: "Articulo activado",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "Articulo activado",
+              description: "El articulo se activo exitosamente",
+              duration: 1,
             });
             fetchData();
-          }
+          },
         });
       }
     } catch (error) {
@@ -291,24 +304,20 @@ function Articulos() {
 
   const handleEditedArticulo = async () => {
     if (!subLineaExists) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "No cargaste una sublinea perteneciente a la linea seleccionada.",
-        icon: "error",
+        content:
+          "No cargaste una sublinea perteneciente a la linea seleccionada.",
       });
       return;
     }
 
-    Swal.fire({
+    confirm({
       title: "¿Estás seguro de hacer este cambio?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <ExclamationCircleOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
         if (currentArticulo.sublinea_id === undefined) {
           currentArticulo.sublinea_id = currentArticulo.subLinea_id;
         }
@@ -325,6 +334,7 @@ function Articulos() {
           precio_oferta: currentArticulo.precio_oferta,
           ID: currentArticulo.id,
         };
+
         try {
           await axios.put(
             `http://localhost:3001/updateArticulos/`,
@@ -340,100 +350,88 @@ function Articulos() {
 
           setData(updatedData); // Actualizar el estado con los datos completos
           setOpen(false); // Cerrar el drawer
-          Swal.fire({
-            title: "¡Artículo editado!",
-            text: "El artículo ha sido editado con éxito.",
-            icon: "success",
-            timer: 1000,
+          notification.success({
+            message: "¡Artículo editado!",
+            description: "El artículo ha sido editado con éxito.",
+            duration: 1,
           });
 
           // Refiltrar los datos después de la edición
           filterData(searchValue);
           setTimeout(() => {
             window.location.reload();
-          }, 1000);
+          }, 1500);
         } catch (error) {
           console.error("Error editing the articulo:", error);
         }
-      }
+      },
     });
   };
 
   const handleAddArticulo = async () => {
     if (articulo === null) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "No cargaste un articulo.",
+        content: "No cargaste un articulo.",
         icon: "error",
       });
       return;
     }
     if (articulo.proveedor_id === undefined) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "No cargaste un proveedor.",
+        content: "No cargaste un proveedor.",
         icon: "error",
       });
       return;
     }
     if (articulo.linea_id === undefined) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "No cargaste una linea.",
+        content: "No cargaste una linea.",
         icon: "error",
       });
       return;
     }
     if (articulo.subLinea_id === undefined) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "No cargaste una sublinea.",
+        content: "No cargaste una sublinea.",
         icon: "error",
       });
       return;
     }
 
-    console.log(articulo);
-    Swal.fire({
-      title: "¿Estás seguro de agregar este artículo?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, agregarlo",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    confirm({
+      title: "¿Estás seguro de agregar este articulo?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           await axios.post(`http://localhost:3001/addArticulo`, articulo);
-          Swal.fire({
-            title: "¡Artículo agregado!",
-            text: "El artículo ha sido agregado con éxito.",
-            icon: "success",
+          notification.success({
+            message: "Articulo agregado",
+            description: "El articulo se agrego exitosamente",
+            duration: 1,
           });
-
           setOpenAddArticulo(false);
         } catch (error) {
-          console.error("Error al agregar el artículo:", error);
-          Swal.fire({
-            title: "Error",
-            text: "Hubo un problema al agregar el artículo. Inténtalo de nuevo.",
-            icon: "error",
-          });
+          console.error("Error al agregar el articulo:", error);
         } finally {
           setTimeout(() => {
             window.location.reload();
           }, 1000);
         }
-      }
+      },
     });
   };
 
   const handleFilterChange = async () => {
     if (currentFilter === null) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "No seleccionaste un proveedor.",
+        content: "No seleccionaste un proveedor.",
         icon: "error",
       });
       return;
@@ -444,23 +442,19 @@ function Articulos() {
       currentFilter.percentage === null ||
       currentFilter.percentage === undefined
     ) {
-      Swal.fire({
+      Modal.warning({
         title: "Advertencia",
-        text: "El porcentaje debe estar entre 0 y 100",
+        content: "El porcentaje es inválido.",
         icon: "error",
       });
       return;
     }
-    Swal.fire({
-      title: "¿Esta seguro de aplicar este aumento?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Si, confirmar",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    confirm({
+      title: "¿Estas seguro de aplicar este aumento?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           if (!currentFilter.percentage || isNaN(currentFilter.percentage)) {
             throw new Error("El porcentaje es inválido o no está definido");
@@ -509,11 +503,11 @@ function Articulos() {
           setData(articulosNuevos);
           setOpenFilterDrawer(false);
           setCurrentFilter(null);
-          Swal.fire({
-            title: "¡Filtro aplicado!",
-            text: "El filtro ha sido aplicado con exito.",
-            icon: "success",
-            timer: 1000,
+          notification.success({
+            message: "Filtro aplicado",
+            description: "El filtro se aplicó exitosamente",
+            icon: <CheckCircleOutlined />,
+            duration: 1,
           });
           window.location.reload();
         } catch (error) {
@@ -522,7 +516,7 @@ function Articulos() {
             error
           );
         }
-      }
+      },
     });
   };
 
@@ -1019,17 +1013,15 @@ function Articulos() {
           customStyles={{
             rows: {
               style: {
-                fontSize: "14px", // Cambia este valor para reducir el tamaño del texto
-                padding: "1px 2px", // Ajusta el padding para reducir el tamaño general de las filas
+                fontSize: "12px", // Reducir aún más el tamaño del texto
+                padding: "0px 0px", // Reducir padding al mínimo
               },
             },
             headCells: {
               style: customHeaderStyles,
             },
             cells: {
-              style: {
-                padding: "2px 4px", // Ajusta el padding de las celdas
-              },
+              style: customCellsStyles,
             },
           }}
         />
