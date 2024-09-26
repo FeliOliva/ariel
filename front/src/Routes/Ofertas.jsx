@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
-import { Drawer, Button, InputNumber, Input, Tooltip } from "antd";
+import {
+  Drawer,
+  Button,
+  InputNumber,
+  Input,
+  Tooltip,
+  Modal,
+  notification,
+} from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import MenuLayout from "../components/MenuLayout";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import DynamicList from "../components/DynamicList"; // Asegúrate de tener este componente
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import "../style/style.css";
 
 function Ofertas() {
   const [data, setData] = useState([]);
@@ -25,6 +38,7 @@ function Ofertas() {
   const [articuloValue, setArticuloValue] = useState(null);
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [cantidad, setCantidad] = useState(1);
+  const { confirm } = Modal;
 
   const fetchData = async () => {
     try {
@@ -48,28 +62,45 @@ function Ofertas() {
   };
 
   const handleEditOfert = async () => {
-    try {
-      const updatedOfert = {
-        id: currentOfert.id,
-        nombre: currentOfert.nombre,
-        productos: currentOfert.productos.map((producto) => ({
-          articulo_id: producto.id, // Asegúrate de que este ID es correcto en el backend
-          cantidad: producto.cantidad,
-        })),
-      };
-
-      await axios.put("http://localhost:3001/updateOferta", updatedOfert);
-      setOpenEditDrawer(false);
-      fetchData(); // Refresca la tabla con los nuevos datos
-    } catch (error) {
-      console.error("Error updating the offer:", error);
-    }
+    const updatedOfert = {
+      id: currentOfert.id,
+      nombre: currentOfert.nombre,
+      productos: currentOfert.productos.map((producto) => ({
+        articulo_id: producto.id, // Asegúrate de que este ID es correcto en el backend
+        cantidad: producto.cantidad,
+      })),
+    };
+    confirm({
+      title: "¿Esta seguro de modificar esta oferta?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        try {
+          await axios.put("http://localhost:3001/updateOferta", updatedOfert);
+          setOpenEditDrawer(false);
+          fetchData(); // Refresca la tabla con los nuevos datos
+          notification.success({
+            message: "Oferta modificada con exito!",
+            description: "La oferta ha sido modificada con exito.",
+            duration: 2,
+            placement: "topRight",
+          });
+        } catch (error) {
+          console.error("Error updating the offer:", error);
+        }
+      },
+    });
   };
 
   const handleAddArticulo = () => {
     console.log(articuloValue, cantidad);
     if (selectedArticulo.precio_oferta === null) {
-      alert("El articulo no tiene oferta");
+      Modal.warning({
+        title: "Advertencia",
+        content: "No cargaste un articulo.",
+        icon: <ExclamationCircleOutlined />,
+      });
       return;
     } else {
       if (selectedArticulo && cantidad > 0) {
@@ -89,7 +120,11 @@ function Ofertas() {
         setArticuloValue(""); // Reinicia la selección del artículo
         setCantidad(1); // Reinicia la cantidad
       } else {
-        alert("Seleccione un artículo y una cantidad válida");
+        Modal.warning({
+          title: "Advertencia",
+          content: "No cargaste un articulo.",
+          icon: <ExclamationCircleOutlined />,
+        });
       }
     }
   };
@@ -102,24 +137,36 @@ function Ofertas() {
   };
 
   const handleSaveOfert = async () => {
-    console.log(newOfert);
-    try {
-      const ofertaData = {
-        nombre: newOfert.nombre,
-        detalles: newOfert.productos.map((producto) => ({
-          articulo_id: producto.id,
-          cantidad: producto.quantity,
-          precioOferta: producto.precio_oferta, // Ajuste para cumplir con el formato del endpoint
-        })),
-      };
-      console.log(ofertaData);
+    confirm({
+      title: "¿Esta seguro de crear esta oferta?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        try {
+          const ofertaData = {
+            nombre: newOfert.nombre,
+            detalles: newOfert.productos.map((producto) => ({
+              articulo_id: producto.id,
+              cantidad: producto.quantity,
+              precioOferta: producto.precio_oferta, // Ajuste para cumplir con el formato del endpoint
+            })),
+          };
+          console.log(ofertaData);
 
-      await axios.post("http://localhost:3001/addOferta", ofertaData);
-      setOpen(false);
-      fetchData();
-    } catch (error) {
-      console.error("Error saving the offer:", error);
-    }
+          await axios.post("http://localhost:3001/addOferta", ofertaData);
+          setOpen(false);
+          fetchData();
+          notification.success({
+            message: "Oferta Creada",
+            description: "La oferta se ha creado correctamente.",
+            duration: 2,
+          });
+        } catch (error) {
+          console.error("Error saving the offer:", error);
+        }
+      },
+    });
   };
 
   const handleArticuloChange = (articulo) => {
@@ -210,7 +257,7 @@ function Ofertas() {
             items={newOfert.productos}
             onDelete={handleDeleteArticulo}
           />
-          <Button type="primary" onClick={handleSaveOfert}>
+          <Button className="custom-button" onClick={handleSaveOfert}>
             Guardar Oferta
           </Button>
         </div>
@@ -291,6 +338,9 @@ function Ofertas() {
         customStyles={{
           headCells: {
             style: customHeaderStyles,
+          },
+          cells: {
+            style: customCellsStyles,
           },
         }}
       />

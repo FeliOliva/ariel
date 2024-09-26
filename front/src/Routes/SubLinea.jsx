@@ -3,10 +3,14 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Tooltip, Input } from "antd";
-import Swal from "sweetalert2";
+import { Button, Drawer, Tooltip, Input, Modal, notification } from "antd";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import { ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import "../style/style.css";
 
 const SubLinea = () => {
   const { id } = useParams();
@@ -15,7 +19,7 @@ const SubLinea = () => {
   const [nombre, setNombre] = useState("");
   const [editDrawer, setEditDrawer] = useState(false);
   const [currentSubLinea, setCurrentSubLinea] = useState({});
-
+  const { confirm } = Modal;
   const fetchData = async () => {
     try {
       const response = await axios.get(
@@ -36,46 +40,36 @@ const SubLinea = () => {
   const handleToggleState = async (id, currentState) => {
     try {
       if (currentState === 1) {
-        Swal.fire({
-          title: "¿Estas seguro de desactivar esta sublinea?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, desactivar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+        confirm({
+          title: "¿Estas seguro de deshabilitar esta sublinea?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/dropSubLinea/${id}`);
-            Swal.fire({
-              title: "SubLinea desactivada",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "SubLinea desactivada",
+              description: "La subLinea se desactivo exitosamente",
+              duration: 1,
             });
             fetchData();
-          }
+          },
         });
       } else {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de activar esta sublinea?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, activar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/upSubLinea/${id}`);
-            Swal.fire({
-              title: "SubLinea activada",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "SubLinea activada",
+              description: "La subLinea se activo exitosamente",
+              duration: 1,
             });
             fetchData();
-          }
+          },
         });
       }
     } catch (error) {
@@ -103,24 +97,20 @@ const SubLinea = () => {
     };
     console.log(editedSubLinea);
     if (!editedSubLinea.nombre) {
-      Swal.fire({
-        title: "Error",
-        text: "El nombre es obligatorio.",
-        icon: "error",
-        timer: 1000,
+      Modal.warning({
+        title: "Advertencia",
+        content: "El campo de nombre es obligatorio",
+        icon: <ExclamationCircleOutlined />,
+        timer: 1500,
       });
       return;
     }
-    Swal.fire({
+    confirm({
       title: "¿Estas seguro de editar esta sublinea?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, editarla",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           await axios.put(
             `http://localhost:3001/updateSubLinea`,
@@ -128,16 +118,15 @@ const SubLinea = () => {
           );
           setEditDrawer(false);
           fetchData();
-          Swal.fire({
-            title: "Sublinea editada con exito!",
-            text: "La sublinea ha sido editada con exito.",
-            icon: "success",
-            timer: 1000,
+          notification.success({
+            message: "Sublinea editada con exito!",
+            description: "La sublinea ha sido editada con exito.",
+            duration: 1,
           });
         } catch (error) {
           console.error("Error fetching the data:", error);
         }
-      }
+      },
     });
   };
   const columns = [
@@ -186,7 +175,7 @@ const SubLinea = () => {
           style={{ marginBottom: 10 }}
           required
         ></Input>
-        <Button type="primary" onClick={handleEditedSubLinea}>
+        <Button className="custom-button" onClick={handleEditedSubLinea}>
           Actualizar Sublinea
         </Button>
       </Drawer>
@@ -202,6 +191,9 @@ const SubLinea = () => {
           customStyles={{
             headCells: {
               style: customHeaderStyles,
+            },
+            cells: {
+              style: customCellsStyles,
             },
           }}
         />

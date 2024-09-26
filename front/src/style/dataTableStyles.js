@@ -19,9 +19,9 @@ export const customCellsStyles = {
   justifyContent: "center",
   flex: 1,
   minHeight: "20px", // Reducir aún más la altura mínima
-  padding: "2px", // Reducir padding al mínimo
   width: "100%",
   boxSizing: "border-box",
+  padding: 1,
 };
 export const iconStyles = {
   fontSize: "12px", // Reducir tamaño de los íconos

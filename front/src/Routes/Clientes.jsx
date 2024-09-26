@@ -13,7 +13,10 @@ import {
 } from "antd";
 import ZonasInput from "../components/ZonasInput";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import TipoClienteInput from "../components/TipoClienteInput";
 import { useNavigate } from "react-router-dom";
 import { WarningOutlined } from "@ant-design/icons";
@@ -126,21 +129,23 @@ const Clientes = () => {
             `http://localhost:3001/updateClients`,
             clienteActualizado
           );
-          const updatedData = data.map((cliente) =>
-            cliente.id === currentCliente.id ? response.data : cliente
-          );
-          setData(updatedData);
           setOpenEditDrawer(false);
-          fetchData();
+          // Actualizar datos
+          setData((i) => {
+            const index = i.findIndex(
+              (cliente) => cliente.id === currentCliente.id
+            );
+            if (i != -1) {
+              i[index] = { ...currentCliente, ...clienteActualizado };
+            }
+            return [...i];
+          }); // Actualizar el estado con los datos completos
           notification.success({
             message: "Cliente actualizado",
             description: "El cliente se actualizo correctamente",
             duration: 2,
             placement: "topRight",
           });
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
         } catch (error) {
           console.error("Error updating the cliente:", error);
         }
@@ -569,6 +574,9 @@ const Clientes = () => {
         customStyles={{
           headCells: {
             style: customHeaderStyles,
+          },
+          cells: {
+            style: customCellsStyles,
           },
         }}
       />

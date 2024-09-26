@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Drawer, InputNumber, Tooltip, message } from "antd";
+import {
+  Button,
+  Drawer,
+  InputNumber,
+  Tooltip,
+  Modal,
+  notification,
+} from "antd";
 import ClienteInput from "../components/ClienteInput";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
@@ -9,6 +16,7 @@ import CustomPagination from "../components/CustomPagination";
 import { format, set } from "date-fns";
 import "../style/style.css";
 import Swal from "sweetalert2";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 
 function CuentasCorrientes() {
   const [client, setClient] = useState(null);
@@ -20,7 +28,7 @@ function CuentasCorrientes() {
   const [monto, setMonto] = useState(0);
   const [cuentaCorriente, setCuentaCorriente] = useState([]);
   const [hasSearched, setHasSearched] = useState(false); // Nuevo estado para controlar la búsqueda
-
+  const { confirm } = Modal;
   const fetchCuentasCorrientes = async (clientId) => {
     setLoading(true);
     try {
@@ -50,7 +58,14 @@ function CuentasCorrientes() {
   };
 
   const handleSelectedClient = () => {
-    if (client) {
+    if (!client) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "Por favor, selecciona un cliente.",
+        icon: <ExclamationCircleOutlined />,
+        timer: 1500,
+      });
+    } else {
       fetchCuentasCorrientes(client);
       fetchPagoCuentasCorrientes(client);
       setHasSearched(true); // Activar después de hacer clic en Buscar
@@ -70,34 +85,40 @@ function CuentasCorrientes() {
     console.log(cuentaCorriente);
     console.log(client);
     console.log(monto);
-    Swal.fire({
-      title: "¿Esta seguro de pagar esta cuenta?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Si, pagar!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    if (!monto) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "No has ingresado un valor de pago.",
+        icon: "error",
+        timer: 1500,
+      });
+      return;
+    }
+    confirm({
+      title: "¿Esta seguro de pagar este monto?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           const response = await axios.put(
             "http://localhost:3001/payByCuentaCorriente",
             { monto: monto, cliente_id: client, ID: cuentaCorriente }
           );
           console.log(response.data);
-          Swal.fire({
-            title: "Exito",
-            text: "Total por cuenta pagado con exito",
-            icon: "success",
-            timer: 1500,
+          notification.success({
+            message: "Exito",
+            description: "Cuenta corriente pagada con exito",
+            duration: 2,
           });
           fetchCuentasCorrientes(client);
           fetchPagoCuentasCorrientes(client);
+          setMonto(0);
           setOpen(false);
         } catch (error) {
           console.error("Error al pagar la cuenta:", error);
         }
-      }
+      },
     });
   };
   const handleOpenPayTotalDrawer = () => {
@@ -107,34 +128,40 @@ function CuentasCorrientes() {
   const handlePayTotal = async () => {
     console.log(monto);
     console.log(client);
-    Swal.fire({
+    if (!monto) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "No has ingresado un valor de pago.",
+        icon: "error",
+        timer: 1500,
+      });
+      return;
+    }
+    confirm({
       title: "¿Esta seguro de pagar todo el saldo?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Si, pagar todo!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           const response = await axios.put(
             "http://localhost:3001/payCuentaByTotal",
             { monto: monto, cliente_id: client }
           );
           console.log(response.data);
-          Swal.fire({
-            title: "Exito",
-            text: "Total pagado con exito",
-            icon: "success",
-            timer: 1500,
+          notification.success({
+            message: "Exito",
+            description: "Total pagado con exito",
+            duration: 2,
           });
           setOpenTotal(false);
           fetchCuentasCorrientes(client);
           fetchPagoCuentasCorrientes(client);
+          setMonto(0);
         } catch (error) {
           console.error("Error al pagar el total:", error);
         }
-      }
+      },
     });
   };
   const columns = [

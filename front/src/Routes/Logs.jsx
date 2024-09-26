@@ -3,17 +3,21 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { useParams } from "react-router-dom";
-import { Button } from "antd";
+import { Button, Modal, notification } from "antd";
 import { format } from "date-fns";
 import CustomPagination from "../components/CustomPagination";
 import Swal from "sweetalert2";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
-
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 function Logs() {
   const { id } = useParams();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nombreArticulo, setNombreArticulo] = useState("");
+  const { confirm } = Modal;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,32 +82,29 @@ function Logs() {
   ];
 
   const handledDeshacer = async (row) => {
-    Swal.fire({
+    confirm({
       title: "¿Estás seguro de deshacer este cambio?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <ExclamationCircleOutlined />,
+      okText: "Sí. confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           await axios.put(`http://localhost:3001/deshacerCambios/${row.id}`, {
             costo_antiguo: row.costo_antiguo,
             precio_monotributista_antiguo: row.precio_monotributista_antiguo,
             articulo_id: row.articulo_id,
           });
-          Swal.fire({
-            title: "Cambio deshecho",
-            icon: "success",
-            timer: 1000,
+          notification.success({
+            message: "Cambio deshecho",
+            description: "Cambio deshecho con exito",
+            duration: 2,
+            placement: "topRight",
           });
           window.history.back();
         } catch (error) {
           console.error("Error fetching the data:", error);
         }
-      }
+      },
     });
   };
   return (
@@ -126,6 +127,9 @@ function Logs() {
           customStyles={{
             headCells: {
               style: customHeaderStyles,
+            },
+            cells: {
+              style: customCellsStyles,
             },
           }}
         />

@@ -3,12 +3,22 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import { Link } from "react-router-dom";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Input, Row, Tooltip, message } from "antd";
-// import SubLineasInput from "../components/InputSubLineas";
-import Swal from "sweetalert2";
+import {
+  Button,
+  Drawer,
+  Input,
+  Tooltip,
+  message,
+  Modal,
+  notification,
+} from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import "../style/style.css";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
 
 const Linea = () => {
   const [lineas, setLineas] = useState([]);
@@ -17,9 +27,9 @@ const Linea = () => {
   const [linea, setLinea] = useState({ nombre: "" });
   const [subLinea, setSubLinea] = useState([]);
   const [openSubLineaDrawer, setOpenSubLineaDrawer] = useState(false);
-  const [subLineaExisted, setSubLineaDrawerExisted] = useState(false);
   const [currentLinea, setCurrentLinea] = useState({});
   const [OpenEditDrawer, setOpenEditDrawer] = useState(false);
+  const { confirm } = Modal;
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/lineas");
@@ -41,41 +51,37 @@ const Linea = () => {
 
   const handleGuardarLinea = async () => {
     if (linea.nombre === "") {
-      Swal.fire({
+      Modal.warning({
         title: "Error",
-        text: "El campo de nombre es obligatorio",
-        icon: "error",
+        content: "El campo de nombre es obligatorio",
+        icon: <ExclamationCircleOutlined />,
         timer: 1500,
       });
       return;
     }
-    Swal.fire({
-      title: "¿Estás seguro de agregar esta linea?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    confirm({
+      title: "¿Estas seguro de agregar esta linea?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           await axios.post("http://localhost:3001/addLinea", {
             nombre: linea.nombre,
           });
+          notification.success({
+            message: "Linea agregada",
+            description: "La linea se agrego exitosamente",
+            duration: 1,
+          });
           fetchData();
           setOpenLineaDrawer(false); // Cierra el drawer
           setLinea(""); // Resetea el estado del input
-          Swal.fire({
-            title: "Linea agregada con exito!",
-            text: "La linea ha sido agregada con éxito.",
-            icon: "success",
-          });
         } catch (error) {
-          console.error("Error al guardar la línea:", error);
-          message.error("Hubo un error al añadir la línea.");
+          console.error("Error al guardar la linea:", error);
+          message.error("Hubo un error al añadir la linea.");
         }
-      }
+      },
     });
   };
   const handleSubLineaChange = (e) => {
@@ -88,24 +94,20 @@ const Linea = () => {
   };
   const handleAddSubLinea = async () => {
     if (subLinea.nombre === undefined) {
-      Swal.fire({
+      Modal.warning({
         title: "Error",
-        text: "El campo de nombre es obligatorio",
-        icon: "error",
+        content: "El campo de nombre es obligatorio",
+        icon: <ExclamationCircleOutlined />,
         timer: 1500,
       });
       return;
     }
-    Swal.fire({
-      title: "¿Estás seguro de agregar esta sublinea?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    confirm({
+      title: "¿Estas seguro de agregar esta sublinea?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           await axios.post(`http://localhost:3001/addSubLinea`, {
             nombre: subLinea.nombre,
@@ -113,79 +115,52 @@ const Linea = () => {
           });
           fetchData();
           setOpenSubLineaDrawer(false);
-          Swal.fire({
-            title: "Sublinea agregada con exito!",
-            text: "La sublinea ha sido agregada con éxito.",
-            icon: "success",
-            timer: 1000,
+          notification.success({
+            message: "SubLinea agregada",
+            description: "La sublinea se agrego exitosamente",
+            duration: 1,
           });
         } catch (error) {
           console.error("Error adding the linea or sublinea:", error);
         }
-      }
+      },
     });
   };
 
-  // const handleOpenDrawerExistedSL = async () => {
-  //   setSubLineaDrawerExisted(true);
-  // };
-  // const handleAddExistedSL = async () => {
-  //   try {
-  //     await axios.post(`http://localhost:3001/addSubLineaByID`, {
-  //       subLinea_id: subLinea.sublinea_id,
-  //       linea_id: subLinea.linea_id,
-  //     });
-  //     window.location.reload();
-  //     setSubLineaDrawerExisted(false);
-  //     setOpenSubLineaDrawer(false);
-  //   } catch (error) {
-  //     console.error("Error adding the linea or sublinea:", error);
-  //   }
-  // };
   const handleToggleState = async (id, currentState) => {
     console.log(currentState);
     try {
       if (currentState === 1) {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de deshabilitar esta Linea?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, deshabilitar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/dropLinea/${id}`);
-            Swal.fire({
-              title: "Linea desactivada",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "Linea desactivada",
+              description: "La linea se desactivo exitosamente",
+              duration: 1,
             });
             fetchData();
-          }
+          },
         });
       } else {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de habilitar esta Linea?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, habilitar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/upLinea/${id}`);
-            Swal.fire({
-              title: "Linea activada",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
+            notification.success({
+              message: "Linea activada",
+              description: "La linea se activo exitosamente",
+              duration: 1,
             });
             fetchData();
-          }
+          },
         });
       }
     } catch (error) {
@@ -213,38 +188,34 @@ const Linea = () => {
     };
     console.log(editedLinea.nombre);
     if (!editedLinea.nombre) {
-      Swal.fire({
+      Modal.warning({
         title: "Error",
-        text: "El campo de nombre es obligatorio",
-        icon: "error",
+        content: "El campo de nombre es obligatorio",
+        icon: <ExclamationCircleOutlined />,
         timer: 1500,
       });
       return;
     }
-    Swal.fire({
+    confirm({
       title: "¿Estas seguro de editar esta Linea?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, editarla",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      icon: <ExclamationCircleOutlined />,
+      okText: "Si, confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           await axios.put(`http://localhost:3001/updateLinea`, editedLinea);
           setOpenEditDrawer(false);
           fetchData();
-          Swal.fire({
-            title: "Linea editada con exito!",
-            text: "La Linea ha sido editada con exito.",
-            icon: "success",
-            timer: 1000,
+          notification.success({
+            message: "Linea editada con exito!",
+            description: "La Linea ha sido editada con exito.",
+            duration: 2,
+            placement: "topRight",
           });
         } catch (error) {
           console.error("Error fetching the data:", error);
         }
-      }
+      },
     });
   };
   const columns = [
@@ -324,6 +295,9 @@ const Linea = () => {
               headCells: {
                 style: customHeaderStyles,
               },
+              cells: {
+                style: customCellsStyles,
+              },
             }}
           />
         )}
@@ -367,14 +341,6 @@ const Linea = () => {
             style={{ padding: 0 }}
           />
         </div>
-        {/* <div style={{ display: "flex", marginBottom: 10, marginTop: 10 }}>
-          <Button
-            style={{ backgroundColor: "#FF9800", borderColor: "#FF9800" }}
-            onClick={handleOpenDrawerExistedSL}
-          >
-            Agregar a SubLinea existente
-          </Button>
-        </div> */}
         <div>
           <Button
             type="primary"
@@ -385,30 +351,6 @@ const Linea = () => {
           </Button>
         </div>
       </Drawer>
-      {/* <Drawer
-        open={subLineaExisted}
-        onClose={() => setSubLineaDrawerExisted(false)}
-        title="Añadir a Sublínea existente"
-      > */}
-      {/* <div style={{ display: "flex", marginBottom: 10 }}>
-          <strong>Añadir a SubLinea Existente</strong>
-        </div>
-        <SubLineasInput
-          onChangeSubLineas={(value) => {
-            setSubLinea((prev) => ({
-              ...prev,
-              sublinea_id: value.id,
-            }));
-          }}
-        />
-        <Button
-          type="primary"
-          onClick={handleAddExistedSL}
-          style={{ marginTop: 20 }}
-        >
-          Guardar
-        </Button> */}
-      {/* </Drawer> */}
       <Drawer
         open={OpenEditDrawer}
         onClose={() => setOpenEditDrawer(false)}

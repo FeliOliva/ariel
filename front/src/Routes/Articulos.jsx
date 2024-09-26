@@ -342,13 +342,15 @@ function Articulos() {
           );
 
           // Actualizar datos
-          const updatedData = data.map((articulo) =>
-            articulo.id === currentArticulo.id
-              ? { ...currentArticulo, ...articuloEdited }
-              : articulo
-          );
-
-          setData(updatedData); // Actualizar el estado con los datos completos
+          setData((i) => {
+            const index = i.findIndex(
+              (articulo) => articulo.id === currentArticulo.id
+            );
+            if (i != -1) {
+              i[index] = { ...currentArticulo, ...articuloEdited };
+            }
+            return [...i];
+          }); // Actualizar el estado con los datos completos
           setOpen(false); // Cerrar el drawer
           notification.success({
             message: "¡Artículo editado!",
@@ -358,9 +360,7 @@ function Articulos() {
 
           // Refiltrar los datos después de la edición
           filterData(searchValue);
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
+          setTimeout(() => {}, 1500);
         } catch (error) {
           console.error("Error editing the articulo:", error);
         }
