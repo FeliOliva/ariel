@@ -39,7 +39,7 @@ const upGasto = async (req, res) => {
 const updateGastos = async (req, res) => {
   try {
     const { nombre, monto, ID } = req.body;
-    const gasto = await gastosModel.updateGastos(ID, nombre, monto);
+    await gastosModel.updateGastos(nombre, monto, ID);
     res.status(200).json({ message: "Gasto actualizado con exito" });
   } catch (error) {
     res.status(500).json({ error: error.message });

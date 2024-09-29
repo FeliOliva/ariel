@@ -67,7 +67,7 @@ const addVenta = async (req, res) => {
     const response = await ventasModel.getTotal(ventaId);
     const ventaTotal = response[0].total;
 
-    await ventasModel.addCuentaCorriente(cliente_id, ventaTotal);
+    await ventasModel.addCuentaCorriente(cliente_id, ventaTotal, ventaId);
 
     // Calcular el saldo acumulado para este cliente en pagos_cuenta_corriente
     const saldoTotal = await ventasModel.getSaldoTotalCuentaCorriente(

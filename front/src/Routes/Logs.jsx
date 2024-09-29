@@ -6,7 +6,6 @@ import { useParams } from "react-router-dom";
 import { Button, Modal, notification } from "antd";
 import { format } from "date-fns";
 import CustomPagination from "../components/CustomPagination";
-import Swal from "sweetalert2";
 import {
   customHeaderStyles,
   customCellsStyles,

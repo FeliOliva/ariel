@@ -12,8 +12,8 @@ const getAllZonas = async (req, res) => {
 const addZona = async (req, res) => {
   try {
     const { nombre } = req.body;
-    await zonaModel.addZona(nombre);
-    res.status(201).json({ message: "Zona agregada con exito" });
+    const zona = await zonaModel.addZona(nombre);
+    res.status(201).json({ message: "Zona agregada con exito", zona: zona });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

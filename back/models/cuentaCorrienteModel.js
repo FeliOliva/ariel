@@ -71,7 +71,31 @@ const actualizarSaldoCuentaCorriente = async (cuenta_id, nuevo_saldo) => {
     throw err;
   }
 };
-
+const actualizarPagoEnVenta = async (venta_id) => {
+  try {
+    await db.query(queriesCuentasCorrientes.actualizarPagoEnVenta, [venta_id]);
+  } catch (err) {
+    throw err;
+  }
+};
+const getVentaId = async (cuenta_id) => {
+  try {
+    const query = queriesCuentasCorrientes.getVentaId;
+    const [rows] = await db.query(query, [cuenta_id]);
+    return rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+const setEstadoCuentaCorriente = async (ID) => {
+  try {
+    const query = queriesCuentasCorrientes.setEstadoCuentaCorriente;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllCuentasCorrientesByCliente,
   payByCuentaCorriente,
@@ -80,4 +104,7 @@ module.exports = {
   getTotalPagoCuentaCorriente,
   getCuentasByClienteOrdenadas,
   actualizarSaldoCuentaCorriente,
+  actualizarPagoEnVenta,
+  getVentaId,
+  setEstadoCuentaCorriente,
 };

@@ -4,12 +4,16 @@ module.exports = {
     cc.cliente_id, 
     c.nombre AS nombre_cliente, 
     cc.saldo_total, 
-    cc.fecha_ultima_actualizacion
+    cc.fecha_ultima_actualizacion,
+    cc.venta_id,
+    cc.estado
 FROM 
     cuenta_corriente cc
 JOIN 
     cliente c ON cc.cliente_id = c.id
-    WHERE c.id = ?;
+    WHERE c.id = ?
+ORDER BY 
+    cc.id DESC;
 `,
   getCuentaByID: `SELECT 
     cc.id, 
@@ -42,5 +46,20 @@ WHERE c.id = ?;
     UPDATE pagos_cuenta_corriente 
     SET monto_total = monto_total - ? 
     WHERE cliente_id = ?;
+  `,
+  actualizarPagoEnVenta: `
+    UPDATE venta 
+    SET pago = 1 
+    WHERE id = ?;
+  `,
+  getVentaId: `
+    SELECT venta_id
+    FROM cuenta_corriente 
+    WHERE id = ?;
+  `,
+  setEstadoCuentaCorriente: `
+    UPDATE cuenta_corriente 
+    SET estado = 0
+    WHERE id = ?;
   `,
 };

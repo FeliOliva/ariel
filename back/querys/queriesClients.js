@@ -20,7 +20,7 @@ JOIN
 JOIN
   tipo_cliente ON cliente.tipo_cliente = tipo_cliente.id
 ORDER BY 
-  cliente.id;
+  cliente.id DESC;
 `,
   addClient: `INSERT INTO cliente (nombre, apellido, direccion, email, telefono, cuil, zona_id, tipo_cliente, localidad ) VALUES (?, ?, ?, ?, ?, ?, ? ,?,?);`,
   dropClient: `UPDATE cliente SET estado = 0 WHERE ID = ?`,

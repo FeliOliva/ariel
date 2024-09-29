@@ -22,16 +22,19 @@ export default function ZonasInput({ onChangeZona }) {
   const handleChangeZona = (value) => {
     const selectedZona = zonas.find((zona) => zona.id === value);
     onChangeZona(selectedZona); // Llama la función de callback con la zona seleccionada
+    console.log(selectedZona);
   };
 
   const handleSearchZona = (value) => {
     console.log("search:", value); // Puedes agregar lógica de búsqueda personalizada aquí si lo necesitas
   };
 
-  const options = zonas.map((zona) => ({
-    label: zona.nombre,
-    value: zona.id,
-  }));
+  const options = zonas
+    .filter((zona) => zona.estado === 1)
+    .map((zona) => ({
+      label: zona.nombreZona,
+      value: zona.id,
+    }));
 
   return (
     <Select

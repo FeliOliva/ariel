@@ -1,8 +1,8 @@
 module.exports = {
-  getAllGastos: "SELECT * FROM gastos;",
-  addGasto: "INSERT INTO gastos (nombre, monto, fecha) VALUES (?, ?, NOW());",
-  dropGasto: "UPDATE gastos SET estado = 0 WHERE ID = ?;",
-  upGasto: "UPDATE gastos SET estado = 1 WHERE ID = ?;",
-  updateGastos: "UPDATE gastos SET nombre = ?, monto = ? WHERE ID = ?;",
-  getGastoByID: "SELECT * FROM gastos WHERE ID = ?;",
+  getAllGastos: "SELECT * FROM gasto;",
+  addGasto: "INSERT INTO gasto (nombre, monto, fecha) VALUES (?, ?, NOW());",
+  dropGasto: "UPDATE gasto SET estado = 0 WHERE ID = ?;",
+  upGasto: "UPDATE gasto SET estado = 1 WHERE ID = ?;",
+  updateGastos: "UPDATE gasto SET nombre = ?, monto = ? WHERE ID = ?;",
+  getGastoByID: "SELECT * FROM gasto WHERE ID = ?;",
 };

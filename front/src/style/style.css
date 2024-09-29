@@ -1,7 +1,7 @@
 /* src/styles.css */
 .custom-button {
   border: 1px solid blue; /* Borde azul */
-  color: black; /* Texto azul */
+  color: black; /* Texto negro */
   background-color: transparent; /* Fondo transparente */
   transition: background-color 0.3s ease; /* Transición suave para el cambio de color */
 }
@@ -10,6 +10,7 @@
   background-color: blue; /* Fondo azul al hacer hover */
   color: white; /* Cambia el color del texto a blanco al hacer hover */
 }
+
 /* src/style/style.css */
 .custom-header {
   font-size: 14px; /* Tamaño del texto en los encabezados */
@@ -19,4 +20,71 @@
   text-transform: uppercase; /* Texto en mayúsculas */
   padding: 10px 15px; /* Padding adicional para un mejor espaciado */
   border-bottom: 2px solid #0056b3; /* Borde inferior para resaltar separación */
+}
+
+.strikethrough {
+  text-decoration: line-through;
+  color: grey;
+}
+
+.cards-wrapper {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px; /* Espacio entre las cards */
+}
+
+.card-container {
+  width: 48%; /* Cada card ocupa el 48% del ancho */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.inputs-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.inputs-container > * {
+  width: 100%; /* Ajusta el ancho de los inputs */
+}
+
+.graph-container {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.graph {
+  width: 100%;
+  height: 300px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.graph-container button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.graph-container button:hover {
+  background-color: #40a9ff;
 }

@@ -10,7 +10,8 @@ module.exports = {
 FROM 
   Compra
 INNER JOIN 
-  Proveedor ON Compra.proveedor_id = Proveedor.id;
+  Proveedor ON Compra.proveedor_id = Proveedor.id
+ORDER BY Compra.id DESC;
 `,
   addCompra: `INSERT INTO Compra (proveedor_id, nro_compra, total) VALUES (?, ?, ?);`,
   getCompraByID: `

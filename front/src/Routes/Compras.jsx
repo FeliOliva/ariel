@@ -15,7 +15,10 @@ import {
 import { Link } from "react-router-dom";
 import ProveedoresInput from "../components/ProveedoresInput";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles";
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles";
 import { format } from "date-fns";
 import { WarningOutlined } from "@ant-design/icons";
 
@@ -75,22 +78,14 @@ function Compras() {
       });
       return;
     }
-    confirm({
-      title: "¿Estas seguro de agregar este proveedor?",
-      icon: <WarningOutlined />,
-      okText: "Sí",
-      cancelText: "Cancelar",
-      onOk: async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
-          );
-          setArticulosFiltrados(response.data);
-        } catch (error) {
-          console.error("Error fetching filtered articles:", error);
-        }
-      },
-    });
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
+      );
+      setArticulosFiltrados(response.data);
+    } catch (error) {
+      console.error("Error fetching filtered articles:", error);
+    }
     try {
       const response = await axios.get(
         `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
@@ -195,7 +190,11 @@ function Compras() {
   const columns = [
     {
       name: "Nro. Compra",
-      selector: (row) => row.nro_compra,
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.nro_compra}
+        </span>
+      ),
       sortable: true,
     },
     {
@@ -230,7 +229,11 @@ function Compras() {
   return (
     <MenuLayout>
       <h1>Compras</h1>
-      <Button onClick={handleOpenDrawer} type="primary">
+      <Button
+        onClick={handleOpenDrawer}
+        style={{ marginBottom: 10 }}
+        type="primary"
+      >
         Registrar Compra
       </Button>
       <Drawer
@@ -301,11 +304,10 @@ function Compras() {
             </ul>
           </div>
         )}
-
         <Button
           type="primary"
           onClick={handleRegistrarCompra}
-          style={{ marginTop: 20 }}
+          style={{ marginBottom: 10 }}
         >
           Registrar Compra
         </Button>
@@ -318,7 +320,14 @@ function Compras() {
         highlightOnHover
         pagination
         paginationComponent={CustomPagination}
-        customStyles={customHeaderStyles}
+        customStyles={{
+          headCells: {
+            style: customHeaderStyles,
+          },
+          cells: {
+            style: customCellsStyles,
+          },
+        }}
       />
     </MenuLayout>
   );

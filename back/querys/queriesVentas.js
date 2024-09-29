@@ -3,6 +3,7 @@ module.exports = {
   v.id,
   v.estado, 
   c.nombre AS nombre_cliente, 
+  c.apellido AS apellido_cliente,
   v.nroVenta,
   z.nombre AS nombre_zona,
   v.pago,
@@ -14,7 +15,7 @@ INNER JOIN cliente c ON v.cliente_id = c.id
 INNER JOIN zona z ON v.zona_id = z.id
 LEFT JOIN detalle_venta d ON v.id = d.venta_id
 GROUP BY v.id, v.estado, c.nombre, v.nroVenta, z.nombre, v.pago
-ORDER BY v.id;
+ORDER BY v.id DESC;
 
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, pago) VALUES (?, ?, ?, ?);`,
@@ -76,7 +77,7 @@ WHERE dv.venta_id = ?;
   updateLogVenta:
     "INSERT INTO stock_log(cliente_id, articulo_id, cantidad, fecha) VALUES (?, ?, ?, NOW())",
   getTotal: `select total, cliente_id from venta where id = ?`,
-  addCuentaCorriente: `INSERT INTO cuenta_corriente (cliente_id, saldo_total, fecha_ultima_actualizacion) VALUES (?, ?, NOW())`,
+  addCuentaCorriente: `INSERT INTO cuenta_corriente (cliente_id, saldo_total, fecha_ultima_actualizacion,venta_id) VALUES (?, ?, NOW(), ?)`,
   getCuentaCorrienteByClienteId: `SELECT * FROM cuenta_corriente WHERE cliente_id = ?`,
   updateCuentaCorriente: `UPDATE cuenta_corriente SET saldo_total = ? WHERE cliente_id = ?`,
   addPagoCuentaCorriente: `INSERT INTO pagos_cuenta_corriente (cliente_id, monto_total, fecha_pago) VALUES (?, ?, NOW())`,

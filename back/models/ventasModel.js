@@ -148,9 +148,9 @@ const getVentaByID = async (venta_id) => {
   }
 };
 
-const addCuentaCorriente = async (cliente_id, saldo_total) => {
+const addCuentaCorriente = async (cliente_id, saldo_total, ventaId) => {
   const query = queriesVentas.addCuentaCorriente;
-  await db.query(query, [cliente_id, saldo_total]);
+  await db.query(query, [cliente_id, saldo_total, ventaId]);
 };
 
 const getTotal = async (venta_id) => {

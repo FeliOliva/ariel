@@ -2,19 +2,26 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Input } from "antd";
-import Swal from "sweetalert2";
+import { Button, Drawer, Input, Modal, notification } from "antd";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
-
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 const Proveedores = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openAddDrawer, setOpenAddDrawer] = useState(false);
   const [openEditDrawer, setOpenEditDrawer] = useState(false);
-  const [currentProveedor, setCurrentProveedor] = useState(null);
-  const [nombre, setNombre] = useState("");
-
+  const [currentProveedor, setCurrentProveedor] = useState("");
+  const [newProveedor, setNewProveedor] = useState("");
+  const { confirm } = Modal;
   useEffect(() => {
     fetchData();
   }, []);
@@ -23,178 +30,159 @@ const Proveedores = () => {
     try {
       const response = await axios.get("http://localhost:3001/proveedor");
       setData(response.data);
-      setLoading(false);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddProveedor = async () => {
-    if (!nombre) {
-      alert("El campo Nombre es obligatorio");
+    if (!newProveedor.nombre) {
+      Modal.warning({
+        title: "Error",
+        content: "El campo Nombre es obligatorio",
+        icon: <WarningOutlined />,
+      });
       return;
     }
 
-    const nuevoProveedor = { nombre: nombre };
-    Swal.fire({
-      title: "¿Estás seguro de agregar este proveedor?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    confirm({
+      title: "¿Estas seguro de agregar este proveedor?",
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
           const response = await axios.post(
             "http://localhost:3001/addProveedor",
-            nuevoProveedor
+            newProveedor
           );
           setData([...data, response.data]);
           setOpenAddDrawer(false);
-          setNombre("");
+          setNewProveedor(null);
           fetchData();
-          Swal.fire({
-            icon: "success",
-            title: "Proveedor agregado con exito",
-            showConfirmButton: false,
-            timer: 1500,
+          notification.success({
+            message: "Proveedor agregado con exito",
+            description: "El proveedor se agrego correctamente",
+            duration: 2,
+            placement: "topRight",
           });
         } catch (error) {
           console.error("Error adding the proveedor:", error);
         }
-      }
+      },
     });
   };
 
   const handleEditProveedor = async () => {
-    if (!nombre) {
-      alert("El campo Nombre es obligatorio");
+    if (!currentProveedor.nombre) {
+      Modal.warning({
+        title: "Error",
+        content: "El campo Nombre es obligatorio",
+        icon: <WarningOutlined />,
+      });
       return;
     }
 
     const proveedorActualizado = {
-      nombre,
+      nombre: currentProveedor.nombre,
       ID: currentProveedor.id,
     };
-
-    Swal.fire({
-      title: "¿Estás seguro de actualizar este proveedor?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    confirm({
+      title: "¿Estas seguro de actualizar este proveedor?",
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
         try {
-          const response = await axios.put(
-            `http://localhost:3001/updateProveedor`,
+          await axios.put(
+            "http://localhost:3001/updateProveedor",
             proveedorActualizado
           );
-
-          const updatedData = data.map((proveedor) =>
-            proveedor.id === currentProveedor.id ? response.data : proveedor
-          );
-
-          setData(updatedData);
           setOpenEditDrawer(false);
-          setNombre("");
+          setCurrentProveedor(null);
           fetchData();
-          Swal.fire({
-            icon: "success",
-            title: "Proveedor actualizado con exito",
-            showConfirmButton: false,
-            timer: 1500,
+          notification.success({
+            message: "Proveedor actualizado con exito",
+            description: "El proveedor se actualizo correctamente",
+            duration: 2,
+            placement: "topRight",
           });
         } catch (error) {
           console.error("Error updating the proveedor:", error);
         }
-      }
+      },
     });
   };
   const handleToggleState = async (id, currentState) => {
-    console.log(currentState);
     try {
       if (currentState === 1) {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de desactivar este Proveedor?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, desactivar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/dropProveedor/${id}`);
-            Swal.fire({
-              title: "Proveedor desactivado",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
-            });
             fetchData();
-          }
+            notification.success({
+              message: "Proveedor desactivado con exito",
+              description: "El proveedor se desactivo correctamente",
+              duration: 2,
+              placement: "topRight",
+            });
+          },
         });
       } else {
-        Swal.fire({
+        confirm({
           title: "¿Estas seguro de activar este Proveedor?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, activar",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
             await axios.put(`http://localhost:3001/upProveedor/${id}`);
-            Swal.fire({
-              title: "Proveedor activado",
-              icon: "success",
-              showConfirmButton: false,
-              timer: 1000,
-            });
             fetchData();
-          }
+            notification.success({
+              message: "Proveedor activado con exito",
+              description: "El proveedor se activo correctamente",
+              duration: 2,
+              placement: "topRight",
+            });
+          },
         });
       }
     } catch (error) {
-      console.error(
-        `Error ${currentState ? "deactivating" : "activating"} the article:`,
-        error
-      );
+      console.error("Error toggling state:", error);
     }
   };
 
   const columns = [
-    { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
-    { name: "Nombre", selector: (row) => row.nombre, sortable: true },
     {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
+      name: "Nombre",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.nombre}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Habilitar/Deshabilitar",
       cell: (row) => (
-        <Button
-          type="primary"
-          onClick={() => handleToggleState(row.id, row.estado)}
-        >
-          {row.estado ? "Desactivar" : "Activar"}
-        </Button>
-      ),
-    },
-    {
-      name: "Acciones",
-      cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
-          Editar
-        </Button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            type="primary"
+            onClick={() => handleOpenEditDrawer(row.id)}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            type="primary"
+            onClick={() => handleToggleState(row.id, row.estado)}
+          >
+            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          </Button>
+        </div>
       ),
     },
   ];
@@ -205,7 +193,6 @@ const Proveedores = () => {
         `http://localhost:3001/getProveedorByID/${id}`
       );
       setCurrentProveedor(response.data);
-      setNombre(response.data.nombre);
       setOpenEditDrawer(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -234,8 +221,13 @@ const Proveedores = () => {
         onClose={() => setOpenAddDrawer(false)}
       >
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={newProveedor?.nombre}
+          onChange={(e) =>
+            setNewProveedor((value) => ({
+              ...value,
+              nombre: e.target.value,
+            }))
+          }
           placeholder="Nombre"
           style={{ marginBottom: 10 }}
           required
@@ -250,8 +242,13 @@ const Proveedores = () => {
         onClose={() => setOpenEditDrawer(false)}
       >
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={currentProveedor?.nombre}
+          onChange={(e) =>
+            setCurrentProveedor((prev) => ({
+              ...prev,
+              nombre: e.target.value,
+            }))
+          }
           placeholder="Nombre"
           style={{ marginBottom: 10 }}
           required
@@ -270,6 +267,9 @@ const Proveedores = () => {
           customStyles={{
             headCells: {
               style: customHeaderStyles,
+            },
+            cells: {
+              style: customCellsStyles,
             },
           }}
         />

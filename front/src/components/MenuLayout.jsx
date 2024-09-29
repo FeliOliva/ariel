@@ -1,32 +1,24 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   ContactsOutlined,
   ShoppingCartOutlined,
   SkinOutlined,
-  TeamOutlined,
   SisternodeOutlined,
   HomeOutlined,
   SubnodeOutlined,
   ShoppingOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, theme, Button } from "antd";
+import { Layout, Menu, theme } from "antd";
 
-const { Header, Sider, Content } = Layout;
+const { Sider, Content } = Layout;
 
 const MenuLayout = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
-  };
 
   const handleMenuClick = (e) => {
     switch (e.key) {
@@ -54,6 +46,9 @@ const MenuLayout = ({ children }) => {
       case "8":
         navigate("/Linea");
         break;
+      case "9":
+        navigate("/Gastos");
+        break;
       default:
     }
   };
@@ -77,6 +72,8 @@ const MenuLayout = ({ children }) => {
         return ["7"];
       case "/Linea":
         return ["8"];
+      case "/Gastos":
+        return ["9"];
       default:
         return ["1"];
     }
@@ -84,7 +81,7 @@ const MenuLayout = ({ children }) => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider trigger={null} collapsible collapsed={collapsed}>
+      <Sider trigger={null}>
         <div className="demo-logo-vertical" />
         <Menu
           theme="dark"
@@ -132,23 +129,15 @@ const MenuLayout = ({ children }) => {
               icon: <SisternodeOutlined />,
               label: "Linea",
             },
+            {
+              key: "9",
+              icon: <SisternodeOutlined />,
+              label: "Gastos",
+            },
           ]}
         />
       </Sider>
       <Layout>
-        <Header
-          style={{
-            padding: 0,
-            background: colorBgContainer,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Button type="text" onClick={toggleCollapsed}>
-            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </Button>
-        </Header>
         <Content
           style={{
             margin: "24px 16px",

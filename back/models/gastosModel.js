@@ -38,10 +38,10 @@ const upGasto = async (ID) => {
     throw err;
   }
 };
-const updateGastos = async (ID, nombre, monto) => {
+const updateGastos = async (nombre, monto, ID) => {
   try {
     const query = queriesGastos.updateGastos;
-    const [rows] = await db.query(query, [ID, nombre, monto]);
+    const [rows] = await db.query(query, [nombre, monto, ID]);
     return rows;
   } catch (err) {
     throw err;

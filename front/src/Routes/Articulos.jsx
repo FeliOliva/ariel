@@ -70,23 +70,41 @@ function Articulos() {
   const columns = [
     {
       name: "Codigo",
-      selector: (row) => row.codigo_producto,
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.codigo_producto}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Nombre",
       selector: (row) => (
-        <Tooltip title={row.nombre + " " + row.mediciones}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre + " " + row.mediciones}
+        >
           <span>{row.nombre + " " + row.mediciones}</span>
         </Tooltip>
       ),
       sortable: true,
     },
-    { name: "Stock", selector: (row) => row.stock, sortable: true },
+    {
+      name: "Stock",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.stock}
+        </span>
+      ),
+      sortable: true,
+    },
     {
       name: "Linea",
       selector: (row) => (
-        <Tooltip title={row.linea_nombre}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.linea_nombre}
+        >
           <span>{row.linea_nombre}</span>
         </Tooltip>
       ),
@@ -95,7 +113,10 @@ function Articulos() {
     {
       name: "SubLinea",
       selector: (row) => (
-        <Tooltip title={row.sublinea_nombre}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.sublinea_nombre}
+        >
           <span>{row.sublinea_nombre}</span>
         </Tooltip>
       ),
@@ -103,78 +124,73 @@ function Articulos() {
     },
     {
       name: "Costo",
-      selector: (row) => row.costo,
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.costo}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Precio monotributista",
-      selector: (row) => row.precio_monotributista,
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.precio_monotributista}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Precio Oferta",
-      selector: (row) =>
-        row.precio_oferta !== null ? row.precio_oferta : "Inexistente",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.precio_oferta !== null ? row.precio_oferta : "Inexistente"}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Proveedor",
       selector: (row) => (
-        <Tooltip title={row.proveedor_nombre}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.proveedor_nombre}
+        >
           <span>{row.proveedor_nombre}</span>
         </Tooltip>
       ),
       sortable: true,
     },
     {
-      name: "Editar",
+      name: "Acciones",
       cell: (row) => (
-        <Button
-          className="custom-button"
-          onClick={() => handleOpenEditDrawer(row.id)}
-          icon={<EditOutlined />}
-        ></Button>
-      ),
-    },
-    {
-      name: "Logs",
-      cell: (row) => (
-        <Link to={`/Logs/${row.id}`}>
+        <div style={{ display: "flex", gap: "8px" }}>
           <Button
-            icon={<FileTextOutlined />}
             className="custom-button"
+            onClick={() => handleOpenEditDrawer(row.id)}
+            icon={<EditOutlined />}
           ></Button>
-        </Link>
-      ),
-    },
-    {
-      name: "Aumentos",
-      cell: (row) => (
-        <Button
-          icon={<PlusCircleOutlined />}
-          className="custom-button"
-          onClick={() => handleIncrease(row.id)}
-        ></Button>
-      ),
-    },
-    {
-      name: "Accion",
 
-      cell: (row) => (
-        <Button
-          className="custom-button"
-          onClick={() => handleToggleState(row.id, row.estado)}
-        >
-          {row.estado ? (
-            <>
-              <DeleteOutlined />
-            </>
-          ) : (
-            <>
-              <CheckCircleOutlined />
-            </>
-          )}
-        </Button>
+          <Link to={`/Logs/${row.id}`}>
+            <Button
+              icon={<FileTextOutlined />}
+              className="custom-button"
+            ></Button>
+          </Link>
+
+          <Button
+            icon={<PlusCircleOutlined />}
+            className="custom-button"
+            onClick={() => handleIncrease(row.id)}
+          ></Button>
+
+          <Button
+            className="custom-button"
+            onClick={() => handleToggleState(row.id, row.estado)}
+          >
+            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          </Button>
+        </div>
       ),
     },
   ];
@@ -346,7 +362,7 @@ function Articulos() {
             const index = i.findIndex(
               (articulo) => articulo.id === currentArticulo.id
             );
-            if (i != -1) {
+            if (i !== -1) {
               i[index] = { ...currentArticulo, ...articuloEdited };
             }
             return [...i];
@@ -509,7 +525,9 @@ function Articulos() {
             icon: <CheckCircleOutlined />,
             duration: 1,
           });
-          window.location.reload();
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } catch (error) {
           console.error(
             "Error updating prices or fetching filtered data:",
@@ -561,6 +579,9 @@ function Articulos() {
   const handleGoToProveedores = () => {
     navigate("/proveedor");
   };
+  const handleGoToDetallesArticulos = () => {
+    navigate("/ArticulosDetalles");
+  };
 
   return (
     <MenuLayout>
@@ -578,6 +599,9 @@ function Articulos() {
         </Button>
         <Button type="primary" onClick={handleGoToProveedores}>
           Ver Proveedores
+        </Button>
+        <Button type="primary" onClick={handleGoToDetallesArticulos}>
+          Imprimir lista de articulos
         </Button>
       </div>
       {/* Input de búsqueda */}

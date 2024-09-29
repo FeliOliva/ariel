@@ -12,7 +12,12 @@ import {
   Modal,
   notification,
 } from "antd";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  ExclamationCircleOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 import "../style/style.css";
 import CustomPagination from "../components/CustomPagination";
 import {
@@ -223,7 +228,9 @@ const Linea = () => {
       name: "Nombre",
       selector: (row) => (
         <Tooltip title={row.nombre}>
-          <span>{row.nombre}</span>
+          <span className={row.estado === 0 ? "strikethrough" : ""}>
+            {row.nombre}
+          </span>
         </Tooltip>
       ),
       sortable: true,
@@ -249,25 +256,21 @@ const Linea = () => {
       ),
     },
     {
-      name: "Editar",
+      name: "Acciones",
       cell: (row) => (
-        <Button
-          className="custom-button"
-          onClick={() => handleOpenEditDrawer(row.id)}
-        >
-          Editar
-        </Button>
-      ),
-    },
-    {
-      name: "Activar/Desactivar",
-      cell: (row) => (
-        <Button
-          className="custom-button"
-          onClick={() => handleToggleState(row.id, row.estado)}
-        >
-          {row.estado ? "Desactivar" : "Activar"}
-        </Button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleOpenEditDrawer(row.id)}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleToggleState(row.id, row.estado)}
+          >
+            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          </Button>
+        </div>
       ),
     },
   ];

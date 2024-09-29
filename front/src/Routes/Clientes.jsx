@@ -19,7 +19,12 @@ import {
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import TipoClienteInput from "../components/TipoClienteInput";
 import { useNavigate } from "react-router-dom";
-import { WarningOutlined } from "@ant-design/icons";
+import {
+  WarningOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
@@ -62,6 +67,22 @@ const Clientes = () => {
       Modal.warning({
         title: "Error",
         content: "Todos los campos son obligatorios",
+        icon: <WarningOutlined />,
+      });
+      return;
+    }
+    if (!newClient.tipo_cliente) {
+      Modal.warning({
+        title: "Error",
+        content: "El tipo de cliente es obligatorio",
+        icon: <WarningOutlined />,
+      });
+      return;
+    }
+    if (!newClient.zona_id) {
+      Modal.warning({
+        title: "Error",
+        content: "El campo zona es obligatorio",
         icon: <WarningOutlined />,
       });
       return;
@@ -125,27 +146,21 @@ const Clientes = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          const response = await axios.put(
+          await axios.put(
             `http://localhost:3001/updateClients`,
             clienteActualizado
           );
           setOpenEditDrawer(false);
-          // Actualizar datos
-          setData((i) => {
-            const index = i.findIndex(
-              (cliente) => cliente.id === currentCliente.id
-            );
-            if (i != -1) {
-              i[index] = { ...currentCliente, ...clienteActualizado };
-            }
-            return [...i];
-          }); // Actualizar el estado con los datos completos
+          fetchData();
           notification.success({
             message: "Cliente actualizado",
             description: "El cliente se actualizo correctamente",
             duration: 2,
             placement: "topRight",
           });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         } catch (error) {
           console.error("Error updating the cliente:", error);
         }
@@ -207,46 +222,103 @@ const Clientes = () => {
   };
 
   const columns = [
-    { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
-    { name: "Nombre", selector: (row) => row.nombre, sortable: true },
-    { name: "Apellido", selector: (row) => row.apellido, sortable: true },
-    { name: "Email", selector: (row) => row.email, sortable: true },
-    { name: "Teléfono", selector: (row) => row.telefono, sortable: true },
-    { name: "Dirección", selector: (row) => row.direccion, sortable: true },
-    { name: "CUIL", selector: (row) => row.cuil, sortable: true },
-    { name: "Zona", selector: (row) => row.zona_nombre, sortable: true },
+    {
+      name: "Nombre",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.nombre}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Apellido",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.apellido}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Email",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.email}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Teléfono",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.telefono}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Dirección",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.direccion}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "CUIL",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.cuil}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Zona",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.zona_nombre}
+        </span>
+      ),
+      sortable: true,
+    },
     {
       name: "Tipo de cliente",
-      selector: (row) => row.nombre_tipo_cliente,
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.nombre_tipo_cliente}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Localidad",
-      selector: (row) => row.localidad,
-      sortable: true,
-    },
-    {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
-      sortable: true,
-    },
-    {
-      name: "Editar",
-      cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
-          Editar
-        </Button>
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.localidad}
+        </span>
       ),
+      sortable: true,
     },
     {
-      name: "Habilitar/Deshabilitar",
-      cell: (row) => (
-        <Button
-          type="primary"
-          onClick={() => handleToggleState(row.id, row.estado)}
-        >
-          {row.estado ? "Desactivar" : "Activar"}
-        </Button>
+      name: "Acciones",
+      selector: (row) => (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleOpenEditDrawer(row.id)}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleToggleState(row.id, row.estado)}
+          >
+            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          </Button>
+        </div>
       ),
     },
   ];

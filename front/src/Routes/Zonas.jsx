@@ -2,9 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Input } from "antd";
+import { Button, Drawer, Input, Modal, notification } from "antd";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import "../style/style.css";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 
 const Zonas = () => {
   const [data, setData] = useState([]);
@@ -12,10 +22,11 @@ const Zonas = () => {
   const [openAddDrawer, setOpenAddDrawer] = useState(false);
   const [openEditDrawer, setOpenEditDrawer] = useState(false);
   const [currentZona, setCurrentZona] = useState(null);
-  const [nombre, setNombre] = useState("");
+  const [newZone, setNewZone] = useState(null);
   useEffect(() => {
     fetchData();
   }, []);
+  const { confirm } = Modal;
 
   const fetchData = async () => {
     try {
@@ -28,88 +39,155 @@ const Zonas = () => {
   };
 
   const handleAddZona = async () => {
-    if (!nombre) {
-      alert("El campo Zona es obligatorio");
-      return;
+    if (!newZone.nombre) {
+      Modal.warning({
+        title: "Error",
+        content: "El campo Zona es obligatorio",
+        icon: <WarningOutlined />,
+      });
     }
-
-    const nuevaZona = {
-      nombre: nombre,
-    };
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3001/addZona",
-        nuevaZona
-      );
-      setData([...data, response.data]);
-      alert("Zona agregada con éxito");
-      setOpenAddDrawer(false);
-      setNombre("");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error adding the zona:", error);
-    }
+    confirm({
+      title: "¿Estas seguro de agregar esta Zona?",
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        try {
+          await axios.post("http://localhost:3001/addZona", newZone);
+          fetchData();
+          setOpenAddDrawer(false);
+          setNewZone(null);
+          notification.success({
+            message: "Zona agregada",
+            description: "La Zona se agrego correctamente",
+            duration: 2,
+            placement: "topRight",
+          });
+        } catch (error) {
+          console.error("Error adding the zona:", error);
+        }
+      },
+    });
   };
 
+  const handleToggleState = async (id, currentState) => {
+    try {
+      if (currentState === 1) {
+        confirm({
+          title: "¿Estas seguro de desactivar esta zona?",
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/dropZona/${id}`);
+            notification.success({
+              message: "Zona desactivada",
+              description: "La zona se desactivo correctamente",
+              duration: 2,
+              placement: "topRight",
+            });
+            fetchData();
+          },
+        });
+      } else {
+        confirm({
+          title: "¿Estas seguro de activar esta zona?",
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/upZona/${id}`);
+            notification.success({
+              message: "Zona activada",
+              description: "La zona se activo correctamente",
+              duration: 2,
+              placement: "topRight",
+            });
+            fetchData();
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
   const handleEditZona = async () => {
-    if (!nombre) {
-      alert("El campo Zona es obligatorio");
+    if (!currentZona.nombre) {
+      Modal.warning({
+        title: "Error",
+        content: "El campo Zona es obligatorio",
+        icon: <WarningOutlined />,
+      });
       return;
     }
-
     const zonaActualizada = {
-      nombre: nombre,
+      nombre: currentZona.nombre,
       ID: currentZona.id,
     };
-
-    try {
-      const response = await axios.put(
-        `http://localhost:3001/updateZona`,
-        zonaActualizada
-      );
-
-      const updatedData = data.map((zonaItem) =>
-        zonaItem.id === currentZona.id ? response.data : zonaItem
-      );
-
-      setData(updatedData);
-      alert("Zona actualizada con éxito");
-      setOpenEditDrawer(false);
-      setNombre("");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error updating the zona:", error);
-    }
+    confirm({
+      title: "¿Estas seguro de actualizar esta Zona?",
+      icon: <WarningOutlined />,
+      okText: "Sí",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        try {
+          await axios.put(`http://localhost:3001/updateZona`, zonaActualizada);
+          setOpenEditDrawer(false);
+          fetchData();
+          notification.success({
+            message: "Zona actualizada",
+            description: "La Zona se actualizo correctamente",
+            duration: 2,
+            placement: "topRight",
+          });
+        } catch (error) {
+          console.error("Error updating the zona:", error);
+        }
+      },
+    });
   };
 
   const columns = [
-    { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
-    { name: "Zona", selector: (row) => row.nombre, sortable: true },
     {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitada" : "Deshabilitada"),
+      name: "Zona",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.nombreZona}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Acciones",
-      cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
-          Editar
-        </Button>
+      selector: (row) => (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleOpenEditDrawer(row.id)}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleToggleState(row.id, row.estado)}
+          >
+            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          </Button>
+        </div>
       ),
     },
   ];
 
   const handleOpenEditDrawer = async (ID) => {
-    console.log(ID);
     try {
       const response = await axios.get(
         `http://localhost:3001/getZonaByID/${ID}`
       );
       setCurrentZona(response.data);
-      setNombre(response.data.nombre);
       setOpenEditDrawer(true);
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     }
@@ -136,8 +214,10 @@ const Zonas = () => {
         onClose={() => setOpenAddDrawer(false)}
       >
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={newZone?.nombre}
+          onChange={(e) =>
+            setNewZone((prev) => ({ ...prev, nombre: e.target.value }))
+          }
           placeholder="nombre"
           style={{ marginBottom: 10 }}
           required
@@ -152,8 +232,10 @@ const Zonas = () => {
         onClose={() => setOpenEditDrawer(false)}
       >
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={currentZona?.nombre}
+          onChange={(e) =>
+            setCurrentZona((prev) => ({ ...prev, nombre: e.target.value }))
+          }
           placeholder="nombre"
           style={{ marginBottom: 10 }}
           required
@@ -172,6 +254,9 @@ const Zonas = () => {
           customStyles={{
             headCells: {
               style: customHeaderStyles,
+            },
+            cells: {
+              style: customCellsStyles,
             },
           }}
         />

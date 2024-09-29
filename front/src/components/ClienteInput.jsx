@@ -17,6 +17,7 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
 
     fetchClientes();
   }, []);
+
   const handleSearchCliente = (value) => {
     console.log("search:", value);
   };
@@ -24,7 +25,11 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
   const handleChangeCliente = (value) => {
     const selectedCliente = clientes.find((cliente) => cliente.id === value);
     onChangeCliente(selectedCliente); // Pass selected cliente to parent
-    onInputChange(value); // Update input value in parent
+
+    // Solo llama a onInputChange si se ha pasado como prop
+    if (onInputChange) {
+      onInputChange(value);
+    }
   };
 
   const options = clientes

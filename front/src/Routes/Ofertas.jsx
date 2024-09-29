@@ -10,7 +10,12 @@ import {
   Modal,
   notification,
 } from "antd";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  ExclamationCircleOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 import MenuLayout from "../components/MenuLayout";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -173,22 +178,75 @@ function Ofertas() {
     setSelectedArticulo(articulo); // Guarda todo el objeto del artículo
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del producto
   };
+  const handleToggleState = async (id, currentState) => {
+    try {
+      if (currentState === 1) {
+        confirm({
+          title: "¿Esta seguro de desactivar esta oferta?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/dropOferta/${id}`);
+            notification.success({
+              message: "Oferta desactivada",
+              description: "La oferta se desactivo exitosamente",
+              duration: 1,
+            });
+            fetchData();
+          },
+        });
+      } else {
+        confirm({
+          title: "¿Esta seguro de activar esta oferta?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/upOferta/${id}`);
+            notification.success({
+              message: "Oferta activada",
+              description: "La oferta se activo exitosamente",
+              duration: 1,
+            });
+            fetchData();
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
 
   const columns = [
-    { name: "Nombre", selector: (row) => row.nombre, sortable: true },
+    {
+      name: "Nombre",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.nombre}
+        </span>
+      ),
+      sortable: true,
+    },
     {
       name: "Fecha",
-      selector: (row) => format(new Date(row.fecha), "dd/MM/yyyy"),
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {format(new Date(row.fecha), "dd/MM/yyyy")}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Precio total",
-      selector: (row) => row.total_oferta,
-      sortable: true,
-    },
-    {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.total_oferta}
+        </span>
+      ),
       sortable: true,
     },
     {
@@ -200,11 +258,21 @@ function Ofertas() {
       ),
     },
     {
-      name: "Editar",
+      name: "Acciones",
       cell: (row) => (
-        <Button type="primary" onClick={() => handleOpenEditDrawer(row.id)}>
-          Editar
-        </Button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleOpenEditDrawer(row.id)}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleToggleState(row.id, row.estado)}
+          >
+            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          </Button>
+        </div>
       ),
     },
   ];

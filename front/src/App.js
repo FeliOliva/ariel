@@ -15,12 +15,15 @@ import OfertasDetalles from "./Routes/OfertasDetalles";
 import Compras from "./Routes/Compras";
 import CompraDetalles from "./Routes/CompraDetalles";
 import CuentasCorrientes from "./Routes/CuentasCorrientes";
+import Gastos from "./Routes/Gastos";
+import ArticulosDetalles from "./Routes/ArticulosDetalles ";
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Inicio />} />
       <Route path="/clientes" element={<Clientes />} />
       <Route path="/Articulos" element={<Articulos />} />
+      <Route path="/ArticulosDetalles" element={<ArticulosDetalles />} />
       <Route path="/Logs/:id" element={<Logs />} />
       <Route path="/Ventas" element={<Venta />} />
       <Route path="/venta/:id" element={<VentaDetalles />} />{" "}
@@ -33,6 +36,7 @@ function App() {
       <Route path="/compras" element={<Compras />} />
       <Route path="/compras/:id" element={<CompraDetalles />} />
       <Route path="/CuentasCorrientes" element={<CuentasCorrientes />} />
+      <Route path="/Gastos" element={<Gastos />} />
     </Routes>
   );
 }

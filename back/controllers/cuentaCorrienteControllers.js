@@ -12,7 +12,7 @@ const getAllCuentasCorrientesByCliente = async (req, res) => {
   }
 };
 const payByCuentaCorriente = async (req, res) => {
-  const { monto, cliente_id, ID } = req.body;
+  const { monto, cliente_id, venta_id, ID } = req.body;
   const total = await cuentaCorrienteModel.getTotalCuentaCorriente(ID);
   let totalCalc = total.saldo_total - monto;
   console.log(totalCalc);
@@ -23,6 +23,10 @@ const payByCuentaCorriente = async (req, res) => {
   } else {
     await cuentaCorrienteModel.payByCuentaCorriente(monto, ID);
     await cuentaCorrienteModel.payCuentaByTotal(monto, cliente_id);
+    if (totalCalc === 0) {
+      await cuentaCorrienteModel.actualizarPagoEnVenta(venta_id);
+      await cuentaCorrienteModel.setEstadoCuentaCorriente(ID);
+    }
     return res.status(200).json("Cuenta corriente pagada con exito");
   }
 };
@@ -64,7 +68,11 @@ const payCuentaByTotal = async (req, res) => {
             cuenta.id,
             0
           );
+          const response = await cuentaCorrienteModel.getVentaId(cuenta.id);
+          console.log(response.venta_id);
           montoRestante -= saldo; // Restar el saldo descontado del monto restante
+          await cuentaCorrienteModel.actualizarPagoEnVenta(response.venta_id);
+          await cuentaCorrienteModel.setEstadoCuentaCorriente(cuenta.id);
         } else {
           // Si el monto restante es menor que el saldo, solo descontar parte del saldo
           await cuentaCorrienteModel.actualizarSaldoCuentaCorriente(

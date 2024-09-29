@@ -2,16 +2,28 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Drawer, Button, Input, Spin, Tooltip, InputNumber } from "antd";
+import {
+  Drawer,
+  Button,
+  Input,
+  Spin,
+  Tooltip,
+  InputNumber,
+  Modal,
+  notification,
+} from "antd";
 import { Link } from "react-router-dom";
 import { format, set } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import ClienteInput from "../components/ClienteInput";
 import DynamicList from "../components/DynamicList";
 import CustomPagination from "../components/CustomPagination";
-import { customHeaderStyles } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import OfertasInput from "../components/OfertasInput";
-
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 function Ventas() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +39,7 @@ function Ventas() {
   const [clienteValue, setClienteValue] = useState(""); // Estado para el valor del input del cliente
   const [ofertaValue, setOfertaValue] = useState(""); // Estado para el valor del input de la oferta
   const [selectedOferta, setSelectedOferta] = useState(""); // Estado para el valor del input de la oferta
-
+  const { confirm } = Modal;
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/ventas");
@@ -44,7 +56,7 @@ function Ventas() {
         const nextSaleNumber = lastVenta + 1;
         setVenta((prev) => ({
           ...prev,
-          nroVenta: `V${String(nextSaleNumber).padStart(3, "0")}`,
+          nroVenta: `V${String(nextSaleNumber).padStart(5, "0")}`,
         }));
       } else {
         setVenta((prev) => ({
@@ -79,8 +91,21 @@ function Ventas() {
   };
 
   const handleAddArticulo = () => {
-    console.log(selectedArticulo, cantidad);
+    console.log(selectedArticulo);
+    console.log(cantidad);
+    console.log(selectedArticulo.stock);
     if (selectedArticulo && cantidad > 0) {
+      if (selectedArticulo.stock < cantidad) {
+        Modal.warning({
+          title: "Advertencia",
+          content:
+            "No hay suficiente stock de este articulo," +
+            "  el stock es de: " +
+            selectedArticulo.stock,
+          icon: <ExclamationCircleOutlined />,
+        });
+        return;
+      }
       setVenta((prev) => ({
         ...prev,
         articulos: [
@@ -102,7 +127,11 @@ function Ventas() {
       setCantidad(0); // Reset quantity to 1 after adding
       setArticuloValue(""); // Reset input value
     } else {
-      alert("Seleccione un artículo y una cantidad válida");
+      Modal.warning({
+        title: "Advertencia",
+        content: "Seleccione un articulo y una cantidad valida",
+        icon: <ExclamationCircleOutlined />,
+      });
     }
   };
 
@@ -134,25 +163,35 @@ function Ventas() {
           ventaData
         );
 
-        if (response.status === 203) {
-          const articuloFaltante = response.data.error_code;
-          alert(`Stock insuficiente para ${articuloFaltante}`);
-          return;
-        } else {
-          setVenta({ articulos: [], cliente: null, nroVenta: "" });
-          setArticuloValue("");
-          setClienteValue("");
-          setCantidad(0);
-          setOpen(false);
-          alert("Venta registrada con éxito");
-          fetchData();
-        }
+        confirm({
+          title: "Confirmar",
+          content: "¿Desea registrar la venta?",
+          okText: "Si",
+          cancelText: "No",
+          onOk: () => {
+            setVenta({ articulos: [], cliente: null, nroVenta: "" });
+            setArticuloValue("");
+            setClienteValue("");
+            setCantidad(0);
+            setOpen(false);
+            notification.success({
+              message: "Exito",
+              description: "Venta registrada con exito",
+              duration: 2,
+            });
+            fetchData();
+          },
+        });
       } catch (error) {
         console.error("Error al enviar la venta:", error);
         alert("Error al registrar la venta");
       }
     } else {
-      alert("Seleccione un cliente y agregue al menos un artículo");
+      Modal.warning({
+        title: "Advertencia",
+        content: "Por favor, complete todos los campos",
+        icon: <ExclamationCircleOutlined />,
+      });
     }
   };
 
@@ -200,33 +239,76 @@ function Ventas() {
         alert("Error al agregar la oferta");
       }
     } else {
-      alert("Seleccione una oferta válida");
+      Modal.warning({
+        title: "Advertencia",
+        content: "Por favor, seleccione una oferta",
+        icon: <ExclamationCircleOutlined />,
+      });
     }
   };
 
   const columns = [
-    { name: "Nro. Venta", selector: (row) => row.nroVenta, sortable: true },
-    { name: "Cliente", selector: (row) => row.nombre_cliente, sortable: true },
-    { name: "Zona", selector: (row) => row.nombre_zona, sortable: true },
     {
-      name: "Fecha",
-      selector: (row) => format(new Date(row.fecha_venta), "dd/MM/yyyy"),
+      name: "Nro. Venta",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.nroVenta}
+        </span>
+      ),
       sortable: true,
     },
-    { name: "Total Costo", selector: (row) => row.total_costo, sortable: true },
+    {
+      name: "Cliente",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.nombre_cliente + " " + row.apellido_cliente}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Zona",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.nombre_zona}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Fecha",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {format(new Date(row.fecha_venta), "dd/MM/yyyy")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Total Costo",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.total_costo}
+        </span>
+      ),
+      sortable: true,
+    },
     {
       name: "Total Precio Monotributista",
-      selector: (row) => row.total_monotributista,
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.total_monotributista}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Pago",
-      selector: (row) => (row.pago ? "Pagado" : "No Pagado"),
-      sortable: true,
-    },
-    {
-      name: "Estado",
-      selector: (row) => (row.estado ? "Habilitado" : "Deshabilitado"),
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.pago ? "Pagado" : "No Pagado"}
+        </span>
+      ),
       sortable: true,
     },
     {
@@ -272,6 +354,9 @@ function Ventas() {
         customStyles={{
           headCells: {
             style: customHeaderStyles,
+          },
+          cells: {
+            style: customCellsStyles,
           },
         }}
       />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import {
   Button,
@@ -13,7 +13,7 @@ import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { customHeaderStyles } from "../style/dataTableStyles";
 import CustomPagination from "../components/CustomPagination";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import "../style/style.css";
 import Swal from "sweetalert2";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
@@ -35,6 +35,7 @@ function CuentasCorrientes() {
       const response = await axios.get(
         `http://localhost:3001/cuentasCorrientesByCliente/${clientId}`
       );
+      console.log(response.data);
       setData(response.data);
     } catch (error) {
       console.error("Error al obtener las cuentas corrientes:", error);
@@ -76,8 +77,13 @@ function CuentasCorrientes() {
     setClient(cliente);
   };
 
-  const handlePayByCuenta = (id) => () => {
-    setCuentaCorriente(id);
+  const handlePayByCuenta = (id, venta_id, saldo_total) => () => {
+    setCuentaCorriente({
+      id: id,
+      venta_id: venta_id,
+      saldo_total: saldo_total,
+    });
+    console.log(id, venta_id);
     setOpen(true);
   };
 
@@ -85,11 +91,20 @@ function CuentasCorrientes() {
     console.log(cuentaCorriente);
     console.log(client);
     console.log(monto);
-    if (!monto) {
+    if (!monto || monto <= 0) {
       Modal.warning({
         title: "Advertencia",
         content: "No has ingresado un valor de pago.",
-        icon: "error",
+        icon: <ExclamationCircleOutlined />,
+        timer: 1500,
+      });
+      return;
+    }
+    if (monto > cuentaCorriente.saldo_total) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "El valor de pago es mayor al saldo de la cuenta.",
+        icon: <ExclamationCircleOutlined />,
         timer: 1500,
       });
       return;
@@ -103,7 +118,12 @@ function CuentasCorrientes() {
         try {
           const response = await axios.put(
             "http://localhost:3001/payByCuentaCorriente",
-            { monto: monto, cliente_id: client, ID: cuentaCorriente }
+            {
+              monto: monto,
+              cliente_id: client,
+              ID: cuentaCorriente.id,
+              venta_id: cuentaCorriente.venta_id,
+            }
           );
           console.log(response.data);
           notification.success({
@@ -128,11 +148,11 @@ function CuentasCorrientes() {
   const handlePayTotal = async () => {
     console.log(monto);
     console.log(client);
-    if (!monto) {
+    if (!monto || monto <= 0) {
       Modal.warning({
         title: "Advertencia",
         content: "No has ingresado un valor de pago.",
-        icon: "error",
+        icon: <ExclamationCircleOutlined />,
         timer: 1500,
       });
       return;
@@ -164,16 +184,30 @@ function CuentasCorrientes() {
       },
     });
   };
+  const handlePonerTotal = () => {
+    setMonto(cuentaCorriente.saldo_total);
+  };
+  const handlePonerMontoTotal = () => {
+    setMonto(total);
+  };
+
   const columns = [
     {
       name: "Monto Total",
-      selector: (row) => row.saldo_total,
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.saldo_total}
+        </span>
+      ),
       sortable: true,
     },
     {
       name: "Fecha",
-      selector: (row) =>
-        format(new Date(row.fecha_ultima_actualizacion), "dd/MM/yyyy"),
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {format(new Date(row.fecha_ultima_actualizacion), "dd/MM/yyyy")}
+        </span>
+      ),
       sortable: true,
     },
     {
@@ -183,12 +217,11 @@ function CuentasCorrientes() {
           className="custom-button"
           onClick={() =>
             row.saldo_total > 0
-              ? handlePayByCuenta(row.id)()
-              : Swal.fire({
-                  title: "Advertencia",
-                  text: "Esta cuenta ya está en 0",
-                  icon: "warning",
-                  timer: 1500,
+              ? handlePayByCuenta(row.id, row.venta_id, row.saldo_total)()
+              : notification.warning({
+                  message: "Advertencia",
+                  description: "No hay saldo disponible para pagar",
+                  duration: 2,
                 })
           }
           disabled={row.saldo_total === 0} // Deshabilitar si el saldo es 0
@@ -223,18 +256,27 @@ function CuentasCorrientes() {
           <Tooltip title="Monto a descontar">
             <span>Monto a pagar</span>
           </Tooltip>
-          <div style={{ marginTop: "10px" }}>
+          <div
+            style={{ marginTop: "10px", display: "flex", alignItems: "center" }}
+          >
             <InputNumber
               value={monto}
               onChange={setMonto}
-              style={{ width: "100%" }}
+              style={{ width: "70%", marginRight: "10px" }} // Reduce el ancho del InputNumber
             />
+            <Button
+              className="custom-button"
+              onClick={handlePonerTotal}
+              style={{ marginTop: "20px" }}
+            >
+              Poner Total
+            </Button>
           </div>
         </div>
         <Button
           type="primary"
           onClick={handlePayMonto}
-          style={{ marginTop: "20px" }}
+          style={{ marginLeft: "10px", flexShrink: 0 }} // Coloca el botón junto al InputNumber
         >
           Pagar
         </Button>
@@ -246,17 +288,26 @@ function CuentasCorrientes() {
         onClose={() => setOpenTotal(false)}
         open={openTotal}
       >
-        <div style={{ marginBottom: "20px" }}>
-          <Tooltip title="Monto a descontar">
-            <span>Monto a pagar</span>
-          </Tooltip>
+        <Tooltip title="Monto a descontar">
+          <span>Monto a pagar</span>
+        </Tooltip>
+        <div
+          style={{ marginTop: "10px", display: "flex", alignItems: "center" }}
+        >
           <div style={{ marginTop: "10px" }}>
             <InputNumber
               value={monto}
               onChange={setMonto}
-              style={{ width: "100%" }}
+              style={{ width: "70%" }}
             />
           </div>
+          <Button
+            onClick={handlePonerMontoTotal}
+            type="default"
+            style={{ display: "flex" }}
+          >
+            Poner Total
+          </Button>
         </div>
         <Button
           type="primary"
@@ -287,13 +338,16 @@ function CuentasCorrientes() {
           <div style={{ textAlign: "right", marginTop: "20px" }}>
             <strong>Total: {total}</strong>
             {total > 0 && (
-              <Button
-                onClick={handleOpenPayTotalDrawer}
-                type="primary"
-                style={{ marginLeft: "10px" }}
-              >
-                Pagar Total
-              </Button>
+              <>
+                <Button
+                  onClick={handleOpenPayTotalDrawer}
+                  type="primary"
+                  style={{ marginLeft: "10px" }}
+                >
+                  Pagar Total
+                </Button>
+                {/* Botón para establecer el monto total como el monto a pagar */}
+              </>
             )}
           </div>
         )}
