@@ -11,13 +11,14 @@ const getAllVentas = async () => {
   }
 };
 
-const addVenta = async (cliente_id, nroVenta, zona_id, pago) => {
+const addVenta = async (cliente_id, nroVenta, zona_id, descuento, pago) => {
   try {
     const query = queriesVentas.addVenta;
     const [result] = await db.query(query, [
       cliente_id,
       nroVenta,
       zona_id,
+      descuento,
       pago,
     ]);
     return result.insertId;
@@ -192,9 +193,9 @@ const getSaldoTotalCuentaCorriente = async (cliente_id) => {
   const [rows] = await db.query(query, [cliente_id]);
   return rows[0].saldo_acumulado || 0;
 };
-const updateVentaTotal = async (ventaId, total) => {
+const updateVentaTotal = async (total, total_con_descuento, ventaId) => {
   const query = queriesVentas.updateVentaTotal;
-  await db.query(query, [total, ventaId]);
+  await db.query(query, [total, total_con_descuento, ventaId]);
 };
 
 module.exports = {

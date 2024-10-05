@@ -7,18 +7,40 @@ module.exports = {
   v.nroVenta,
   z.nombre AS nombre_zona,
   v.pago,
+  v.descuento,
+  v.total_con_descuento,
   v.fecha_venta,
   COALESCE(SUM(d.costo * d.cantidad), 0) AS total_costo,
-  COALESCE(SUM(d.precio_monotributista * d.cantidad), 0) AS total_monotributista
-FROM venta v
-INNER JOIN cliente c ON v.cliente_id = c.id
-INNER JOIN zona z ON v.zona_id = z.id
-LEFT JOIN detalle_venta d ON v.id = d.venta_id
-GROUP BY v.id, v.estado, c.nombre, v.nroVenta, z.nombre, v.pago
-ORDER BY v.id DESC;
-
+  COALESCE(SUM(d.precio_monotributista * d.cantidad), 0) AS total_monotributista,
+  mp.id AS metodo_pago_id,         -- Devuelve el ID del método de pago
+  mp.metodo AS metodo_pago         -- Devuelve el nombre del método de pago
+FROM 
+  venta v
+INNER JOIN 
+  cliente c ON v.cliente_id = c.id
+INNER JOIN 
+  zona z ON v.zona_id = z.id
+LEFT JOIN 
+  detalle_venta d ON v.id = d.venta_id
+LEFT JOIN 
+  metodos_pago mp ON v.metodo_pago_id = mp.id  -- Vincula la tabla metodos_pago
+GROUP BY 
+  v.id, 
+  v.estado, 
+  c.nombre, 
+  c.apellido, 
+  v.nroVenta, 
+  z.nombre, 
+  v.pago, 
+  v.descuento, 
+  v.total_con_descuento, 
+  v.fecha_venta, 
+  mp.id, 
+  mp.metodo
+ORDER BY 
+  v.id DESC;
     `,
-  addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, pago) VALUES (?, ?, ?, ?);`,
+  addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, descuento, pago) VALUES (?, ?, ?, ?, ?);`,
   addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista) VALUES (?, ?, ?, ?, ?);`,
   dropVenta: `UPDATE Ventas SET estado = 'inactivo' WHERE ID = ?;`,
   upVenta: `UPDATE Ventas SET estado = 'activo' WHERE ID = ?;`,
@@ -42,10 +64,11 @@ ORDER BY v.id DESC;
   JOIN Zona z ON v.zona_id = z.ID
   WHERE p.ID = ?;`,
   getVentaByID: `SELECT 
-  dv.id, 
+  dv.id AS id_dv, 
   dv.articulo_id, 
   a.nombre AS nombre_articulo, 
   a.codigo_producto AS cod_articulo,
+  a.mediciones,
   dv.venta_id, 
   v.nroVenta,  -- Número de venta
   dv.costo, 
@@ -60,6 +83,8 @@ ORDER BY v.id DESC;
   c.tipo_cliente,  -- ID del tipo de cliente
   tc.nombre_tipo AS nombre_tipo_cliente,  -- Nombre del tipo de cliente
   z.nombre AS nombre_zona,
+  l.nombre AS nombre_linea,  -- Nombre de la línea
+  sl.nombre AS nombre_sublinea,  -- Nombre de la sublínea
   (dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista, -- Importe de cada detalle
   (SELECT SUM(dv1.precio_monotributista * dv1.cantidad)
    FROM detalle_venta dv1 
@@ -70,6 +95,8 @@ INNER JOIN venta v ON dv.venta_id = v.id
 INNER JOIN cliente c ON v.cliente_id = c.id
 INNER JOIN zona z ON c.zona_id = z.id
 INNER JOIN tipo_cliente tc ON c.tipo_cliente = tc.id  -- Unión con tipo_cliente
+INNER JOIN linea l ON a.linea_id = l.id  -- Unión con línea
+INNER JOIN sublinea sl ON a.subLinea_id = sl.id  -- Unión con sublínea
 WHERE dv.venta_id = ?;
   `,
   checkStock: "SELECT stock, nombre FROM articulo WHERE id = ?",
@@ -84,5 +111,5 @@ WHERE dv.venta_id = ?;
   getPagoCuentaCorrienteByClienteId: `SELECT * FROM pagos_cuenta_corriente WHERE cliente_id = ?`,
   updatePagoCuentaCorriente: `UPDATE pagos_cuenta_corriente SET monto_total = ? WHERE cliente_id = ?`,
   getSaldoTotalCuentaCorriente: `SELECT SUM(saldo_total) as saldo_acumulado FROM cuenta_corriente WHERE cliente_id = ?`,
-  updateVentaTotal: `UPDATE venta SET total = ? WHERE id = ?`,
+  updateVentaTotal: `UPDATE venta SET total = ?, total_con_descuento = ? WHERE id = ?`,
 };

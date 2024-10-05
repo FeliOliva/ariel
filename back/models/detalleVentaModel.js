@@ -1,52 +1,25 @@
 const db = require("../database");
 const queriesDetalleVenta = require("../querys/queriesDetalleVentas");
 
-const getAllDetalleVentas = async () => {
+const getDetalleVentaById = async (ID) => {
   try {
-    const query = queriesDetalleVenta.getAllDetalleVentas;
-    const [rows] = await db.query(query);
+    const query = queriesDetalleVenta.getDetalleVentaById;
+    const [rows] = await db.query(query, [ID]);
     return rows;
   } catch (err) {
     throw err;
   }
 };
-
-const addDetalleVenta = async (venta_id, producto_id, cantidad, precio) => {
-  try {
-    const query = queriesDetalleVenta.addDetalleVenta;
-    await db.query(query, [venta_id, producto_id, cantidad, precio]);
-  } catch (err) {
-    throw err;
-  }
-};
-
-const deleteDetalleVenta = async (ID) => {
-  try {
-    const query = queriesDetalleVenta.deleteDetalleVenta;
-    await db.query(query, [ID]);
-  } catch (err) {
-    throw err;
-  }
-};
-
-const updateDetalleVenta = async (
-  ID,
-  venta_id,
-  producto_id,
-  cantidad,
-  precio
-) => {
+const updateDetalleVenta = async (ID, producto_id) => {
   try {
     const query = queriesDetalleVenta.updateDetalleVenta;
-    await db.query(query, [venta_id, producto_id, cantidad, precio, ID]);
+    await db.query(query, [producto_id, ID]);
   } catch (err) {
     throw err;
   }
 };
 
 module.exports = {
-  getAllDetalleVentas,
-  addDetalleVenta,
-  deleteDetalleVenta,
+  getDetalleVentaById,
   updateDetalleVenta,
 };

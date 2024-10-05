@@ -3,13 +3,17 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button } from "antd";
+import { Button, Drawer, Tooltip, InputNumber } from "antd";
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 
 const VentaDetalles = () => {
   const { id } = useParams();
-  console.log(id);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ventaInfo, setVentaInfo] = useState({
@@ -21,6 +25,9 @@ const VentaDetalles = () => {
     direccion: "",
     nombre_tipo_cliente: "",
   });
+  const [openUp, setOpenUp] = useState(false);
+  const [openDown, setOpenDown] = useState(false);
+  const [detalleVenta, setDetalleVenta] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +45,7 @@ const VentaDetalles = () => {
           total,
           direccion,
           nombre_tipo_cliente,
+          detalle_venta_id,
         } = response.data;
 
         if (Array.isArray(detalles)) {
@@ -50,9 +58,8 @@ const VentaDetalles = () => {
             total,
             direccion,
             nombre_tipo_cliente,
+            detalle_venta_id,
           });
-          console.log(response.data);
-          console.log(response.data.nombre_tipo_cliente);
         } else {
           console.error("Expected 'detalles' to be an array");
         }
@@ -153,15 +160,67 @@ const VentaDetalles = () => {
         160,
         pdf.lastAutoTable.finalY + 10
       );
+      pdf.text(
+        `Nro Venta: ${ventaInfo.nroVenta}`,
+        10,
+        pdf.lastAutoTable.finalY + 10
+      );
 
       pdf.save(`${ventaInfo.nroVenta}.pdf`);
     }
+  };
+  const handleUpPrice = async (id) => {
+    console.log(id);
+    const response = await axios.get(
+      `http://localhost:3001/detalleVenta/${id}`
+    );
+    setDetalleVenta({
+      id: response.data.id,
+      precio_monotributista: response.data.precio_monotributista,
+    });
+    setOpenUp(true);
+  };
+  const handleDownPrice = async (id) => {
+    const response = await axios.get(
+      `http://localhost:3001/detalleVenta/${id}`
+    );
+    setDetalleVenta({
+      id: response.data.id,
+      precio_monotributista: response.data.precio_monotributista,
+    });
+    setOpenDown(true);
+  };
+  const handleAplyUpFilter = async () => {
+    const nuevoPrecioMonotributista = parseFloat(
+      detalleVenta.precio_monotributista * (1 + detalleVenta.percentage / 100)
+    );
+    const newData = {
+      ID: detalleVenta.id,
+      precio_monotributista: Math.round(nuevoPrecioMonotributista),
+    };
+    console.log(newData);
+    await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
+    setOpenUp(false);
+    window.location.reload();
+  };
+  const handleAplyDownFilter = async () => {
+    const nuevoPrecioMonotributista = parseFloat(
+      detalleVenta.precio_monotributista * (1 - detalleVenta.percentage / 100)
+    );
+    const newData = {
+      ID: detalleVenta.id,
+      precio_monotributista: Math.round(nuevoPrecioMonotributista),
+    };
+    console.log(newData);
+    await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
+    setOpenUp(false);
+    window.location.reload();
   };
 
   const columns = [
     {
       name: "Descripción",
-      selector: (row) => row.nombre,
+      selector: (row) => row.nombre + row.mediciones,
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "30px" }}>{row.nombre}</div>
@@ -201,6 +260,23 @@ const VentaDetalles = () => {
         </div>
       ),
     },
+    {
+      name: "Acciones",
+      cell: (row) => (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleUpPrice(row.detalle_venta_id)}
+            icon={<ArrowUpOutlined />}
+          ></Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleDownPrice(row.detalle_venta_id)}
+            icon={<ArrowDownOutlined />}
+          ></Button>
+        </div>
+      ),
+    },
   ];
 
   const totalImporte = data
@@ -211,6 +287,48 @@ const VentaDetalles = () => {
     });
   return (
     <MenuLayout>
+      <Drawer
+        open={openUp}
+        onClose={() => setOpenUp(false)}
+        title="Aumentar Precio"
+      >
+        <Tooltip>
+          <strong>Porcentaje</strong>
+        </Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={VentaDetalles?.percentage}
+            onChange={(value) =>
+              setDetalleVenta((prev) => ({
+                ...prev,
+                percentage: value,
+              }))
+            }
+          />{" "}
+          <Button onClick={handleAplyUpFilter}>Aplicar</Button>
+        </div>
+      </Drawer>
+      <Drawer
+        open={openDown}
+        onClose={() => setOpenDown(false)}
+        title="Bajar Precio"
+      >
+        <Tooltip>
+          <strong>Porcentaje</strong>
+        </Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={VentaDetalles?.percentage}
+            onChange={(value) =>
+              setDetalleVenta((prev) => ({
+                ...prev,
+                percentage: value,
+              }))
+            }
+          />{" "}
+          <Button onClick={handleAplyDownFilter}>Aplicar</Button>
+        </div>
+      </Drawer>
       <h1>Detalle de Venta {ventaInfo.nroVenta}</h1>
       <div>
         <Button onClick={() => window.history.back()} type="primary">
@@ -226,27 +344,22 @@ const VentaDetalles = () => {
         {loading ? (
           <p>Cargando...</p>
         ) : (
-          <div id="pdf-content" style={{ padding: "50px" }}>
+          <div id="pdf-content" style={{ padding: "50px", fontSize: "20px" }}>
             <DataTable
               columns={columns}
               data={data}
               pagination={false}
               customStyles={{
-                rows: {
-                  style: {
-                    minHeight: "60px",
-                  },
-                },
                 headCells: {
                   style: {
-                    fontSize: "30px",
-                    padding: "12px",
+                    ...customHeaderStyles,
+                    fontSize: "20px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "20px",
-                    padding: "10px",
+                    ...customCellsStyles,
+                    fontSize: "30px",
                   },
                 },
               }}

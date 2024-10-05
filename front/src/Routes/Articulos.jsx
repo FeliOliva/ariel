@@ -56,6 +56,7 @@ function Articulos() {
     try {
       const response = await axios.get("http://localhost:3001/articulos");
       setData(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {

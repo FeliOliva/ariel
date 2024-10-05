@@ -11,7 +11,8 @@ const getAllVentas = async (req, res) => {
 };
 const addVenta = async (req, res) => {
   try {
-    const { cliente_id, nroVenta, zona_id, pago, detalles } = req.body;
+    const { cliente_id, nroVenta, zona_id, pago, descuento, detalles } =
+      req.body;
 
     // Verificar el stock de cada artículo primero
     for (const detalle of detalles) {
@@ -20,12 +21,8 @@ const addVenta = async (req, res) => {
         detalle.cantidad
       );
       if (!result.disponible) {
-        console.log(
-          "Stock insuficiente para el articulo:",
-          detalle.articulo_id
-        );
         return res.status(203).json({
-          error_code: result.nombre, // Puedes personalizar el mensaje de error aquí
+          error_code: result.nombre,
         });
       }
     }
@@ -35,14 +32,17 @@ const addVenta = async (req, res) => {
       cliente_id,
       nroVenta,
       zona_id,
+      descuento,
       pago
     );
     let totalVenta = 0;
 
-    // Agregar detalles de la venta y descontar el stock
+    // Agregar detalles de la venta y sumar subtotales
     for (const detalle of detalles) {
       const subtotal = detalle.cantidad * detalle.precio_monotributista;
-      totalVenta += subtotal;
+      Math.round((totalVenta += subtotal));
+
+      // Agregar el detalle de la venta
       await ventasModel.addDetalleVenta(
         ventaId,
         detalle.articulo_id,
@@ -60,28 +60,35 @@ const addVenta = async (req, res) => {
         detalle.articulo_id,
         detalle.cantidad
       );
-      await ventasModel.updateVentaTotal(ventaId, totalVenta);
     }
 
-    // Obtener el total de la venta
-    const response = await ventasModel.getTotal(ventaId);
-    const ventaTotal = response[0].total;
+    const totalConDescuento = Math.round(
+      totalVenta - totalVenta * (descuento / 100)
+    );
+    // Actualizar la venta con el total y el total con descuento
+    await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
 
-    await ventasModel.addCuentaCorriente(cliente_id, ventaTotal, ventaId);
+    // En lugar de guardar el total de la venta en cuenta corriente, guarda el total con descuento
+    await ventasModel.addCuentaCorriente(
+      cliente_id,
+      totalConDescuento,
+      ventaId
+    );
 
-    // Calcular el saldo acumulado para este cliente en pagos_cuenta_corriente
+    // Calcular el saldo acumulado para este cliente en cuenta corriente
     const saldoTotal = await ventasModel.getSaldoTotalCuentaCorriente(
       cliente_id
     );
 
-    // Actualizar el monto total en pagos_cuenta_corriente
+    // Actualizar el monto total en pagos de cuenta corriente
     const pagoExistente = await ventasModel.getPagoCuentaCorrienteByClienteId(
       cliente_id
     );
+
     if (pagoExistente) {
-      await ventasModel.updatePagoCuentaCorriente(cliente_id, saldoTotal);
+      await ventasModel.updatePagoCuentaCorriente(cliente_id, saldoTotal); // Usamos saldoTotal que incluye el descuento
     } else {
-      await ventasModel.addPagoCuentaCorriente(cliente_id, saldoTotal);
+      await ventasModel.addPagoCuentaCorriente(cliente_id, saldoTotal); // Lo mismo aquí, agregamos el saldo con descuento
     }
 
     res.status(201).json({ message: "Venta agregada con éxito" });
@@ -172,7 +179,6 @@ const getVentaByID = async (req, res) => {
     } else {
       let data = {
         nombre_cliente: detalleVentas[0].nombre_cliente_completo,
-        id: detalleVentas[0].id,
         nroVenta: detalleVentas[0].nroVenta,
         fecha: detalleVentas[0].fecha,
         zona_nombre: detalleVentas[0].nombre_zona,
@@ -180,11 +186,19 @@ const getVentaByID = async (req, res) => {
         nombre_tipo_cliente: detalleVentas[0].nombre_tipo_cliente,
         total: detalleVentas[0].total_importe,
         detalles: detalleVentas.map((detalle) => ({
-          id: detalle.articulo_id,
-          nombre: detalle.nombre_articulo,
+          articulo_id: detalle.articulo_id,
+          nombre:
+            detalle.nombre_articulo +
+            " " +
+            detalle.mediciones +
+            " " +
+            detalle.nombre_linea +
+            " " +
+            detalle.nombre_sublinea,
           cantidad: detalle.cantidad,
           precio_monotributista: detalle.precio_monotributista,
           subtotal: detalle.total_precio_monotributista,
+          detalle_venta_id: detalle.id_dv,
         })),
       };
       res.json(data);

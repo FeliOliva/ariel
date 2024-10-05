@@ -144,11 +144,21 @@ function Ventas() {
 
   const handleAddVenta = async () => {
     if (venta.cliente && venta.articulos.length > 0) {
+      if (venta.descuento === 0 || venta.descuento === undefined) {
+        notification.warning({
+          message: "Advertencia",
+          description: "Estas por cargar una venta sin descuento",
+          duration: 2,
+        });
+        venta.descuento = 0;
+      }
+      console.log(venta.descuento);
       try {
         const ventaData = {
           cliente_id: venta.cliente.id,
           nroVenta: venta.nroVenta,
           zona_id: venta.cliente.zona_id,
+          descuento: venta.descuento,
           pago: 0,
           detalles: venta.articulos.map((articulo) => ({
             articulo_id: articulo.value, // Usamos el ID del artículo
@@ -158,10 +168,7 @@ function Ventas() {
           })),
         };
 
-        const response = await axios.post(
-          "http://localhost:3001/addVenta",
-          ventaData
-        );
+        await axios.post("http://localhost:3001/addVenta", ventaData);
 
         confirm({
           title: "Confirmar",
@@ -285,19 +292,37 @@ function Ventas() {
       sortable: true,
     },
     {
-      name: "Total Costo",
+      name: "Total Precio Monotributista",
       selector: (row) => (
         <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.total_costo}
+          {row.total_monotributista}
         </span>
       ),
       sortable: true,
     },
     {
-      name: "Total Precio Monotributista",
+      name: "Descuento",
       selector: (row) => (
         <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.total_monotributista}
+          {row.descuento}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Total con descuento",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.total_con_descuento}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Metodo de pago",
+      selector: (row) => (
+        <span className={row.pago === 1 ? "strikethrough" : ""}>
+          {row.metodo_pago ? row.metodo_pago : "No Pagado"}
         </span>
       ),
       sortable: true,
@@ -424,6 +449,17 @@ function Ventas() {
         </Button>
 
         <DynamicList items={venta.articulos} onDelete={handleDeleteArticulo} />
+        <div style={{ display: "flex", margin: 10 }}>
+          <Tooltip>Descuento</Tooltip>
+        </div>
+        <InputNumber
+          min={0}
+          value={venta?.descuento}
+          onChange={(value) =>
+            setVenta((prev) => ({ ...prev, descuento: value }))
+          }
+          style={{ marginBottom: 10, display: "flex", marginTop: 10 }}
+        />
         <Button onClick={handleAddVenta} type="primary">
           Registrar Venta
         </Button>

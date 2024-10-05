@@ -62,4 +62,9 @@ WHERE c.id = ?;
     SET estado = 0
     WHERE id = ?;
   `,
+  actualizarMetodoPago: `
+    UPDATE venta 
+    SET metodo_pago_id = ? 
+    WHERE id = ?;
+  `,
 };

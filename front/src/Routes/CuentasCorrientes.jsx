@@ -7,15 +7,16 @@ import {
   Tooltip,
   Modal,
   notification,
+  Input,
 } from "antd";
 import ClienteInput from "../components/ClienteInput";
+import MetodosPagoInput from "../components/MetodosPagoInput";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import { customHeaderStyles } from "../style/dataTableStyles";
 import CustomPagination from "../components/CustomPagination";
 import { format } from "date-fns";
 import "../style/style.css";
-import Swal from "sweetalert2";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 
 function CuentasCorrientes() {
@@ -26,6 +27,8 @@ function CuentasCorrientes() {
   const [openTotal, setOpenTotal] = useState(false);
   const [total, setTotal] = useState(0);
   const [monto, setMonto] = useState(0);
+  const [metodoPago, setMetodoPago] = useState(null);
+  const [metodoPagoValue, setMetodoPagoValue] = useState("");
   const [cuentaCorriente, setCuentaCorriente] = useState([]);
   const [hasSearched, setHasSearched] = useState(false); // Nuevo estado para controlar la búsqueda
   const { confirm } = Modal;
@@ -91,6 +94,7 @@ function CuentasCorrientes() {
     console.log(cuentaCorriente);
     console.log(client);
     console.log(monto);
+    console.log(metodoPago); // Solo el id del método de pago
     if (!monto || monto <= 0) {
       Modal.warning({
         title: "Advertencia",
@@ -116,16 +120,12 @@ function CuentasCorrientes() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          const response = await axios.put(
-            "http://localhost:3001/payByCuentaCorriente",
-            {
-              monto: monto,
-              cliente_id: client,
-              ID: cuentaCorriente.id,
-              venta_id: cuentaCorriente.venta_id,
-            }
-          );
-          console.log(response.data);
+          // await axios.put("http://localhost:3001/payByCuentaCorriente", {
+          //   monto: monto,
+          //   cliente_id: client,
+          //   ID: cuentaCorriente.id,
+          //   venta_id: cuentaCorriente.venta_id,
+          // });
           notification.success({
             message: "Exito",
             description: "Cuenta corriente pagada con exito",
@@ -148,6 +148,7 @@ function CuentasCorrientes() {
   const handlePayTotal = async () => {
     console.log(monto);
     console.log(client);
+    console.log(metodoPago);
     if (!monto || monto <= 0) {
       Modal.warning({
         title: "Advertencia",
@@ -164,11 +165,10 @@ function CuentasCorrientes() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          const response = await axios.put(
-            "http://localhost:3001/payCuentaByTotal",
-            { monto: monto, cliente_id: client }
-          );
-          console.log(response.data);
+          // await axios.put("http://localhost:3001/payCuentaByTotal", {
+          //   monto: monto,
+          //   cliente_id: client,
+          // });
           notification.success({
             message: "Exito",
             description: "Total pagado con exito",
@@ -189,6 +189,9 @@ function CuentasCorrientes() {
   };
   const handlePonerMontoTotal = () => {
     setMonto(total);
+  };
+  const handleMetodoChange = (metodo) => {
+    setMetodoPago(metodo);
   };
 
   const columns = [
@@ -272,6 +275,14 @@ function CuentasCorrientes() {
               Poner Total
             </Button>
           </div>
+          <Tooltip title="Metodo de pago">
+            <span>Metodo de pago</span>
+          </Tooltip>
+          <MetodosPagoInput
+            value={metodoPago}
+            onChangeMetodo={handleMetodoChange}
+            onInputChange={setMetodoPago}
+          />
         </div>
         <Button
           type="primary"
@@ -309,6 +320,14 @@ function CuentasCorrientes() {
             Poner Total
           </Button>
         </div>
+        <Tooltip title="Metodo de pago">
+          <span>Metodo de pago</span>
+        </Tooltip>
+        <Input
+          value={metodoPago}
+          onChange={setMetodoPago}
+          style={{ marginTop: "10px", width: "70%" }}
+        />
         <Button
           type="primary"
           onClick={handlePayTotal}

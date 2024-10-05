@@ -14,6 +14,7 @@ export default function ArticulosInput({
       try {
         const response = await axios.get("http://localhost:3001/articulos");
         setArticulos(response.data);
+        console.log(response.data);
       } catch (error) {
         console.error("Error fetching articulos:", error);
       }
@@ -39,6 +40,8 @@ export default function ArticulosInput({
     .map((articulo) => ({
       label:
         articulo.nombre +
+        " - " +
+        articulo.mediciones +
         " - " +
         articulo.linea_nombre +
         " - " +
