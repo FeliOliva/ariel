@@ -319,10 +319,10 @@ function Ventas() {
       sortable: true,
     },
     {
-      name: "Metodo de pago",
+      name: "Método de Pago",
       selector: (row) => (
         <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.metodo_pago ? row.metodo_pago : "No Pagado"}
+          {row.metodo_pago || "No Pagado"}
         </span>
       ),
       sortable: true,

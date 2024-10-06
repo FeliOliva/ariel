@@ -108,7 +108,6 @@ const getTotalCuentasByCliente = async (req, res) => {
   );
   res.json(cuenta);
 };
-
 module.exports = {
   getAllCuentasCorrientesByCliente,
   getCuentasByCliente,

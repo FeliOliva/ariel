@@ -8,6 +8,9 @@ import {
   Modal,
   notification,
   Input,
+  Form,
+  DatePicker,
+  message,
 } from "antd";
 import ClienteInput from "../components/ClienteInput";
 import MetodosPagoInput from "../components/MetodosPagoInput";
@@ -18,6 +21,7 @@ import CustomPagination from "../components/CustomPagination";
 import { format } from "date-fns";
 import "../style/style.css";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 function CuentasCorrientes() {
   const [client, setClient] = useState(null);
@@ -28,10 +32,12 @@ function CuentasCorrientes() {
   const [total, setTotal] = useState(0);
   const [monto, setMonto] = useState(0);
   const [metodoPago, setMetodoPago] = useState(null);
-  const [metodoPagoValue, setMetodoPagoValue] = useState("");
+  const [cheque, setCheque] = useState(null);
   const [cuentaCorriente, setCuentaCorriente] = useState([]);
   const [hasSearched, setHasSearched] = useState(false); // Nuevo estado para controlar la búsqueda
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const { confirm } = Modal;
+  const [form] = Form.useForm();
   const fetchCuentasCorrientes = async (clientId) => {
     setLoading(true);
     try {
@@ -94,7 +100,7 @@ function CuentasCorrientes() {
     console.log(cuentaCorriente);
     console.log(client);
     console.log(monto);
-    console.log(metodoPago); // Solo el id del método de pago
+    console.log(metodoPago);
     if (!monto || monto <= 0) {
       Modal.warning({
         title: "Advertencia",
@@ -120,12 +126,20 @@ function CuentasCorrientes() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          // await axios.put("http://localhost:3001/payByCuentaCorriente", {
-          //   monto: monto,
-          //   cliente_id: client,
-          //   ID: cuentaCorriente.id,
-          //   venta_id: cuentaCorriente.venta_id,
-          // });
+          if (cheque) {
+            await axios.post("http://localhost:3001/addCheque", cheque, {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          }
+          await axios.put("http://localhost:3001/payByCuentaCorriente", {
+            monto: monto,
+            cliente_id: client,
+            ID: cuentaCorriente.id,
+            venta_id: cuentaCorriente.venta_id,
+            metodo_pago: metodoPago,
+          });
           notification.success({
             message: "Exito",
             description: "Cuenta corriente pagada con exito",
@@ -135,6 +149,7 @@ function CuentasCorrientes() {
           fetchPagoCuentasCorrientes(client);
           setMonto(0);
           setOpen(false);
+          setCheque(null);
         } catch (error) {
           console.error("Error al pagar la cuenta:", error);
         }
@@ -165,10 +180,18 @@ function CuentasCorrientes() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          // await axios.put("http://localhost:3001/payCuentaByTotal", {
-          //   monto: monto,
-          //   cliente_id: client,
-          // });
+          if (cheque) {
+            await axios.post("http://localhost:3001/addCheque", cheque, {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          }
+          await axios.put("http://localhost:3001/payCuentaByTotal", {
+            monto: monto,
+            cliente_id: client,
+            metodo_pago: metodoPago,
+          });
           notification.success({
             message: "Exito",
             description: "Total pagado con exito",
@@ -192,6 +215,32 @@ function CuentasCorrientes() {
   };
   const handleMetodoChange = (metodo) => {
     setMetodoPago(metodo);
+    console.log(metodo);
+    if (metodo.id === 3) {
+      setIsModalVisible(true);
+    }
+  };
+  const handleOk = () => {
+    // Aquí podrías procesar los datos del formulario
+
+    form.submit();
+  };
+
+  const handleCancel = () => {
+    // Cierra el modal sin hacer nada
+    setIsModalVisible(false);
+  };
+  const onFinish = (values) => {
+    const chequeData = {
+      banco: values.banco,
+      nro_cheque: values.nro_cheque,
+      fecha_emision: dayjs(values.fecha_emision).format("YYYY-MM-DD"),
+      fecha_cobro: dayjs(values.fecha_cobro).format("YYYY-MM-DD"),
+      importe: parseFloat(values.importe), // Asegúrate de convertir a número
+    };
+    console.log("Datos del cheque:", chequeData);
+    setCheque(chequeData);
+    setIsModalVisible(false);
   };
 
   const columns = [
@@ -237,6 +286,78 @@ function CuentasCorrientes() {
 
   return (
     <MenuLayout>
+      <Modal
+        title="Ingrese los datos de su cheque"
+        open={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish} // Maneja el envío del formulario
+        >
+          <Form.Item
+            label="Número de Cheque"
+            name="nro_cheque"
+            rules={[
+              {
+                required: true,
+                message: "Por favor ingrese el número de cheque",
+              },
+            ]}
+          >
+            <Input placeholder="Ingrese el número de cheque" />
+          </Form.Item>
+
+          <Form.Item
+            label="Banco"
+            name="banco"
+            rules={[
+              {
+                required: true,
+                message: "Por favor ingrese el nombre del banco",
+              },
+            ]}
+          >
+            <Input placeholder="Ingrese el nombre del banco" />
+          </Form.Item>
+
+          <Form.Item
+            label="Monto"
+            name="importe"
+            rules={[{ required: true, message: "Por favor ingrese el monto" }]}
+          >
+            <Input placeholder="Ingrese el monto" type="number" />
+          </Form.Item>
+
+          <Form.Item
+            label="Fecha de Emisión"
+            name="fecha_emision"
+            rules={[
+              {
+                required: true,
+                message: "Por favor ingrese la fecha de emisión",
+              },
+            ]}
+          >
+            <DatePicker format="YYYY-MM-DD" />
+          </Form.Item>
+
+          <Form.Item
+            label="Fecha de Cobro"
+            name="fecha_cobro"
+            rules={[
+              {
+                required: true,
+                message: "Por favor ingrese la fecha de cobro",
+              },
+            ]}
+          >
+            <DatePicker format="YYYY-MM-DD" />
+          </Form.Item>
+        </Form>
+      </Modal>
       <div>Cuentas Corrientes</div>
       <div style={{ display: "flex", width: "30%" }}>
         <ClienteInput
@@ -303,9 +424,9 @@ function CuentasCorrientes() {
           <span>Monto a pagar</span>
         </Tooltip>
         <div
-          style={{ marginTop: "10px", display: "flex", alignItems: "center" }}
+          style={{ marginTop: "5px", display: "flex", alignItems: "center" }}
         >
-          <div style={{ marginTop: "10px" }}>
+          <div style={{ marginTop: "5px" }}>
             <InputNumber
               value={monto}
               onChange={setMonto}
@@ -320,14 +441,20 @@ function CuentasCorrientes() {
             Poner Total
           </Button>
         </div>
-        <Tooltip title="Metodo de pago">
-          <span>Metodo de pago</span>
-        </Tooltip>
-        <Input
-          value={metodoPago}
-          onChange={setMetodoPago}
-          style={{ marginTop: "10px", width: "70%" }}
-        />
+        <div style={{ margin: "20px", marginLeft: "0px" }}>
+          <Tooltip title="Metodo de pago">
+            <span style={{ display: "block", marginBottom: "8px" }}>
+              Método de pago
+            </span>
+          </Tooltip>
+          <MetodosPagoInput
+            value={metodoPago}
+            onChangeMetodo={handleMetodoChange}
+            onInputChange={setMetodoPago}
+            style={{ marginTop: "8px" }}
+          />
+        </div>
+
         <Button
           type="primary"
           onClick={handlePayTotal}

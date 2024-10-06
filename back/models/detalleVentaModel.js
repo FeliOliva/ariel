@@ -18,8 +18,27 @@ const updateDetalleVenta = async (ID, producto_id) => {
     throw err;
   }
 };
+const getVenta = async (ID) => {
+  try {
+    const query = queriesDetalleVenta.getVenta;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+const updateTotalVenta = async (ID, total) => {
+  try {
+    const query = queriesDetalleVenta.updateTotalVenta;
+    await db.query(query, [total, ID]);
+  } catch (err) {
+    throw err;
+  }
+};
 
 module.exports = {
   getDetalleVentaById,
   updateDetalleVenta,
+  getVenta,
+  updateTotalVenta,
 };
