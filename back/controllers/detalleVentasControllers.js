@@ -15,8 +15,9 @@ const updateDetalleVenta = async (req, res) => {
   try {
     const { ID, precio_monotributista } = req.body;
     await detalleVentaModel.updateDetalleVenta(ID, precio_monotributista);
-    const venta = await detalleVentaModel.getVenta(ID);
-    await detalleVentaModel.updateTotalVenta(ID, venta[0].total_con_descuento);
+    // console.log(ID);
+    // const total = await detalleVentaModel.getTotalVenta(ID);
+    // console.log(total);
     res
       .status(200)
       .json({ message: "Detalle de venta actualizado correctamente" });

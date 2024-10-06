@@ -24,6 +24,7 @@ const VentaDetalles = () => {
     total: "",
     direccion: "",
     nombre_tipo_cliente: "",
+    descuento: "",
   });
   const [openUp, setOpenUp] = useState(false);
   const [openDown, setOpenDown] = useState(false);
@@ -35,7 +36,8 @@ const VentaDetalles = () => {
         const response = await axios.get(
           `http://localhost:3001/getVentaByID/${id}`
         );
-
+        console.log(id);
+        console.log(response.data);
         const {
           detalles,
           nombre_cliente,
@@ -46,6 +48,7 @@ const VentaDetalles = () => {
           direccion,
           nombre_tipo_cliente,
           detalle_venta_id,
+          descuento,
         } = response.data;
 
         if (Array.isArray(detalles)) {
@@ -59,6 +62,7 @@ const VentaDetalles = () => {
             direccion,
             nombre_tipo_cliente,
             detalle_venta_id,
+            descuento,
           });
         } else {
           console.error("Expected 'detalles' to be an array");
@@ -69,7 +73,6 @@ const VentaDetalles = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [id]);
 
@@ -86,7 +89,7 @@ const VentaDetalles = () => {
 
       pdf.setFontSize(10);
       pdf.text(`${ventaInfo.nombre_cliente}`, 10, 35);
-      pdf.text(` ${ventaInfo.direccion}`, 10, 40); // Se muestra la dirección correctamente
+      pdf.text(` ${ventaInfo.direccion}`, 10, 40);
       pdf.text(`${ventaInfo.zona_nombre}`, 10, 45);
       pdf.text(`${ventaInfo.nombre_tipo_cliente}`, 10, 50);
 
@@ -130,6 +133,7 @@ const VentaDetalles = () => {
           row.importe,
         ]),
         theme: "grid",
+        tableWidth: "wrap", // Ajusta el ancho de la tabla para evitar columnas adicionales
         styles: {
           fontSize: 10,
           cellPadding: 3,
@@ -140,7 +144,7 @@ const VentaDetalles = () => {
           0: { cellWidth: 25 },
           1: { cellWidth: 80 },
           2: { cellWidth: 45 },
-          3: { cellWidth: 35 }, // Elimina los cuadros del costado de "Importe"
+          3: { cellWidth: 35 }, // Define el ancho exacto de la columna "Importe" para evitar espacio extra
         },
         headStyles: {
           fillColor: [255, 255, 255],
@@ -151,24 +155,45 @@ const VentaDetalles = () => {
         tableLineWidth: 0.1,
       });
 
+      // Calcula la posición vertical después de la tabla
+      const finalY = pdf.lastAutoTable.finalY + 155;
+
+      // Ajuste de alineación para el total, descuento y total con descuento
+      const rightX = 140; // Ajustar el valor según el centro
+
       pdf.setFontSize(12);
+      pdf.text(`Total Importe: ${totalImporte}`, rightX, finalY);
+
       pdf.text(
-        `TOTAL: ${parseFloat(ventaInfo.total).toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`,
-        160,
-        pdf.lastAutoTable.finalY + 10
+        `Descuento: ${parseFloat(ventaInfo.descuento).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}%`,
+        rightX,
+        finalY + 5
       );
+
       pdf.text(
-        `Nro Venta: ${ventaInfo.nroVenta}`,
-        10,
-        pdf.lastAutoTable.finalY + 10
+        `Total con Descuento: ${parseFloat(ventaInfo.total).toLocaleString(
+          "es-ES",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }
+        )}`,
+        rightX,
+        finalY + 10
       );
+
+      // Número de venta en la parte inferior izquierda
+      const bottomY = pdf.internal.pageSize.height - 10;
+      pdf.setFontSize(10);
+      pdf.text(`Nro Venta: ${ventaInfo.nroVenta}`, 10, bottomY);
 
       pdf.save(`${ventaInfo.nroVenta}.pdf`);
     }
   };
+
   const handleUpPrice = async (id) => {
     console.log(id);
     const response = await axios.get(
@@ -371,7 +396,32 @@ const VentaDetalles = () => {
                 fontSize: "30px",
               }}
             >
-              <strong>Total Importe: </strong> {totalImporte}
+              <div
+                style={{
+                  textAlign: "right",
+                  marginTop: "20px",
+                  fontSize: "30px",
+                }}
+              >
+                <div>
+                  <strong>Total Importe: </strong>
+                  {totalImporte}
+                </div>
+                <div>
+                  <strong>Descuento: %</strong>
+                  {parseFloat(ventaInfo.descuento).toLocaleString("es-ES", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
+                </div>
+                <div>
+                  <strong>Total con descuento: </strong>
+                  {parseFloat(ventaInfo.total).toLocaleString("es-ES", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}

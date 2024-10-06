@@ -12,7 +12,7 @@ import {
   Modal,
   notification,
 } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format, set } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import ClienteInput from "../components/ClienteInput";
@@ -24,6 +24,7 @@ import {
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import OfertasInput from "../components/OfertasInput";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+
 function Ventas() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,7 @@ function Ventas() {
   const [ofertaValue, setOfertaValue] = useState(""); // Estado para el valor del input de la oferta
   const [selectedOferta, setSelectedOferta] = useState(""); // Estado para el valor del input de la oferta
   const { confirm } = Modal;
+  const navigate = useNavigate();
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/ventas");
@@ -253,6 +255,9 @@ function Ventas() {
       });
     }
   };
+  const handleGoToCheques = () => {
+    navigate("/cheques");
+  };
 
   const columns = [
     {
@@ -370,6 +375,9 @@ function Ventas() {
         onClick={() => setOpen(true)}
       >
         Nueva Venta
+      </Button>
+      <Button type="primary" onClick={handleGoToCheques}>
+        Ver Cheques
       </Button>
       <DataTable
         columns={columns}

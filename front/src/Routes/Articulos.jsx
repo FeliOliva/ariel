@@ -580,6 +580,7 @@ function Articulos() {
   const handleGoToProveedores = () => {
     navigate("/proveedor");
   };
+
   const handleGoToDetallesArticulos = () => {
     navigate("/ArticulosDetalles");
   };
