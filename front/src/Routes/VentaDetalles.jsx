@@ -17,6 +17,7 @@ const VentaDetalles = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ventaInfo, setVentaInfo] = useState({
+    venta_id: "",
     nombre_cliente: "",
     nroVenta: "",
     fecha: "",
@@ -40,6 +41,7 @@ const VentaDetalles = () => {
         console.log(response.data);
         const {
           detalles,
+          venta_id, // Asegúrate de que el backend envíe el venta_id en la respuesta
           nombre_cliente,
           nroVenta,
           fecha,
@@ -47,13 +49,13 @@ const VentaDetalles = () => {
           total,
           direccion,
           nombre_tipo_cliente,
-          detalle_venta_id,
           descuento,
         } = response.data;
 
         if (Array.isArray(detalles)) {
           setData(detalles);
           setVentaInfo({
+            venta_id, // Guarda el venta_id en ventaInfo
             nombre_cliente,
             nroVenta,
             fecha,
@@ -61,7 +63,6 @@ const VentaDetalles = () => {
             total,
             direccion,
             nombre_tipo_cliente,
-            detalle_venta_id,
             descuento,
           });
         } else {
@@ -221,8 +222,10 @@ const VentaDetalles = () => {
     );
     const newData = {
       ID: detalleVenta.id,
+      id_venta: ventaInfo.venta_id, // Incluye el venta_id en el payload
       precio_monotributista: Math.round(nuevoPrecioMonotributista),
     };
+    console.log("new data");
     console.log(newData);
     await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
     setOpenUp(false);
@@ -234,6 +237,7 @@ const VentaDetalles = () => {
     );
     const newData = {
       ID: detalleVenta.id,
+      id_venta: ventaInfo.venta_id, // Incluye el venta_id en el payload
       precio_monotributista: Math.round(nuevoPrecioMonotributista),
     };
     console.log(newData);

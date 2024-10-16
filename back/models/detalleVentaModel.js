@@ -18,41 +18,21 @@ const updateDetalleVenta = async (ID, producto_id) => {
     throw err;
   }
 };
-const getTotalVenta = async (ID) => {
+const ajustarTotalConDescuento = async (id_venta, diferencia) => {
   try {
-    const query = queriesDetalleVenta.getTotalVenta;
-    const rows = await db.query(query, [ID]);
-    return rows[0];
-  } catch (err) {
-    throw err;
-  }
-};
-const updateTotalVenta = async (ID, total) => {
-  try {
-    const query = queriesDetalleVenta.updateTotalVenta;
-    await db.query(query, [total, ID]);
-  } catch (err) {
-    throw err;
-  }
-};
-const calcularTotalVenta = async (ID) => {
-  try {
-    const query = `
-      SELECT total
-      FROM venta 
-      WHERE  = ?;
-    `;
-    const [rows] = await db.query(query, [ID]);
-    return rows[0].total;
+    const query = queriesDetalleVenta.ajustarTotalConDescuento;
+    await db.query(query, [diferencia, id_venta]);
   } catch (err) {
     throw err;
   }
 };
 
+
+
+
+
 module.exports = {
   getDetalleVentaById,
   updateDetalleVenta,
-  getTotalVenta,
-  updateTotalVenta,
-  calcularTotalVenta,
+  ajustarTotalConDescuento
 };

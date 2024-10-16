@@ -71,6 +71,7 @@ ORDER BY
   a.mediciones,
   dv.venta_id, 
   v.nroVenta,  -- Número de venta
+  v.id AS id_venta,
   v.total_con_descuento AS total_con_descuento,  
   v.descuento AS descuento,
   dv.costo, 

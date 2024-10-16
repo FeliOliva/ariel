@@ -14,7 +14,6 @@ const RoutesArticulos = require("./routes/articulosRoutes");
 const RoutesClientes = require("./routes/clientesRoutes");
 const RoutesLineas = require("./routes/lineaRoutes");
 const RoutesSublineas = require("./routes/subLineaRoutes");
-const RoutesMarcas = require("./routes/marcasRoutes");
 const RoutesVentas = require("./routes/ventasRoutes");
 const RoutesZonas = require("./routes/zonasRoutes");
 const RoutesDetalleVentas = require("./routes/detalleVentasRoutes");
@@ -34,7 +33,6 @@ app.use(
   RoutesClientes,
   RoutesLineas,
   RoutesSublineas,
-  RoutesMarcas,
   RoutesVentas,
   RoutesZonas,
   RoutesDetalleVentas,

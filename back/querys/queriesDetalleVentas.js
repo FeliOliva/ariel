@@ -7,6 +7,9 @@ module.exports = {
     set precio_monotributista = ?
     WHERE ID = ?;
   `,
-  getTotalVenta: ` select total from venta WHERE ID = ?;`,
-  updateTotalVenta: "UPDATE venta SET total_con_descuento = ? WHERE ID = ?;",
+  ajustarTotalConDescuento: `
+      UPDATE venta 
+      SET total_con_descuento = total_con_descuento + ?
+      WHERE id = ?;
+    `,
 };
