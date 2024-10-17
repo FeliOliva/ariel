@@ -9,7 +9,13 @@ module.exports = {
   `,
   ajustarTotalConDescuento: `
       UPDATE venta 
-      SET total_con_descuento = total_con_descuento + ?
+      SET total_con_descuento = ?
       WHERE id = ?;
     `,
+  getVenta: 'select * from venta where id = ?',
+  updateTotales: `
+    UPDATE venta 
+    SET total = ?, total_con_descuento = ?
+    WHERE id = ?;
+  `,
 };

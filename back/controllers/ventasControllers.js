@@ -184,9 +184,9 @@ const getVentaByID = async (req, res) => {
         zona_nombre: detalleVentas[0].nombre_zona,
         direccion: detalleVentas[0].direccion,
         nombre_tipo_cliente: detalleVentas[0].nombre_tipo_cliente,
-        total: detalleVentas[0].total_con_descuento,
+        total_importe: detalleVentas[0].total_venta,
         descuento: detalleVentas[0].descuento,
-        total_importe: detalleVentas[0].total_importe,
+        total_con_descuento: detalleVentas[0].total_con_descuento,
         venta_id: detalleVentas[0].id_venta,
         detalles: detalleVentas.map((detalle) => ({
           articulo_id: detalle.articulo_id,
@@ -200,7 +200,7 @@ const getVentaByID = async (req, res) => {
             detalle.nombre_sublinea,
           cantidad: detalle.cantidad,
           precio_monotributista: detalle.precio_monotributista,
-          subtotal: detalle.total_precio_monotributista,
+          subtotal: detalle.precio_monotributista * detalle.cantidad,
           detalle_venta_id: detalle.id_dv,
         })),
       };

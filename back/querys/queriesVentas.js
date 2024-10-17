@@ -63,7 +63,8 @@ ORDER BY
   JOIN Cliente c ON v.cliente_id = c.ID
   JOIN Zona z ON v.zona_id = z.ID
   WHERE p.ID = ?;`,
-  getVentaByID: `SELECT 
+  getVentaByID: `
+  SELECT 
   dv.id AS id_dv, 
   dv.articulo_id, 
   a.nombre AS nombre_articulo, 
@@ -72,8 +73,9 @@ ORDER BY
   dv.venta_id, 
   v.nroVenta,  -- Número de venta
   v.id AS id_venta,
+    v.total AS total_venta,
+	v.descuento AS descuento,
   v.total_con_descuento AS total_con_descuento,  
-  v.descuento AS descuento,
   dv.costo, 
   dv.cantidad, 
   dv.precio_monotributista, 
@@ -87,11 +89,7 @@ ORDER BY
   tc.nombre_tipo AS nombre_tipo_cliente,  -- Nombre del tipo de cliente
   z.nombre AS nombre_zona,
   l.nombre AS nombre_linea,  -- Nombre de la línea
-  sl.nombre AS nombre_sublinea,  -- Nombre de la sublínea
-  (dv.precio_monotributista * dv.cantidad) AS total_precio_monotributista, -- Importe de cada detalle
-  (SELECT SUM(dv1.precio_monotributista * dv1.cantidad)
-   FROM detalle_venta dv1 
-   WHERE dv1.venta_id = dv.venta_id) AS total_importe -- Total de todos los detalles
+  sl.nombre AS nombre_sublinea 
 FROM detalle_venta dv
 INNER JOIN articulo a ON dv.articulo_id = a.id
 INNER JOIN venta v ON dv.venta_id = v.id
@@ -100,7 +98,7 @@ INNER JOIN zona z ON c.zona_id = z.id
 INNER JOIN tipo_cliente tc ON c.tipo_cliente = tc.id  -- Unión con tipo_cliente
 INNER JOIN linea l ON a.linea_id = l.id  -- Unión con línea
 INNER JOIN sublinea sl ON a.subLinea_id = sl.id  -- Unión con sublínea
-WHERE dv.venta_id = ?;
+WHERE dv.venta_id = ?
   `,
   checkStock: "SELECT stock, nombre FROM articulo WHERE id = ?",
   descontarStock: "UPDATE articulo SET stock = stock - ? WHERE id = ?",

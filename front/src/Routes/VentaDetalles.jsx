@@ -46,10 +46,11 @@ const VentaDetalles = () => {
           nroVenta,
           fecha,
           zona_nombre,
-          total,
+          total_importe,
+          descuento,
+          total_con_descuento,
           direccion,
           nombre_tipo_cliente,
-          descuento,
         } = response.data;
 
         if (Array.isArray(detalles)) {
@@ -60,10 +61,11 @@ const VentaDetalles = () => {
             nroVenta,
             fecha,
             zona_nombre,
-            total,
+            total_importe,
+            descuento,
+            total_con_descuento,
             direccion,
             nombre_tipo_cliente,
-            descuento,
           });
         } else {
           console.error("Expected 'detalles' to be an array");
@@ -163,7 +165,7 @@ const VentaDetalles = () => {
       const rightX = 140; // Ajustar el valor según el centro
 
       pdf.setFontSize(12);
-      pdf.text(`Total Importe: ${totalImporte}`, rightX, finalY);
+      pdf.text(`Total Importe: ${ventaInfo.total}`, rightX, finalY);
 
       pdf.text(
         `Descuento: ${parseFloat(ventaInfo.descuento).toLocaleString("es-ES", {
@@ -307,13 +309,6 @@ const VentaDetalles = () => {
       ),
     },
   ];
-
-  const totalImporte = data
-    .reduce((acc, item) => acc + parseFloat(item.subtotal), 0)
-    .toLocaleString("es-ES", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
   return (
     <MenuLayout>
       <Drawer
@@ -408,8 +403,11 @@ const VentaDetalles = () => {
                 }}
               >
                 <div>
-                  <strong>Total Importe: </strong>
-                  {totalImporte}
+                  <strong>Total importe:</strong>
+                  {parseFloat(ventaInfo.total_importe).toLocaleString("es-ES", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </div>
                 <div>
                   <strong>Descuento: %</strong>
@@ -420,10 +418,13 @@ const VentaDetalles = () => {
                 </div>
                 <div>
                   <strong>Total con descuento: </strong>
-                  {parseFloat(ventaInfo.total).toLocaleString("es-ES", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {parseFloat(ventaInfo.total_con_descuento).toLocaleString(
+                    "es-ES",
+                    {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }
+                  )}
                 </div>
               </div>
             </div>
