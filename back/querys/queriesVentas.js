@@ -41,7 +41,7 @@ ORDER BY
   v.id DESC;
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, descuento, pago) VALUES (?, ?, ?, ?, ?);`,
-  addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista) VALUES (?, ?, ?, ?, ?);`,
+  addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista,sub_total) VALUES (?, ?, ?, ?, ?, ?);`,
   dropVenta: `UPDATE Ventas SET estado = 'inactivo' WHERE ID = ?;`,
   upVenta: `UPDATE Ventas SET estado = 'activo' WHERE ID = ?;`,
   updateVentas: `UPDATE Ventas SET producto_id = ?, cantidad = ?, cliente_id = ?, zona_id = ? WHERE ID = ?;`,
@@ -64,7 +64,7 @@ ORDER BY
   JOIN Zona z ON v.zona_id = z.ID
   WHERE p.ID = ?;`,
   getVentaByID: `
-  SELECT 
+ SELECT 
   dv.id AS id_dv, 
   dv.articulo_id, 
   a.nombre AS nombre_articulo, 
@@ -80,6 +80,7 @@ ORDER BY
   dv.cantidad, 
   dv.precio_monotributista, 
   dv.fecha, 
+  dv.sub_total,
   CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente_completo, -- Nombre completo del cliente
   c.direccion, -- Dirección del cliente
   c.cuil, -- CUIL del cliente
@@ -98,7 +99,7 @@ INNER JOIN zona z ON c.zona_id = z.id
 INNER JOIN tipo_cliente tc ON c.tipo_cliente = tc.id  -- Unión con tipo_cliente
 INNER JOIN linea l ON a.linea_id = l.id  -- Unión con línea
 INNER JOIN sublinea sl ON a.subLinea_id = sl.id  -- Unión con sublínea
-WHERE dv.venta_id = ?
+WHERE dv.venta_id = ?;
   `,
   checkStock: "SELECT stock, nombre FROM articulo WHERE id = ?",
   descontarStock: "UPDATE articulo SET stock = stock - ? WHERE id = ?",

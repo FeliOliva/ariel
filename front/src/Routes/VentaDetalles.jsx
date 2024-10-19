@@ -51,6 +51,7 @@ const VentaDetalles = () => {
           total_con_descuento,
           direccion,
           nombre_tipo_cliente,
+          sub_total,
         } = response.data;
 
         if (Array.isArray(detalles)) {
@@ -120,7 +121,7 @@ const VentaDetalles = () => {
             maximumFractionDigits: 2,
           }
         ),
-        importe: parseFloat(row.subtotal).toLocaleString("es-ES", {
+        importe: parseFloat(row.sub_total).toLocaleString("es-ES", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }),
@@ -165,7 +166,7 @@ const VentaDetalles = () => {
       const rightX = 140; // Ajustar el valor según el centro
 
       pdf.setFontSize(12);
-      pdf.text(`Total Importe: ${ventaInfo.total}`, rightX, finalY);
+      pdf.text(`Total Importe: ${ventaInfo.total_importe}`, rightX, finalY);
 
       pdf.text(
         `Descuento: ${parseFloat(ventaInfo.descuento).toLocaleString("es-ES", {
@@ -177,13 +178,12 @@ const VentaDetalles = () => {
       );
 
       pdf.text(
-        `Total con Descuento: ${parseFloat(ventaInfo.total).toLocaleString(
-          "es-ES",
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }
-        )}`,
+        `Total con Descuento: ${parseFloat(
+          ventaInfo.total_con_descuento
+        ).toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
         rightX,
         finalY + 10
       );
@@ -205,6 +205,7 @@ const VentaDetalles = () => {
     setDetalleVenta({
       id: response.data.id,
       precio_monotributista: response.data.precio_monotributista,
+      cantidad: response.data.cantidad,
     });
     setOpenUp(true);
   };
@@ -215,6 +216,7 @@ const VentaDetalles = () => {
     setDetalleVenta({
       id: response.data.id,
       precio_monotributista: response.data.precio_monotributista,
+      cantidad: response.data.cantidad,
     });
     setOpenDown(true);
   };
@@ -229,6 +231,7 @@ const VentaDetalles = () => {
     const newData = {
       ID: detalleVenta.id,
       new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
+      cantidad: detalleVenta.cantidad,
       venta_id: ventaInfo.venta_id,
     };
     console.log("newData");
@@ -246,6 +249,7 @@ const VentaDetalles = () => {
     const newData = {
       ID: detalleVenta.id,
       new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
+      cantidad: detalleVenta.cantidad,
       venta_id: ventaInfo.venta_id,
     };
     console.log(newData);
@@ -286,11 +290,11 @@ const VentaDetalles = () => {
     },
     {
       name: "Importe",
-      selector: (row) => row.subtotal,
+      selector: (row) => row.sub_total,
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "30px" }}>
-          {parseFloat(row.subtotal).toLocaleString("es-ES", {
+          {parseFloat(row.sub_total).toLocaleString("es-ES", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}

@@ -67,7 +67,8 @@ const addDetalleVenta = async (
   articulo_id,
   costo,
   cantidad,
-  precio_monotributista
+  precio_monotributista,
+  sub_total
 ) => {
   try {
     await db.query(queriesVentas.addDetalleVenta, [
@@ -76,6 +77,7 @@ const addDetalleVenta = async (
       costo,
       cantidad,
       precio_monotributista,
+      sub_total,
     ]);
   } catch (error) {
     throw new Error("Error al agregar el detalle de venta: " + error.message);

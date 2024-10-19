@@ -26,6 +26,7 @@ const addVenta = async (req, res) => {
         });
       }
     }
+    console.log(detalles);
 
     // Crear la venta
     const ventaId = await ventasModel.addVenta(
@@ -36,11 +37,20 @@ const addVenta = async (req, res) => {
       pago
     );
     let totalVenta = 0;
-
+    let sub_total = 0;
     // Agregar detalles de la venta y sumar subtotales
     for (const detalle of detalles) {
-      const subtotal = detalle.cantidad * detalle.precio_monotributista;
-      Math.round((totalVenta += subtotal));
+      if (detalle.isGift === true) {
+        sub_total = 0;
+        console.log(sub_total);
+      } else {
+        sub_total = Math.round(
+          detalle.cantidad * detalle.precio_monotributista
+        );
+        console.log(sub_total);
+      }
+      Math.round((totalVenta += sub_total));
+      console.log(totalVenta);
 
       // Agregar el detalle de la venta
       await ventasModel.addDetalleVenta(
@@ -48,7 +58,8 @@ const addVenta = async (req, res) => {
         detalle.articulo_id,
         detalle.costo,
         detalle.cantidad,
-        detalle.precio_monotributista
+        detalle.precio_monotributista,
+        sub_total
       );
 
       // Descontar el stock del artículo
@@ -200,7 +211,7 @@ const getVentaByID = async (req, res) => {
             detalle.nombre_sublinea,
           cantidad: detalle.cantidad,
           precio_monotributista: detalle.precio_monotributista,
-          subtotal: detalle.precio_monotributista * detalle.cantidad,
+          sub_total: detalle.sub_total,
           detalle_venta_id: detalle.id_dv,
         })),
       };

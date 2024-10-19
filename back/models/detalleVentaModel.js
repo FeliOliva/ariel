@@ -10,10 +10,10 @@ const getDetalleVentaById = async (ID) => {
     throw err;
   }
 };
-const updateDetalleVenta = async (ID, new_precio_monotributista) => {
+const updateDetalleVenta = async (ID, new_precio_monotributista, sub_total) => {
   try {
     const query = queriesDetalleVenta.updateDetalleVenta;
-    await db.query(query, [new_precio_monotributista, ID]);
+    await db.query(query, [new_precio_monotributista, sub_total, ID]);
   } catch (err) {
     throw err;
   }
@@ -26,7 +26,7 @@ const getDetalleVenta = async (venta_id) => {
   } catch (err) {
     throw err;
   }
-}
+};
 const getPorcentage = async (venta_id) => {
   try {
     const query = queriesDetalleVenta.getPorcentage;
@@ -35,7 +35,7 @@ const getPorcentage = async (venta_id) => {
   } catch (err) {
     throw err;
   }
-}
+};
 const updateTotalesVenta = async (venta_id, total, totalConDescuento) => {
   try {
     const query = `
@@ -49,14 +49,10 @@ const updateTotalesVenta = async (venta_id, total, totalConDescuento) => {
   }
 };
 
-
-
-
-
 module.exports = {
   getDetalleVentaById,
   updateDetalleVenta,
   getDetalleVenta,
   getPorcentage,
-  updateTotalesVenta
+  updateTotalesVenta,
 };

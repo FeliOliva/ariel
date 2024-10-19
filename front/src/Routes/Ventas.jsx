@@ -143,6 +143,19 @@ function Ventas() {
       articulos: prev.articulos.filter((articulo) => articulo.id !== id),
     }));
   };
+  const handleGiftChange = (id, isGift) => {
+    setVenta((prev) => ({
+      ...prev,
+      articulos: prev.articulos.map((articulo) =>
+        articulo.id === id
+          ? {
+              ...articulo,
+              isGift, // Actualiza simplemente el estado de "isGift"
+            }
+          : articulo
+      ),
+    }));
+  };
 
   const handleAddVenta = async () => {
     if (venta.cliente && venta.articulos.length > 0) {
@@ -167,9 +180,10 @@ function Ventas() {
             costo: articulo.costo, // Asegúrate de que este campo esté presente
             cantidad: articulo.quantity,
             precio_monotributista: articulo.precio_monotributista,
+            isGift: articulo.isGift ? true : false,
           })),
         };
-
+        console.log(ventaData);
         await axios.post("http://localhost:3001/addVenta", ventaData);
 
         confirm({
@@ -456,7 +470,11 @@ function Ventas() {
           Agregar oferta
         </Button>
 
-        <DynamicList items={venta.articulos} onDelete={handleDeleteArticulo} />
+        <DynamicList
+          items={venta.articulos}
+          onDelete={handleDeleteArticulo}
+          onGiftChange={handleGiftChange}
+        />
         <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Descuento</Tooltip>
         </div>
