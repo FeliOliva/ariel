@@ -80,6 +80,13 @@ const ArticulosDetalles = () => {
 
   return (
     <MenuLayout>
+      <Button
+        onClick={() => window.history.back()}
+        type="primary"
+        style={{ marginBottom: 10 }}
+      >
+        Volver
+      </Button>
       <div>
         <Button
           onClick={handleGeneratePDF}

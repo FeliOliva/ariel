@@ -183,15 +183,14 @@ function Ventas() {
             isGift: articulo.isGift ? true : false,
           })),
         };
-        console.log(ventaData);
-        await axios.post("http://localhost:3001/addVenta", ventaData);
 
         confirm({
           title: "Confirmar",
           content: "¿Desea registrar la venta?",
           okText: "Si",
           cancelText: "No",
-          onOk: () => {
+          onOk: async () => {
+            await axios.post("http://localhost:3001/addVenta", ventaData);
             setVenta({ articulos: [], cliente: null, nroVenta: "" });
             setArticuloValue("");
             setClienteValue("");
@@ -314,7 +313,7 @@ function Ventas() {
       name: "Total Precio Monotributista",
       selector: (row) => (
         <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.total_monotributista}
+          {row.total}
         </span>
       ),
       sortable: true,
@@ -385,12 +384,16 @@ function Ventas() {
       <h1>Listado de ventas</h1>
       <Button
         type="primary"
-        style={{ marginBottom: 10 }}
+        style={{ marginBottom: 10, marginRight: 10 }}
         onClick={() => setOpen(true)}
       >
         Nueva Venta
       </Button>
-      <Button type="primary" onClick={handleGoToCheques}>
+      <Button
+        type="primary"
+        onClick={handleGoToCheques}
+        style={{ marginLeft: 10 }}
+      >
         Ver Cheques
       </Button>
       <DataTable

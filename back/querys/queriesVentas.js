@@ -11,7 +11,7 @@ module.exports = {
   v.total_con_descuento,
   v.fecha_venta,
   COALESCE(SUM(d.costo * d.cantidad), 0) AS total_costo,
-  COALESCE(SUM(d.precio_monotributista * d.cantidad), 0) AS total_monotributista,
+  v.total,
   mp.id AS metodo_pago_id,         -- Devuelve el ID del método de pago
   mp.metodo AS metodo_pago         -- Devuelve el nombre del método de pago
 FROM 

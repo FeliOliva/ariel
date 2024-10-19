@@ -11,6 +11,7 @@ const getAllClients = async () => {
 };
 
 const addClient = async (
+  farmacia,
   nombre,
   apellido,
   direccionValue,
@@ -19,11 +20,13 @@ const addClient = async (
   cuilValue,
   zona_id,
   tipo_cliente,
-  localidadValue
+  localidadValue,
+  instagram
 ) => {
   try {
     const query = queriesClients.addClient;
     await db.query(query, [
+      farmacia,
       nombre,
       apellido,
       direccionValue,
@@ -33,6 +36,7 @@ const addClient = async (
       zona_id,
       tipo_cliente,
       localidadValue,
+      instagram,
     ]);
   } catch (err) {
     throw err;
@@ -55,6 +59,7 @@ const upClient = async (ID) => {
   }
 };
 const updateClients = async (
+  farmacia,
   nombre,
   apellido,
   direccionValue,
@@ -64,12 +69,14 @@ const updateClients = async (
   zona_id,
   tipo_cliente,
   localidadValue,
+  instagram,
   ID
 ) => {
   try {
     const query = queriesClients.updateClients;
 
     await db.query(query, [
+      farmacia,
       nombre,
       apellido,
       direccionValue,
@@ -79,6 +86,7 @@ const updateClients = async (
       zona_id,
       tipo_cliente,
       localidadValue,
+      instagram,
       ID,
     ]);
   } catch (err) {

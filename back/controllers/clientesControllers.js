@@ -10,6 +10,7 @@ const getAllClients = async (req, res) => {
 const addClient = async (req, res) => {
   try {
     const {
+      farmacia,
       nombre,
       apellido,
       direccion,
@@ -19,6 +20,7 @@ const addClient = async (req, res) => {
       zona_id,
       tipo_cliente,
       localidad,
+      instagram,
     } = req.body;
     const emailValue = email ?? "";
     const telefonoValue = telefono ?? "";
@@ -27,6 +29,7 @@ const addClient = async (req, res) => {
     const localidadValue = localidad ?? "";
 
     const client = await clientModels.addClient(
+      farmacia,
       nombre,
       apellido,
       direccionValue,
@@ -35,7 +38,8 @@ const addClient = async (req, res) => {
       cuilValue,
       zona_id,
       tipo_cliente,
-      localidadValue
+      localidadValue,
+      instagram
     );
     res
       .status(201)
@@ -68,6 +72,7 @@ const upClient = async (req, res) => {
 const updateClients = async (req, res) => {
   try {
     const {
+      farmacia,
       nombre,
       apellido,
       direccion,
@@ -77,6 +82,7 @@ const updateClients = async (req, res) => {
       zona_id,
       tipo_cliente,
       localidad,
+      instagram,
       ID,
     } = req.body;
 
@@ -87,6 +93,7 @@ const updateClients = async (req, res) => {
     const localidadValue = localidad ?? "";
 
     await clientModels.updateClients(
+      farmacia,
       nombre,
       apellido,
       direccionValue,
@@ -96,6 +103,7 @@ const updateClients = async (req, res) => {
       zona_id,
       tipo_cliente,
       localidadValue,
+      instagram,
       ID
     );
 

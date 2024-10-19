@@ -3,14 +3,25 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button, Drawer, Tooltip, InputNumber } from "antd";
+import {
+  Button,
+  Drawer,
+  Tooltip,
+  InputNumber,
+  notification,
+  Modal,
+} from "antd";
 import {
   customHeaderStyles,
   customCellsStyles,
 } from "../style/dataTableStyles";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
+import {
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons";
 
 const VentaDetalles = () => {
   const { id } = useParams();
@@ -30,7 +41,7 @@ const VentaDetalles = () => {
   const [openUp, setOpenUp] = useState(false);
   const [openDown, setOpenDown] = useState(false);
   const [detalleVenta, setDetalleVenta] = useState({});
-
+  const { confirm } = Modal;
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -178,12 +189,12 @@ const VentaDetalles = () => {
       );
 
       pdf.text(
-        `Total con Descuento: ${parseFloat(
-          ventaInfo.total_con_descuento
-        ).toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`,
+        `Total con Descuento: ${Math.round(
+          parseFloat(ventaInfo.total_con_descuento).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })
+        )}`,
         rightX,
         finalY + 10
       );
@@ -198,7 +209,6 @@ const VentaDetalles = () => {
   };
 
   const handleUpPrice = async (id) => {
-    console.log(id);
     const response = await axios.get(
       `http://localhost:3001/detalleVenta/${id}`
     );
@@ -221,41 +231,90 @@ const VentaDetalles = () => {
     setOpenDown(true);
   };
   const handleAplyUpFilter = async () => {
-    const nuevoPrecioMonotributista = parseFloat(
-      detalleVenta.precio_monotributista * (1 + detalleVenta.percentage / 100)
-    );
-    console.log("nuevo precio");
-    console.log(nuevoPrecioMonotributista);
-    console.log("hook detalle venta");
-    console.log(detalleVenta);
-    const newData = {
-      ID: detalleVenta.id,
-      new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
-      cantidad: detalleVenta.cantidad,
-      venta_id: ventaInfo.venta_id,
-    };
-    console.log("newData");
-    console.log(newData);
-
-    await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
-    setOpenUp(false);
-    window.location.reload();
+    if (detalleVenta.percentage > 100 || detalleVenta.percentage < 0) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "El porcentaje debe ser entre 0 y 100",
+        icon: <ExclamationCircleOutlined />,
+      });
+      return;
+    }
+    try {
+      const nuevoPrecioMonotributista = parseFloat(
+        detalleVenta.precio_monotributista * (1 + detalleVenta.percentage / 100)
+      );
+      const newData = {
+        ID: detalleVenta.id,
+        new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
+        cantidad: detalleVenta.cantidad,
+        venta_id: ventaInfo.venta_id,
+      };
+      confirm({
+        title: "Confirmar",
+        content: "¿Estás seguro de que deseas aplicar el descuento?",
+        okText: "Si",
+        cancelText: "No",
+        onOk: async () => {
+          await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
+          setOpenUp(false);
+          notification.success({
+            message: "Descuento aplicado correctamente",
+            description: "El descuento se aplicó correctamente",
+            duration: 2,
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        },
+      });
+    } catch (error) {
+      console.error("Error al aplicar el descuento:", error);
+    }
   };
 
   const handleAplyDownFilter = async () => {
-    const nuevoPrecioMonotributista = parseFloat(
-      detalleVenta.precio_monotributista * (1 - detalleVenta.percentage / 100)
-    );
-    const newData = {
-      ID: detalleVenta.id,
-      new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
-      cantidad: detalleVenta.cantidad,
-      venta_id: ventaInfo.venta_id,
-    };
-    console.log(newData);
-    await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
-    setOpenUp(false);
-    window.location.reload();
+    if (detalleVenta.percentage > 100 || detalleVenta.percentage < 0) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "El porcentaje debe ser entre 0 y 100",
+        icon: <ExclamationCircleOutlined />,
+      });
+      return;
+    }
+    try {
+      const nuevoPrecioMonotributista = parseFloat(
+        detalleVenta.precio_monotributista * (1 - detalleVenta.percentage / 100)
+      );
+      const newData = {
+        ID: detalleVenta.id,
+        new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
+        cantidad: detalleVenta.cantidad,
+        venta_id: ventaInfo.venta_id,
+      };
+      confirm({
+        title: "Confirmar",
+        content: "¿Estás seguro de que deseas aplicar el descuento?",
+        okText: "Si",
+        cancelText: "No",
+        onOk: async () => {
+          await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
+          setOpenDown(false);
+          notification.success({
+            message: "Descuento aplicado correctamente",
+            description: "El descuento se aplicó correctamente",
+            duration: 2,
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        },
+        onCancel: () => {
+          return;
+        },
+      });
+    } catch (error) {
+      console.error("Error al aplicar el descuento:", error);
+    }
   };
 
   const columns = [

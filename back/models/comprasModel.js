@@ -20,10 +20,10 @@ const addCompra = async (proveedor_id, nro_compra, total) => {
   }
 };
 
-const addDetalleCompra = async (compra_id, articulo_id, cantidad, costo) => {
+const addDetalleCompra = async (compra_id, articulo_id, cantidad, costo, sub_total) => {
   try {
     const query = queriesCompras.addDetalleCompra;
-    await db.query(query, [compra_id, articulo_id, cantidad, costo]);
+    await db.query(query, [compra_id, articulo_id, cantidad, costo, sub_total]);
   } catch (err) {
     throw err;
   }
@@ -56,6 +56,39 @@ const getCompraByID = async (compra_id) => {
     throw err;
   }
 };
+const updateTotalCompra = async (compra_id, total) => {
+  try {
+    const query = queriesCompras.updateTotalesCompra;
+    await db.query(query, [total, compra_id]);
+  } catch (err) {
+    throw err;
+  }
+};
+const updateDetalleCompra = async (ID, new_costo, sub_total) => {
+  try {
+    const query = queriesCompras.updateDetalleCompra;
+    await db.query(query, [new_costo, sub_total, ID]);
+  } catch (err) {
+    throw err;
+  }
+};
+const updateCostoArticulo = async (articulo_id, new_costo) => {
+  try {
+    const query = queriesCompras.updateCostoArticulo;
+    await db.query(query, [new_costo, articulo_id]);
+  } catch (err) {
+    throw err;
+  }
+}
+const getDetalleCompra = async (compra_id) => {
+  try {
+    const query = queriesCompras.getDetalleCompra;
+    const [rows] = await db.query(query, [compra_id]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+}
 module.exports = {
   getAllCompras,
   addCompra,
@@ -63,4 +96,8 @@ module.exports = {
   updateStock,
   getComprasByProveedor,
   getCompraByID,
+  updateTotalCompra,
+  updateDetalleCompra,
+  updateCostoArticulo,
+  getDetalleCompra
 };

@@ -10,6 +10,8 @@ module.exports = {
   cliente.zona_id,
   cliente.telefono, 
   cliente.localidad,
+  cliente.instagram,
+  cliente.farmacia,
   zona.nombre AS zona_nombre,
   tipo_cliente.id AS tipo_cliente_id,
   tipo_cliente.nombre_tipo AS nombre_tipo_cliente
@@ -22,10 +24,10 @@ JOIN
 ORDER BY 
   cliente.id DESC;
 `,
-  addClient: `INSERT INTO cliente (nombre, apellido, direccion, email, telefono, cuil, zona_id, tipo_cliente, localidad ) VALUES (?, ?, ?, ?, ?, ?, ? ,?,?);`,
+  addClient: `INSERT INTO cliente (farmacia, nombre, apellido, direccion, email, telefono, cuil, zona_id, tipo_cliente, localidad, instagram ) VALUES (?, ?, ?, ?, ?, ?, ?, ? ,?,?,?);`,
   dropClient: `UPDATE cliente SET estado = 0 WHERE ID = ?`,
   upClient: `UPDATE cliente SET estado = 1 WHERE ID = ?`,
-  updateClients: `UPDATE cliente SET nombre = ?, apellido = ?, direccion = ?, email = ?, telefono = ?, cuil = ?, zona_id = ?, tipo_cliente = ?, localidad = ? WHERE ID = ?`,
+  updateClients: `UPDATE cliente SET farmacia = ?, nombre = ?, apellido = ?, direccion = ?, email = ?, telefono = ?, cuil = ?, zona_id = ?, tipo_cliente = ?, localidad = ?, instagram = ? WHERE ID = ?`,
   getClientsByID: `SELECT 
   C.*, 
   Z.nombre AS nombreZona, 

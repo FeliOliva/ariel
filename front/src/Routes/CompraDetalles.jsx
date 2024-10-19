@@ -23,12 +23,19 @@ const CompraDetalles = () => {
           `http://localhost:3001/getCompraByID/${id}`
         );
 
-        const { detalles, proveedor_nombre, nro_compra, fecha_compra, total } =
-          response.data;
+        const {
+          detalles,
+          compra_id,
+          proveedor_nombre,
+          nro_compra,
+          fecha_compra,
+          total,
+        } = response.data;
 
         if (Array.isArray(detalles)) {
           setData(detalles);
           setCompraInfo({
+            compra_id,
             proveedor_nombre,
             nro_compra,
             fecha_compra,

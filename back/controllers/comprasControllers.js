@@ -10,8 +10,9 @@ const getAllCompras = async (req, res) => {
 };
 const addCompra = async (req, res) => {
   try {
-    const { proveedor_id, nro_compra, total, detalles } = req.body;
-
+    const { proveedor_id, nro_compra, detalles } = req.body;
+    let total = 0;
+    let sub_total = 0;
     const compra_id = await comprasModel.addCompra(
       proveedor_id,
       nro_compra,
@@ -19,13 +20,19 @@ const addCompra = async (req, res) => {
     );
 
     for (const detalle of detalles) {
+      sub_total = Math.round(
+        detalle.cantidad * detalle.costo
+      );
+      Math.round(total += sub_total);
       await comprasModel.addDetalleCompra(
         compra_id,
         detalle.articulo_id,
         detalle.cantidad,
-        detalle.costo
+        detalle.costo,
+        sub_total
       );
       await comprasModel.updateStock(detalle.articulo_id, detalle.cantidad); // Actualiza el stock sumando la cantidad
+      await comprasModel.updateTotalCompra(compra_id, total);
     }
 
     res.status(201).json({ message: "Compra agregada con éxito" });
@@ -55,9 +62,11 @@ const getCompraByID = async (req, res) => {
         proveedor: detalleCompra[0].proveedor,
         nro_compra: detalleCompra[0].nro_compra,
         fecha_compra: detalleCompra[0].fecha_compra,
+        compra_id: detalleCompra[0].compra_id,
         total: detalleCompra[0].total,
         detalles: detalleCompra.map((detalle) => ({
           id: detalle.articulo_id,
+          detalle_compra_id: detalle.detalle_compra_id,
           nombre: detalle.nombre_articulo,
           costo: detalle.costo,
           cantidad: detalle.cantidad,
@@ -72,9 +81,54 @@ const getCompraByID = async (req, res) => {
   }
 };
 
+
+const updateDetalleCompra = async (req, res) => {
+  try {
+    const { ID, new_costo, cantidad, compra_id, articulo_id } = req.body;
+    const sub_total = new_costo * cantidad;
+
+    // Actualizamos el detalle de la compra
+    await comprasModel.updateDetalleCompra(ID, new_costo, sub_total);
+
+    // Actualizamos el costo del artículo en la tabla articulo
+    await comprasModel.updateCostoArticulo(articulo_id, new_costo);
+
+    // Recalculamos los totales de la compra
+    await recalcularTotalesCompra(compra_id);
+
+    res.status(200).json({
+      message:
+        "Detalle de compra actualizado, artículo modificado y totales recalculados correctamente",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar el detalle de compra" });
+  }
+};
+
+const recalcularTotalesCompra = async (compra_id) => {
+  try {
+    // Obtener todos los detalles de la compra
+    const detalles = await comprasModel.getDetalleCompra(compra_id);
+
+    // Inicializamos el total
+    let total = 0;
+
+    // Calculamos el total sumando costo * cantidad de cada detalle
+    detalles.forEach((detalle) => {
+      total += Math.round(detalle.costo * detalle.cantidad);
+    });
+
+    // Actualizamos el total en la tabla compra
+    await comprasModel.updateTotalCompra(compra_id, total);
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllCompras,
   addCompra,
   getComprasByProveedor,
   getCompraByID,
+  updateDetalleCompra,
 };

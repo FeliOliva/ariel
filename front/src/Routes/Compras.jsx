@@ -29,7 +29,7 @@ function Compras() {
   const [compra, setCompra] = useState({
     articulos: [],
     nro_compra: "",
-    cantidad: 1, // Cantidad por defecto
+    cantidad: 0, // Cantidad por defecto
   });
   const [selectedProveedor, setSelectedProveedor] = useState(null);
   const [articulosFiltrados, setArticulosFiltrados] = useState([]);
@@ -122,7 +122,7 @@ function Compras() {
         ],
       }));
       setSelectedArticulo(null); // Reinicia la selección de artículo
-      setCompra((prev) => ({ ...prev, cantidad: 1 })); // Reinicia la cantidad
+      setCompra((prev) => ({ ...prev, cantidad: 0 })); // Reinicia la cantidad
     } else {
       Modal.warning({
         title: "Advertencia",
@@ -225,7 +225,6 @@ function Compras() {
   useEffect(() => {
     fetchData();
   }, []);
-
   return (
     <MenuLayout>
       <h1>Compras</h1>
@@ -243,6 +242,7 @@ function Compras() {
         placement="right"
         closable={true}
         maskClosable={false}
+        width={700}
       >
         <div style={{ display: "flex", marginTop: 10 }}>
           <Tooltip>Nro de Compra</Tooltip>
@@ -265,12 +265,23 @@ function Compras() {
             <Select
               placeholder="Seleccione un artículo"
               options={articulosFiltrados.map((articulo) => ({
-                label: articulo.nombre,
+                label:
+                  articulo.nombre +
+                  " - " +
+                  articulo.mediciones +
+                  " - " +
+                  articulo.linea_nombre +
+                  " - " +
+                  articulo.sublinea_nombre,
                 value: articulo.id,
               }))}
               value={selectedArticulo}
               onChange={(value) => setSelectedArticulo(value)}
               style={{ width: "100%" }}
+              showSearch
+              filterOption={(input, option) =>
+                option.label.toLowerCase().includes(input.toLowerCase())
+              }
             />
             <InputNumber
               min={1}

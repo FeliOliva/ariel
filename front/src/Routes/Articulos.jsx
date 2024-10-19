@@ -77,6 +77,9 @@ function Articulos() {
         </span>
       ),
       sortable: true,
+      sortFunction: (rowA, rowB) => {
+        return rowA.codigo_producto.localeCompare(rowB.codigo_producto);
+      },
     },
     {
       name: "Nombre",
@@ -89,6 +92,9 @@ function Articulos() {
         </Tooltip>
       ),
       sortable: true,
+      sortFunction: (rowA, rowB) => {
+        return rowA.nombre.localeCompare(rowB.nombre);
+      },
     },
     {
       name: "Stock",
@@ -98,6 +104,10 @@ function Articulos() {
         </span>
       ),
       sortable: true,
+      // Orden numérico de mayor a menor
+      sortFunction: (rowA, rowB) => {
+        return rowB.stock - rowA.stock; // Para ordenar de mayor a menor
+      },
     },
     {
       name: "Linea",
@@ -110,6 +120,9 @@ function Articulos() {
         </Tooltip>
       ),
       sortable: true,
+      sortFunction: (rowA, rowB) => {
+        return rowA.linea_nombre.localeCompare(rowB.linea_nombre);
+      },
     },
     {
       name: "SubLinea",
@@ -122,6 +135,9 @@ function Articulos() {
         </Tooltip>
       ),
       sortable: true,
+      sortFunction: (rowA, rowB) => {
+        return rowA.sublinea_nombre.localeCompare(rowB.sublinea_nombre);
+      },
     },
     {
       name: "Costo",
@@ -131,6 +147,10 @@ function Articulos() {
         </span>
       ),
       sortable: true,
+      // Orden numérico de mayor a menor (si costo es un número)
+      sortFunction: (rowA, rowB) => {
+        return rowB.costo - rowA.costo; // Orden descendente por costo
+      },
     },
     {
       name: "Precio monotributista",
@@ -140,6 +160,10 @@ function Articulos() {
         </span>
       ),
       sortable: true,
+      // Orden numérico de mayor a menor
+      sortFunction: (rowA, rowB) => {
+        return rowB.precio_monotributista - rowA.precio_monotributista;
+      },
     },
     {
       name: "Precio Oferta",
@@ -149,6 +173,14 @@ function Articulos() {
         </span>
       ),
       sortable: true,
+      sortFunction: (rowA, rowB) => {
+        // Si precio_oferta es null, lo tratamos como valor muy bajo
+        const precioA =
+          rowA.precio_oferta !== null ? rowA.precio_oferta : -Infinity;
+        const precioB =
+          rowB.precio_oferta !== null ? rowB.precio_oferta : -Infinity;
+        return precioB - precioA; // De mayor a menor precio
+      },
     },
     {
       name: "Proveedor",
@@ -161,6 +193,9 @@ function Articulos() {
         </Tooltip>
       ),
       sortable: true,
+      sortFunction: (rowA, rowB) => {
+        return rowA.proveedor_nombre.localeCompare(rowB.proveedor_nombre);
+      },
     },
     {
       name: "Acciones",
@@ -195,6 +230,7 @@ function Articulos() {
       ),
     },
   ];
+
   const handleIncrease = (id) => {
     setOpenIncreaseDrawer(true);
     setCurrentIncrease({

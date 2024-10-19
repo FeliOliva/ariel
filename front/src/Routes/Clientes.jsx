@@ -87,6 +87,7 @@ const Clientes = () => {
       });
       return;
     }
+    console.log(newClient);
     confirm({
       title: "¿Estas seguro de agregar este cliente?",
       icon: <WarningOutlined />,
@@ -128,6 +129,7 @@ const Clientes = () => {
     }
 
     const clienteActualizado = {
+      farmacia: currentCliente.farmacia,
       nombre: currentCliente.nombre,
       apellido: currentCliente.apellido,
       email: currentCliente.email,
@@ -137,6 +139,7 @@ const Clientes = () => {
       zona_id: currentCliente.zona_id,
       localidad: currentCliente.localidad,
       tipo_cliente: currentCliente.tipo_cliente,
+      instagram: currentCliente.instagram,
       ID: currentCliente.id,
     };
     confirm({
@@ -223,19 +226,19 @@ const Clientes = () => {
 
   const columns = [
     {
-      name: "Nombre",
+      name: "Farmacia",
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.nombre}
+          {row.farmacia}
         </span>
       ),
       sortable: true,
     },
     {
-      name: "Apellido",
+      name: "Nombre",
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.apellido}
+          {row.nombre + " " + row.apellido}
         </span>
       ),
       sortable: true,
@@ -299,6 +302,15 @@ const Clientes = () => {
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
           {row.localidad}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Instagram",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.instagram}
         </span>
       ),
       sortable: true,
@@ -376,6 +388,18 @@ const Clientes = () => {
         onClose={() => setOpenAddDrawer(false)}
       >
         <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Farmacia</Tooltip>
+        </div>
+        <Input
+          value={newClient?.farmacia}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, farmacia: e.target.value }))
+          }
+          placeholder="Farmacia"
+          style={{ marginBottom: 10 }}
+          required
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Nombre</Tooltip>
         </div>
         <Input
@@ -433,6 +457,18 @@ const Clientes = () => {
           style={{ marginBottom: 10, display: "flex" }}
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Instagram</Tooltip>
+        </div>
+        <Input
+          value={newClient?.instagram}
+          onChange={(e) =>
+            setNewClient((prev) => ({ ...prev, instagram: e.target.value }))
+          }
+          placeholder="instagram"
+          style={{ marginBottom: 10 }}
+          required
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Localidad</Tooltip>
         </div>
         <Input
@@ -478,6 +514,18 @@ const Clientes = () => {
         title="Editar Cliente"
         onClose={() => setOpenEditDrawer(false)}
       >
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Farmacia</Tooltip>
+        </div>
+        <Input
+          value={currentCliente?.farmacia}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({ ...prev, farmacia: e.target.value }))
+          }
+          placeholder="Farmacia"
+          style={{ marginBottom: 10 }}
+          required
+        />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Nombre</Tooltip>
         </div>
@@ -550,6 +598,21 @@ const Clientes = () => {
               cuil: formatCuil(e.target.value),
             }))
           }
+        />
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip>Instagram</Tooltip>
+        </div>
+        <Input
+          value={currentCliente?.instagram}
+          onChange={(e) =>
+            setCurrentCliente((prev) => ({
+              ...prev,
+              instagram: e.target.value,
+            }))
+          }
+          placeholder="Instagram"
+          style={{ marginBottom: 10 }}
+          required
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Localidad</Tooltip>
