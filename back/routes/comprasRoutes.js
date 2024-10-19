@@ -9,6 +9,7 @@ router.get(
   comprasControllers.getComprasByProveedor
 );
 router.get("/getCompraByID/:ID", comprasControllers.getCompraByID);
+router.get("/detalleCompra/:id", comprasControllers.getDetalleCompraById);
 router.put("/updateDetalleCompra", comprasControllers.updateDetalleCompra);
 
 module.exports = router;

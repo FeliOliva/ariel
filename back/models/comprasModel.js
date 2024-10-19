@@ -89,6 +89,15 @@ const getDetalleCompra = async (compra_id) => {
     throw err;
   }
 }
+const getDetalleCompraById = async (ID) => {
+  try {
+    const query = queriesCompras.getDetalleCompraById;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllCompras,
   addCompra,
@@ -99,5 +108,6 @@ module.exports = {
   updateTotalCompra,
   updateDetalleCompra,
   updateCostoArticulo,
-  getDetalleCompra
+  getDetalleCompra,
+  getDetalleCompraById
 };

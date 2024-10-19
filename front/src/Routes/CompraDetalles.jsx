@@ -3,7 +3,19 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
-import { Button } from "antd";
+import {
+  Button,
+  Drawer,
+  Tooltip,
+  InputNumber,
+  notification,
+  Modal,
+} from "antd";
+import {
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons";
 
 const CompraDetalles = () => {
   const { id } = useParams();
@@ -15,6 +27,11 @@ const CompraDetalles = () => {
     fecha_compra: "",
     total: "",
   });
+  const [openUp, setOpenUp] = useState(false);
+  const [openDown, setOpenDown] = useState(false);
+  const [detalleCompra, setDetalleCompra] = useState({});
+  const [newCosto, setNewCosto] = useState(0);
+  const { confirm } = Modal;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,6 +46,7 @@ const CompraDetalles = () => {
           proveedor_nombre,
           nro_compra,
           fecha_compra,
+          articulo_id,
           total,
         } = response.data;
 
@@ -39,6 +57,7 @@ const CompraDetalles = () => {
             proveedor_nombre,
             nro_compra,
             fecha_compra,
+            articulo_id,
             total,
           });
           console.log(response.data);
@@ -54,7 +73,111 @@ const CompraDetalles = () => {
 
     fetchData();
   }, [id]);
-
+  const handleUpPrice = async (id) => {
+    console.log(id);
+    const response = await axios.get(
+      `http://localhost:3001/detalleCompra/${id}`
+    );
+    console.log("response.data");
+    console.log(response.data);
+    setDetalleCompra({
+      id: response.data.id,
+      costo: response.data.costo,
+      cantidad: response.data.cantidad,
+      articulo_id: response.data.articulo_id,
+    });
+    setOpenUp(true);
+  };
+  const handleDownPrice = async (id) => {
+    const response = await axios.get(
+      `http://localhost:3001/detalleCompra/${id}`
+    );
+    setDetalleCompra({
+      id: response.data.id,
+      costo: response.data.costo,
+      cantidad: response.data.cantidad,
+      articulo_id: response.data.articulo_id,
+    });
+    setOpenDown(true);
+  };
+  const handleAplyUpFilter = async () => {
+    if (newCosto < 0) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "El nuevo costo debe ser mayor o igual a 0",
+        icon: <ExclamationCircleOutlined />,
+      });
+      return;
+    }
+    try {
+      const newData = {
+        ID: detalleCompra.id,
+        new_costo: newCosto,
+        cantidad: detalleCompra.cantidad,
+        compra_id: compraInfo.compra_id,
+        articulo_id: detalleCompra.articulo_id,
+      };
+      confirm({
+        title: "Confirmar",
+        content: "¿Estás seguro de que deseas aplicar el descuento?",
+        okText: "Si",
+        cancelText: "No",
+        onOk: async () => {
+          await axios.put("http://localhost:3001/updateDetalleCompra", newData);
+          setOpenUp(false);
+          notification.success({
+            message: "Operación exitosa",
+            description: "Costo actualizado correctamente",
+            duration: 2,
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleAplyDownFilter = async () => {
+    if (newCosto < 0) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "El nuevo costo debe ser mayor o igual a 0",
+        icon: <ExclamationCircleOutlined />,
+      });
+      return;
+    }
+    try {
+      const newData = {
+        ID: detalleCompra.id,
+        new_costo: newCosto,
+        cantidad: detalleCompra.cantidad,
+        compra_id: compraInfo.compra_id,
+        articulo_id: detalleCompra.articulo_id,
+      };
+      confirm({
+        title: "Confirmar",
+        content: "¿Estás seguro de que deseas aplicar el descuento?",
+        okText: "Si",
+        cancelText: "No",
+        onOk: async () => {
+          await axios.put("http://localhost:3001/updateDetalleCompra", newData);
+          setOpenDown(false);
+          notification.success({
+            message: "Operación exitosa",
+            description: "El descuento se aplicó correctamente",
+            duration: 2,
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const columns = [
     {
       name: "Descripción",
@@ -95,6 +218,23 @@ const CompraDetalles = () => {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
+        </div>
+      ),
+    },
+    {
+      name: "Acciones",
+      cell: (row) => (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleUpPrice(row.detalle_compra_id)}
+            icon={<ArrowUpOutlined />}
+          ></Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleDownPrice(row.detalle_compra_id)}
+            icon={<ArrowDownOutlined />}
+          ></Button>
         </div>
       ),
     },
@@ -154,6 +294,38 @@ const CompraDetalles = () => {
           </div>
         )}
       </div>
+      <Drawer
+        open={openUp}
+        onClose={() => setOpenUp(false)}
+        title="Aumentar Precio"
+      >
+        <Tooltip>
+          <strong>Costo</strong>
+        </Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={newCosto}
+            onChange={(value) => setNewCosto(value)}
+          />
+          <Button onClick={handleAplyUpFilter}>Aplicar</Button>
+        </div>
+      </Drawer>
+      <Drawer
+        open={openDown}
+        onClose={() => setOpenUp(false)}
+        title="Bajar Precio"
+      >
+        <Tooltip>
+          <strong>Costo</strong>
+        </Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={newCosto}
+            onChange={(value) => setNewCosto(value)}
+          />
+          <Button onClick={handleAplyDownFilter}>Aplicar</Button>
+        </div>
+      </Drawer>
     </MenuLayout>
   );
 };

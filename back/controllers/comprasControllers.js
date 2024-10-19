@@ -65,7 +65,7 @@ const getCompraByID = async (req, res) => {
         compra_id: detalleCompra[0].compra_id,
         total: detalleCompra[0].total,
         detalles: detalleCompra.map((detalle) => ({
-          id: detalle.articulo_id,
+          articulo_id: detalle.articulo_id,
           detalle_compra_id: detalle.detalle_compra_id,
           nombre: detalle.nombre_articulo,
           costo: detalle.costo,
@@ -80,12 +80,24 @@ const getCompraByID = async (req, res) => {
     res.status(500).json({ error: "Error al obtener la compra por ID" });
   }
 };
+const getDetalleCompraById = async (req, res) => {
+  try {
+    const ID = req.params.id;
+    const compra = await comprasModel.getDetalleCompraById(ID);
+    res.json(compra[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los detalles de venta" });
+  }
+};
 
 
 const updateDetalleCompra = async (req, res) => {
   try {
     const { ID, new_costo, cantidad, compra_id, articulo_id } = req.body;
+
     const sub_total = new_costo * cantidad;
+
 
     // Actualizamos el detalle de la compra
     await comprasModel.updateDetalleCompra(ID, new_costo, sub_total);
@@ -110,7 +122,6 @@ const recalcularTotalesCompra = async (compra_id) => {
   try {
     // Obtener todos los detalles de la compra
     const detalles = await comprasModel.getDetalleCompra(compra_id);
-
     // Inicializamos el total
     let total = 0;
 
@@ -131,4 +142,5 @@ module.exports = {
   getComprasByProveedor,
   getCompraByID,
   updateDetalleCompra,
+  getDetalleCompraById
 };

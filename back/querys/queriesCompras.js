@@ -53,6 +53,9 @@ WHERE c.proveedor_id = ?;
       SET total = ?
       WHERE id = ?;
     `,
-  getDetalleCompra: "SELECT * FROM detalle_compra WHERE compra_id = ?;"
+  getDetalleCompra: "SELECT * FROM detalle_compra WHERE compra_id = ?;",
+  getDetalleCompraById: `
+    select id, costo, cantidad, articulo_id from detalle_compra where ID = ?;
+  `
 
 };
