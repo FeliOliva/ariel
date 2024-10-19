@@ -2,7 +2,7 @@ const detalleVentaModel = require("../models/detalleVentaModel");
 
 const getDetalleVentaById = async (req, res) => {
   try {
-    const ID = req.params.ID;
+    const ID = req.params.id;
     const venta = await detalleVentaModel.getDetalleVentaById(ID);
     res.json(venta[0]);
   } catch (error) {
@@ -13,39 +13,49 @@ const getDetalleVentaById = async (req, res) => {
 
 const updateDetalleVenta = async (req, res) => {
   try {
-    const { ID, precio_monotributista, id_venta } = req.body;
+    const { ID, new_precio_monotributista, venta_id } = req.body;
 
-    // Obtener el precio monotributista antiguo
-    const ventaDetalle = await detalleVentaModel.getDetalleVentaById(ID);
-    const precioAntiguo = ventaDetalle[0].precio_monotributista;
-    const cantidad = ventaDetalle[0].cantidad;
-    const totalPrecioAntiguo = precioAntiguo * cantidad;
+    // Actualizamos el precio del detalle
+    await detalleVentaModel.updateDetalleVenta(ID, new_precio_monotributista);
 
-    // Obtener los datos de la venta
-    const venta = await detalleVentaModel.getVenta(id_venta);
+    // Continuamos con el siguiente paso (recalcular el total)
+    await recalcularTotales(venta_id);
 
-    // Actualizar los totales sin el precio antiguo
-    let newTotal = venta[0].total - totalPrecioAntiguo;
-    let newTotalConDescuento = newTotal * (1 - venta[0].descuento / 100);
-
-    // Actualizar el detalle de venta con el nuevo precio
-    await detalleVentaModel.updateDetalleVenta(ID, precio_monotributista);
-
-    // Recalcular los totales con el nuevo precio
-    const totalPrecioNuevo = precio_monotributista * cantidad;
-    newTotal += totalPrecioNuevo;
-    newTotalConDescuento = newTotal * (1 - venta[0].descuento / 100);
-
-    // Actualizar los totales en la tabla venta
-    await detalleVentaModel.updateTotales(id_venta, newTotal, newTotalConDescuento);
-
-    res.status(200).json({ message: "Detalle de venta actualizado correctamente" });
+    res.status(200).json({ message: "Detalle de venta actualizado y totales recalculados correctamente" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al actualizar el detalle de venta" });
   }
 };
+const recalcularTotales = async (venta_id) => {
+  try {
+    // Obtener todos los detalles de la venta
+    const detalles = await detalleVentaModel.getDetalleVenta(venta_id);
+    console.log("detalles de venta")
+    console.log(detalles)
+    // Inicializamos el total
+    let total = 0;
 
+    // Calculamos el total sumando precio * cantidad de cada detalle
+    detalles.forEach(detalle => {
+      total += detalle.precio_monotributista * detalle.cantidad;
+    });
+    console.log("total")
+    console.log(total)
+    // Obtener el porcentaje de descuento de la tabla venta
+    const porcentajeDescuento = await detalleVentaModel.getPorcentage(venta_id);
+    console.log("porcentaje de descuento")
+    console.log(porcentajeDescuento)
+    // Calcular el total con descuento
+    const totalConDescuento = total - (total * (porcentajeDescuento[0].descuento / 100));
+    console.log("total con descuento")
+    console.log(totalConDescuento)
+    // Actualizar los valores de total y total_con_descuento en la tabla venta
+    await detalleVentaModel.updateTotalesVenta(venta_id, total, totalConDescuento);
+  } catch (err) {
+    throw err;
+  }
+};
 
 
 

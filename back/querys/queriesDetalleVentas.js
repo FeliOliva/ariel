@@ -7,15 +7,6 @@ module.exports = {
     set precio_monotributista = ?
     WHERE ID = ?;
   `,
-  ajustarTotalConDescuento: `
-      UPDATE venta 
-      SET total_con_descuento = ?
-      WHERE id = ?;
-    `,
-  getVenta: 'select * from venta where id = ?',
-  updateTotales: `
-    UPDATE venta 
-    SET total = ?, total_con_descuento = ?
-    WHERE id = ?;
-  `,
+  getDetalleVenta: 'select * from detalle_venta where venta_id = ?',
+  getPorcentage: 'select descuento from venta where ID = ?'
 };

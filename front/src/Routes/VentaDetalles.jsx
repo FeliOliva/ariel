@@ -222,25 +222,31 @@ const VentaDetalles = () => {
     const nuevoPrecioMonotributista = parseFloat(
       detalleVenta.precio_monotributista * (1 + detalleVenta.percentage / 100)
     );
+    console.log("nuevo precio");
+    console.log(nuevoPrecioMonotributista);
+    console.log("hook detalle venta");
+    console.log(detalleVenta);
     const newData = {
       ID: detalleVenta.id,
-      id_venta: ventaInfo.venta_id, // Incluye el venta_id en el payload
-      precio_monotributista: Math.round(nuevoPrecioMonotributista),
+      new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
+      venta_id: ventaInfo.venta_id,
     };
-    console.log("new data");
+    console.log("newData");
     console.log(newData);
+
     await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
     setOpenUp(false);
     window.location.reload();
   };
+
   const handleAplyDownFilter = async () => {
     const nuevoPrecioMonotributista = parseFloat(
       detalleVenta.precio_monotributista * (1 - detalleVenta.percentage / 100)
     );
     const newData = {
       ID: detalleVenta.id,
-      id_venta: ventaInfo.venta_id, // Incluye el venta_id en el payload
-      precio_monotributista: Math.round(nuevoPrecioMonotributista),
+      new_precio_monotributista: Math.round(nuevoPrecioMonotributista),
+      venta_id: ventaInfo.venta_id,
     };
     console.log(newData);
     await axios.put(`http://localhost:3001/updateDetalleVenta`, newData);
