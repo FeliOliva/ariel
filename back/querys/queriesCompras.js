@@ -21,6 +21,7 @@ ORDER BY Compra.id DESC;
     dc.articulo_id, 
     a.nombre AS nombre_articulo, 
     dc.costo, 
+    dc.precio_monotributista,
     dc.cantidad, 
     (dc.costo * dc.cantidad) AS subtotal, 
     c.nro_compra, 
@@ -39,15 +40,16 @@ LEFT JOIN detalle_compra d ON c.id = d.compra_id
 LEFT JOIN articulo a ON d.articulo_id = a.id
 WHERE c.proveedor_id = ?;
 `,
-  addDetalleCompra: `INSERT INTO detalle_compra (compra_id, articulo_id, cantidad, costo, sub_total) VALUES (?, ?, ?, ?, ?);`,
+  addDetalleCompra: `INSERT INTO detalle_compra (compra_id, articulo_id, cantidad, costo, precio_monotributista, sub_total) VALUES (?, ?, ?, ?, ?, ?);`,
   updateStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
   updateDetalleCompra: `
       UPDATE detalle_compra
       SET costo = ?,
+      precio_monotributista = ?,
       sub_total = ?
       WHERE id = ?;
     `,
-  updateCostoArticulo: `UPDATE articulo SET costo = ? WHERE id = ?;`,
+  updateCostoArticulo: `UPDATE articulo SET costo = ?, precio_monotributista = ? WHERE id = ?;`,
   updateTotalesCompra: `
       UPDATE compra
       SET total = ?
@@ -55,7 +57,7 @@ WHERE c.proveedor_id = ?;
     `,
   getDetalleCompra: "SELECT * FROM detalle_compra WHERE compra_id = ?;",
   getDetalleCompraById: `
-    select id, costo, cantidad, articulo_id from detalle_compra where ID = ?;
+    select id, costo, cantidad, articulo_id, precio_monotributista from detalle_compra where ID = ?;
   `
 
 };

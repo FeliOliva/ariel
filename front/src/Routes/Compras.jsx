@@ -118,9 +118,13 @@ function Compras() {
             nombre: articuloSeleccionado.nombre,
             cantidad: compra.cantidad, // Cantidad del artículo
             costo: parseFloat(articuloSeleccionado.costo), // Asigna el costo del artículo
+            precio_monotributista: parseFloat(
+              articuloSeleccionado.precio_monotributista
+            ),
           },
         ],
       }));
+      console.log(compra);
       setSelectedArticulo(null); // Reinicia la selección de artículo
       setCompra((prev) => ({ ...prev, cantidad: 0 })); // Reinicia la cantidad
     } else {
@@ -160,8 +164,10 @@ function Compras() {
         articulo_id: articulo.id,
         cantidad: articulo.cantidad,
         costo: articulo.costo,
+        precio_monotributista: articulo.precio_monotributista,
       })),
     };
+    console.log(payload);
     confirm({
       title: "¿Estas seguro de registrar esta compra?",
       icon: <WarningOutlined />,

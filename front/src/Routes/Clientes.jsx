@@ -228,90 +228,120 @@ const Clientes = () => {
     {
       name: "Farmacia",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.farmacia}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.farmacia}
+        >
+          <span>{row.farmacia}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Nombre",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.nombre + " " + row.apellido}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre + " " + row.apellido}
+        >
+          <span>{row.nombre + " " + row.apellido}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Email",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.email}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.email}
+        >
+          <span>{row.email}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Teléfono",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.telefono}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.telefono}
+        >
+          <span>{row.telefono}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Dirección",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.direccion}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.direccion}
+        >
+          <span>{row.direccion}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "CUIL",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.cuil}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.cuil}
+        >
+          <span>{row.cuil}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Zona",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.zona_nombre}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.zona_nombre}
+        >
+          <span>{row.zona_nombre}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Tipo de cliente",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.nombre_tipo_cliente}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre_tipo_cliente}
+        >
+          <span>{row.nombre_tipo_cliente}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Localidad",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.localidad}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.localidad}
+        >
+          <span>{row.localidad}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Instagram",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.instagram}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.instagram}
+        >
+          <span>{row.instagram}</span>
+        </Tooltip>
       ),
       sortable: true,
     },

@@ -4,6 +4,7 @@ module.exports = {
   v.estado, 
   c.nombre AS nombre_cliente, 
   c.apellido AS apellido_cliente,
+  c.farmacia,
   v.nroVenta,
   z.nombre AS nombre_zona,
   v.pago,

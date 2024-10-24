@@ -29,6 +29,7 @@ const addCompra = async (req, res) => {
         detalle.articulo_id,
         detalle.cantidad,
         detalle.costo,
+        detalle.precio_monotributista,
         sub_total
       );
       await comprasModel.updateStock(detalle.articulo_id, detalle.cantidad); // Actualiza el stock sumando la cantidad
@@ -69,6 +70,7 @@ const getCompraByID = async (req, res) => {
           detalle_compra_id: detalle.detalle_compra_id,
           nombre: detalle.nombre_articulo,
           costo: detalle.costo,
+          precio_monotributista: detalle.precio_monotributista,
           cantidad: detalle.cantidad,
           subtotal: detalle.subtotal,
         })),
@@ -94,16 +96,16 @@ const getDetalleCompraById = async (req, res) => {
 
 const updateDetalleCompra = async (req, res) => {
   try {
-    const { ID, new_costo, cantidad, compra_id, articulo_id } = req.body;
+    const { ID, new_costo, new_precio_monotributista, cantidad, compra_id, articulo_id } = req.body;
 
     const sub_total = new_costo * cantidad;
 
 
     // Actualizamos el detalle de la compra
-    await comprasModel.updateDetalleCompra(ID, new_costo, sub_total);
+    await comprasModel.updateDetalleCompra(ID, new_costo, new_precio_monotributista, sub_total);
 
     // Actualizamos el costo del artículo en la tabla articulo
-    await comprasModel.updateCostoArticulo(articulo_id, new_costo);
+    await comprasModel.updateCostoArticulo(articulo_id, new_costo, new_precio_monotributista);
 
     // Recalculamos los totales de la compra
     await recalcularTotalesCompra(compra_id);

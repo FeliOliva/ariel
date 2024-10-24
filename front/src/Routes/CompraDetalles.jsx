@@ -28,9 +28,9 @@ const CompraDetalles = () => {
     total: "",
   });
   const [openUp, setOpenUp] = useState(false);
-  const [openDown, setOpenDown] = useState(false);
   const [detalleCompra, setDetalleCompra] = useState({});
   const [newCosto, setNewCosto] = useState(0);
+  const [newPrecioMonotributista, setNewPrecioMonotributista] = useState(0);
   const { confirm } = Modal;
 
   useEffect(() => {
@@ -80,25 +80,16 @@ const CompraDetalles = () => {
     );
     console.log("response.data");
     console.log(response.data);
+    setNewCosto(response.data.costo);
+    setNewPrecioMonotributista(response.data.precio_monotributista);
     setDetalleCompra({
       id: response.data.id,
       costo: response.data.costo,
+      precio_monotributista: response.data.precio_monotributista,
       cantidad: response.data.cantidad,
       articulo_id: response.data.articulo_id,
     });
     setOpenUp(true);
-  };
-  const handleDownPrice = async (id) => {
-    const response = await axios.get(
-      `http://localhost:3001/detalleCompra/${id}`
-    );
-    setDetalleCompra({
-      id: response.data.id,
-      costo: response.data.costo,
-      cantidad: response.data.cantidad,
-      articulo_id: response.data.articulo_id,
-    });
-    setOpenDown(true);
   };
   const handleAplyUpFilter = async () => {
     if (newCosto < 0) {
@@ -113,10 +104,12 @@ const CompraDetalles = () => {
       const newData = {
         ID: detalleCompra.id,
         new_costo: newCosto,
+        new_precio_monotributista: newPrecioMonotributista,
         cantidad: detalleCompra.cantidad,
         compra_id: compraInfo.compra_id,
         articulo_id: detalleCompra.articulo_id,
       };
+      console.log(newData);
       confirm({
         title: "Confirmar",
         content: "¿Estás seguro de que deseas aplicar el descuento?",
@@ -128,45 +121,6 @@ const CompraDetalles = () => {
           notification.success({
             message: "Operación exitosa",
             description: "Costo actualizado correctamente",
-            duration: 2,
-          });
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        },
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const handleAplyDownFilter = async () => {
-    if (newCosto < 0) {
-      Modal.warning({
-        title: "Advertencia",
-        content: "El nuevo costo debe ser mayor o igual a 0",
-        icon: <ExclamationCircleOutlined />,
-      });
-      return;
-    }
-    try {
-      const newData = {
-        ID: detalleCompra.id,
-        new_costo: newCosto,
-        cantidad: detalleCompra.cantidad,
-        compra_id: compraInfo.compra_id,
-        articulo_id: detalleCompra.articulo_id,
-      };
-      confirm({
-        title: "Confirmar",
-        content: "¿Estás seguro de que deseas aplicar el descuento?",
-        okText: "Si",
-        cancelText: "No",
-        onOk: async () => {
-          await axios.put("http://localhost:3001/updateDetalleCompra", newData);
-          setOpenDown(false);
-          notification.success({
-            message: "Operación exitosa",
-            description: "El descuento se aplicó correctamente",
             duration: 2,
           });
           setTimeout(() => {
@@ -196,14 +150,27 @@ const CompraDetalles = () => {
       ),
     },
     {
-      name: "Precio Unitario",
+      name: "Costo",
       selector: (row) => row.costo,
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "16px" }}>
           {parseFloat(row.costo).toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
+        </div>
+      ),
+    },
+    {
+      name: "Precio Monotributista",
+      selector: (row) => row.precio_monotributista,
+      sortable: true,
+      cell: (row) => (
+        <div style={{ padding: "5px", fontSize: "16px" }}>
+          {parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
           })}
         </div>
       ),
@@ -215,8 +182,8 @@ const CompraDetalles = () => {
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "16px" }}>
           {parseFloat(row.subtotal).toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
           })}
         </div>
       ),
@@ -229,11 +196,6 @@ const CompraDetalles = () => {
             className="custom-button"
             onClick={() => handleUpPrice(row.detalle_compra_id)}
             icon={<ArrowUpOutlined />}
-          ></Button>
-          <Button
-            className="custom-button"
-            onClick={() => handleDownPrice(row.detalle_compra_id)}
-            icon={<ArrowDownOutlined />}
           ></Button>
         </div>
       ),
@@ -307,24 +269,17 @@ const CompraDetalles = () => {
             value={newCosto}
             onChange={(value) => setNewCosto(value)}
           />
-          <Button onClick={handleAplyUpFilter}>Aplicar</Button>
         </div>
-      </Drawer>
-      <Drawer
-        open={openDown}
-        onClose={() => setOpenUp(false)}
-        title="Bajar Precio"
-      >
         <Tooltip>
-          <strong>Costo</strong>
+          <strong>Precio Monotributista</strong>
         </Tooltip>
         <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
           <InputNumber
-            value={newCosto}
-            onChange={(value) => setNewCosto(value)}
+            value={newPrecioMonotributista}
+            onChange={(value) => setNewPrecioMonotributista(value)}
           />
-          <Button onClick={handleAplyDownFilter}>Aplicar</Button>
         </div>
+        <Button onClick={handleAplyUpFilter}>Aplicar</Button>
       </Drawer>
     </MenuLayout>
   );

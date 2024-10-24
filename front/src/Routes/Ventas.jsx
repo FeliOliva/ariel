@@ -115,6 +115,7 @@ function Ventas() {
           {
             ...selectedArticulo,
             quantity: cantidad,
+            price: selectedArticulo.precio_monotributista,
             label:
               selectedArticulo.nombre +
               " - " +
@@ -125,6 +126,7 @@ function Ventas() {
           },
         ],
       }));
+      console.log(venta);
       setSelectedArticulo(null); // Reset selected article after adding
       setCantidad(0); // Reset quantity to 1 after adding
       setArticuloValue(""); // Reset input value
@@ -167,7 +169,7 @@ function Ventas() {
         });
         venta.descuento = 0;
       }
-      console.log(venta.descuento);
+      console.log(venta);
       try {
         const ventaData = {
           cliente_id: venta.cliente.id,
@@ -271,86 +273,136 @@ function Ventas() {
   const handleGoToCheques = () => {
     navigate("/cheques");
   };
+  const handleEditPrecio = (id, newPrice) => {
+    const updatedArticulos = venta.articulos.map((item) =>
+      item.id === id
+        ? { ...item, precio_monotributista: newPrice, price: newPrice }
+        : item
+    );
+    setVenta((prevVenta) => ({ ...prevVenta, articulos: updatedArticulos }));
+    console.log("Artículos actualizados: ", updatedArticulos);
+  };
 
   const columns = [
     {
       name: "Nro. Venta",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.nroVenta}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Cliente",
-      selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.nombre_cliente + " " + row.apellido_cliente}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Zona",
-      selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.nombre_zona}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.nroVenta}
+        >
+          <span>
+            <span>{row.nroVenta}</span>
+          </span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Fecha",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {format(new Date(row.fecha_venta), "dd/MM/yyyy")}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={format(new Date(row.fecha_venta), "dd/MM/yyyy")}
+        >
+          <span>{format(new Date(row.fecha_venta), "dd/MM/yyyy")}</span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Farmacia",
+      selector: (row) => (
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.farmacia}
+        >
+          <span>{row.farmacia}</span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Cliente",
+      selector: (row) => (
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.nombre_cliente + " " + row.apellido_cliente}
+        >
+          <span>{row.nombre_cliente + " " + row.apellido_cliente}</span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Zona",
+      selector: (row) => (
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.nombre_zona}
+        >
+          <span>{row.nombre_zona}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Total Precio Monotributista",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.total}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.total}
+        >
+          <span>{row.total}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Descuento",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.descuento}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.descuento}
+        >
+          <span>{row.descuento}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Total con descuento",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.total_con_descuento}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.total_con_descuento}
+        >
+          <span>{row.total_con_descuento}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Método de Pago",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.metodo_pago || "No Pagado"}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.metodo_pago}
+        >
+          <span>{row.metodo_pago || "No pagado"}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Pago",
       selector: (row) => (
-        <span className={row.pago === 1 ? "strikethrough" : ""}>
-          {row.pago ? "Pagado" : "No Pagado"}
-        </span>
+        <Tooltip
+          className={row.pago === 1 ? "strikethrough" : ""}
+          title={row.pago ? "Pagado" : "No Pagado"}
+        >
+          <span>{row.pago ? "Pagado" : "No Pagado"}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
@@ -477,6 +529,7 @@ function Ventas() {
           items={venta.articulos}
           onDelete={handleDeleteArticulo}
           onGiftChange={handleGiftChange}
+          onEdit={handleEditPrecio}
         />
         <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Descuento</Tooltip>
