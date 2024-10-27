@@ -37,6 +37,7 @@ const VentaDetalles = () => {
     direccion: "",
     nombre_tipo_cliente: "",
     descuento: "",
+    farmacia: "",
   });
   const [openUp, setOpenUp] = useState(false);
   const [openDown, setOpenDown] = useState(false);
@@ -49,7 +50,7 @@ const VentaDetalles = () => {
           `http://localhost:3001/getVentaByID/${id}`
         );
         console.log(id);
-        console.log(response.data);
+        console.log("response ", response.data);
         const {
           detalles,
           venta_id, // Asegúrate de que el backend envíe el venta_id en la respuesta
@@ -62,6 +63,7 @@ const VentaDetalles = () => {
           total_con_descuento,
           direccion,
           nombre_tipo_cliente,
+          farmacia,
           sub_total,
         } = response.data;
 
@@ -78,7 +80,9 @@ const VentaDetalles = () => {
             total_con_descuento,
             direccion,
             nombre_tipo_cliente,
+            farmacia,
           });
+          console.log("venta info", ventaInfo);
         } else {
           console.error("Expected 'detalles' to be an array");
         }
@@ -102,10 +106,11 @@ const VentaDetalles = () => {
       pdf.text("DOCUMENTO NO VÁLIDO COMO FACTURA", 10, 25);
       pdf.text("X", 100, 20);
 
+      // Aquí agregamos el nombre de la farmacia
       pdf.setFontSize(10);
       pdf.text(`${ventaInfo.nombre_cliente}`, 10, 35);
-      pdf.text(` ${ventaInfo.direccion}`, 10, 40);
-      pdf.text(`${ventaInfo.zona_nombre}`, 10, 45);
+      pdf.text(`${ventaInfo.direccion}`, 10, 40);
+      pdf.text(`${ventaInfo.farmacia}`, 10, 45);
       pdf.text(`${ventaInfo.nombre_tipo_cliente}`, 10, 50);
 
       const fecha = new Date(ventaInfo.fecha);
@@ -148,7 +153,7 @@ const VentaDetalles = () => {
           row.importe,
         ]),
         theme: "grid",
-        tableWidth: "wrap", // Ajusta el ancho de la tabla para evitar columnas adicionales
+        tableWidth: "wrap",
         styles: {
           fontSize: 10,
           cellPadding: 3,
@@ -159,7 +164,7 @@ const VentaDetalles = () => {
           0: { cellWidth: 25 },
           1: { cellWidth: 80 },
           2: { cellWidth: 45 },
-          3: { cellWidth: 35 }, // Define el ancho exacto de la columna "Importe" para evitar espacio extra
+          3: { cellWidth: 35 },
         },
         headStyles: {
           fillColor: [255, 255, 255],
@@ -170,11 +175,9 @@ const VentaDetalles = () => {
         tableLineWidth: 0.1,
       });
 
-      // Calcula la posición vertical después de la tabla
+      // Resto de la función para el total y descuento
       const finalY = pdf.lastAutoTable.finalY + 155;
-
-      // Ajuste de alineación para el total, descuento y total con descuento
-      const rightX = 140; // Ajustar el valor según el centro
+      const rightX = 140;
 
       pdf.setFontSize(12);
       pdf.text(`Total Importe: ${ventaInfo.total_importe}`, rightX, finalY);
@@ -199,7 +202,6 @@ const VentaDetalles = () => {
         finalY + 10
       );
 
-      // Número de venta en la parte inferior izquierda
       const bottomY = pdf.internal.pageSize.height - 10;
       pdf.setFontSize(10);
       pdf.text(`Nro Venta: ${ventaInfo.nroVenta}`, 10, bottomY);

@@ -135,31 +135,35 @@ const CompraDetalles = () => {
   const columns = [
     {
       name: "Descripción",
-      selector: (row) => row.nombre,
-      sortable: true,
-      cell: (row) => (
-        <div style={{ padding: "5px", fontSize: "16px" }}>{row.nombre}</div>
+      selector: (row) => (
+        <Tooltip title={row.nombre}>
+          <span>{row.nombre}</span>
+        </Tooltip>
       ),
+      sortable: true,
     },
     {
       name: "Cantidad",
-      selector: (row) => row.cantidad,
-      sortable: true,
-      cell: (row) => (
-        <div style={{ padding: "5px", fontSize: "16px" }}>{row.cantidad}</div>
+      selector: (row) => (
+        <Tooltip title={row.cantidad}>
+          <span>{row.cantidad}</span>
+        </Tooltip>
       ),
+      sortable: true,
     },
     {
       name: "Costo",
       selector: (row) => row.costo,
       sortable: true,
       cell: (row) => (
-        <div style={{ padding: "5px", fontSize: "16px" }}>
-          {parseFloat(row.costo).toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}
-        </div>
+        <Tooltip title={row.costo}>
+          <div style={{ padding: "5px", fontSize: "16px" }}>
+            {parseFloat(row.costo).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </div>
+        </Tooltip>
       ),
     },
     {
@@ -167,12 +171,14 @@ const CompraDetalles = () => {
       selector: (row) => row.precio_monotributista,
       sortable: true,
       cell: (row) => (
-        <div style={{ padding: "5px", fontSize: "16px" }}>
-          {parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}
-        </div>
+        <Tooltip title={row.precio_monotributista}>
+          <div style={{ padding: "5px", fontSize: "16px" }}>
+            {parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </div>
+        </Tooltip>
       ),
     },
     {

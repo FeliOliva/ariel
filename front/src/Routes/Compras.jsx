@@ -197,25 +197,50 @@ function Compras() {
     {
       name: "Nro. Compra",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.nro_compra}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nro_compra}
+        >
+          <span>{row.nro_compra}</span>
+        </Tooltip>
       ),
       sortable: true,
     },
     {
       name: "Fecha",
-      selector: (row) => format(new Date(row.fecha_compra), "dd/MM/yyyy"),
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={format(new Date(row.fecha_compra), "dd/MM/yyyy")}
+        >
+          <span>{format(new Date(row.fecha_compra), "dd/MM/yyyy")}</span>
+        </Tooltip>
+      ),
+
       sortable: true,
     },
     {
       name: "Proveedor",
-      selector: (row) => row.proveedor_nombre,
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.proveedor_nombre}
+        >
+          <span>{row.proveedor_nombre}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
       name: "Total",
-      selector: (row) => row.total,
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.total}
+        >
+          <span>{row.total}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {

@@ -199,6 +199,7 @@ const getVentaByID = async (req, res) => {
         descuento: detalleVentas[0].descuento,
         total_con_descuento: detalleVentas[0].total_con_descuento,
         venta_id: detalleVentas[0].id_venta,
+        farmacia: detalleVentas[0].farmacia,
         detalles: detalleVentas.map((detalle) => ({
           articulo_id: detalle.articulo_id,
           nombre:

@@ -87,6 +87,7 @@ ORDER BY
   c.cuil, -- CUIL del cliente
   c.telefono, -- Teléfono del cliente
   c.email, 
+  c.farmacia,
   c.tipo_cliente,  -- ID del tipo de cliente
   tc.nombre_tipo AS nombre_tipo_cliente,  -- Nombre del tipo de cliente
   z.nombre AS nombre_zona,
