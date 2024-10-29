@@ -265,7 +265,7 @@ const CompraDetalles = () => {
       <Drawer
         open={openUp}
         onClose={() => setOpenUp(false)}
-        title="Aumentar Precio"
+        title="Cambiar Precio"
       >
         <Tooltip>
           <strong>Costo</strong>

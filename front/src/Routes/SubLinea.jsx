@@ -11,6 +11,7 @@ import {
   customCellsStyles,
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import "../style/style.css";
+import { Toll } from "@mui/icons-material";
 
 const SubLinea = () => {
   const { id } = useParams();
@@ -130,8 +131,17 @@ const SubLinea = () => {
     });
   };
   const columns = [
-    { name: "ID", selector: (row) => row.id, sortable: true, omit: true },
-    { name: "Nombre", selector: (row) => row.nombre, sortable: true },
+    {
+      name: "Nombre",
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre}
+        >
+          <span>{row.nombre}</span>
+        </Tooltip>
+      ),
+    },
     {
       name: "Editar",
       cell: (row) => (

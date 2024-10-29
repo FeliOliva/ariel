@@ -178,21 +178,38 @@ function Gastos() {
     {
       name: "Nombre",
       selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.nombre}
-        </span>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre}
+        >
+          <span>{row.nombre}</span>
+        </Tooltip>
       ),
 
       sortable: true,
     },
     {
       name: "Monto",
-      selector: (row) => row.monto,
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.monto}
+        >
+          <span>{row.monto}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
       name: "Fecha",
-      selector: (row) => format(new Date(row.fecha), "dd/MM/yyyy"),
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={format(new Date(row.fecha), "dd/MM/yyyy")}
+        >
+          <span>{format(new Date(row.fecha), "dd/MM/yyyy")}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
