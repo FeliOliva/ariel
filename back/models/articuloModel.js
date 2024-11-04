@@ -131,10 +131,10 @@ const getArticulosBySubLineaID = async (subLineaID) => {
   }
 };
 
-const increasePrices = async (proveedorID, percentage) => {
+const increasePrices = async (linea_id, percentage) => {
   try {
     const query = queriesArticulos.increasePrices;
-    await db.query(query, [percentage, percentage, proveedorID]);
+    await db.query(query, [percentage, percentage, linea_id]);
   } catch (error) {
     throw new Error("Error updating prices: " + error.message);
   }

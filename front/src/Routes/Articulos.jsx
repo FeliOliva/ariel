@@ -481,6 +481,7 @@ function Articulos() {
   };
 
   const handleFilterChange = async () => {
+    console.log("current filter", currentFilter);
     if (currentFilter === null) {
       Modal.warning({
         title: "Advertencia",
@@ -515,19 +516,19 @@ function Articulos() {
 
           // Obtener los artículos antes de actualizar los precios
           const responseAntiguos = await axios.get(
-            `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
+            `http://localhost:3001/getArticulosByLineaID/${currentFilter.linea_id}`
           );
           const articulosAntiguos = responseAntiguos.data;
 
           // Actualizar los precios
           await axios.put(
-            `http://localhost:3001/increasePrices/${currentFilter.proveedor_id}`,
+            `http://localhost:3001/increasePrices/${currentFilter.linea_id}`,
             { percentage: currentFilter.percentage }
           );
 
           // Obtener los artículos después de actualizar los precios
           const responseNuevos = await axios.get(
-            `http://localhost:3001/getArticulosByProveedorID/${currentFilter.proveedor_id}`
+            `http://localhost:3001/getArticulosByLineaID/${currentFilter.linea_id}`
           );
           const articulosNuevos = responseNuevos.data;
 
@@ -596,7 +597,7 @@ function Articulos() {
   const filterData = (search) => {
     if (search) {
       const filtered = data.filter((articulo) =>
-        articulo.nombre.toLowerCase().includes(search.toLowerCase())
+        articulo.linea_nombre.toLowerCase().includes(search.toLowerCase())
       );
       setFilteredData(filtered);
     } else {
@@ -607,6 +608,7 @@ function Articulos() {
   // Manejar el cambio en el input de búsqueda
   const handleSearchChange = (e) => {
     setSearchValue(e.target.value);
+    console.log(e.target.value);
   };
   const handleClearSearch = () => {
     setSearchValue("");
@@ -664,16 +666,16 @@ function Articulos() {
       >
         <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
           <Tooltip>
-            Aplicar aumento por <strong>Proveedor</strong>
+            Aplicar aumento por <strong>Linea</strong>
           </Tooltip>
         </div>
         <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
-          <ProveedorInput
-            onChangeProveedor={(value) =>
+          <LineaInput
+            onChangeLinea={(value) =>
               setCurrentFilter((prev) => ({
                 ...prev,
-                proveedor_id: value.id,
-                proveedor_nombre: value.label,
+                linea_id: value.id,
+                linea_nombre: value.label,
               }))
             }
           />

@@ -141,14 +141,14 @@ const getArticulosBySubLineaID = async (req, res) => {
 };
 const increasePrices = async (req, res) => {
   try {
-    const proveedorID = req.params.proveedorID;
+    const linea_id = req.params.linea_id;
     const { percentage } = req.body;
 
     if (!percentage || isNaN(percentage)) {
       return res.status(400).json({ error: "Invalid percentage value" });
     }
 
-    await articuloModel.increasePrices(proveedorID, percentage);
+    await articuloModel.increasePrices(linea_id, percentage);
     res.status(200).json({ message: "Prices updated successfully" });
   } catch (error) {
     console.error(error);

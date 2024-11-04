@@ -92,7 +92,7 @@ module.exports = {
         SET 
           precio_monotributista = precio_monotributista * (1 + ? / 100),
           costo = costo * (1 + ? / 100)
-        WHERE proveedor_id = ?;
+        WHERE linea_id = ?;
       `,
   increasePrice: `
       UPDATE articulo
