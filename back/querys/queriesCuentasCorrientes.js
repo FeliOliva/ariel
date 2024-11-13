@@ -67,4 +67,7 @@ WHERE c.id = ?;
     SET metodo_pago_id = ? 
     WHERE id = ?;
   `,
+  updateLogPago: `
+    INSERT INTO log_pago(cliente_id, cuenta_corriente_id, venta_id, monto, metodo_pago_id, cheque_id, estado_pago) VALUES (?, ?, ?, ?, ?, ?, ?);
+  `,
 };

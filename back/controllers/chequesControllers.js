@@ -11,14 +11,14 @@ const getAllCheques = async (req, res) => {
 const addCheque = async (req, res) => {
   try {
     const { banco, nro_cheque, fecha_emision, fecha_cobro, importe } = req.body;
-    await chequesModel.addCheque({
+    const cheque = await chequesModel.addCheque({
       banco,
       nro_cheque,
       fecha_emision,
       fecha_cobro,
       importe,
     });
-    res.status(201).json({ message: "Cheque agregado con exito" });
+    res.status(201).json({ message: "Cheque agregado con éxito", cheque });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

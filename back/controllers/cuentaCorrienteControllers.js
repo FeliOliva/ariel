@@ -12,15 +12,26 @@ const getAllCuentasCorrientesByCliente = async (req, res) => {
   }
 };
 const payByCuentaCorriente = async (req, res) => {
-  const { monto, cliente_id, venta_id, metodo_pago, ID } = req.body;
+  const { monto, cliente_id, venta_id, metodo_pago, cheque_id, estado_pago, ID } = req.body;
   const total = await cuentaCorrienteModel.getTotalCuentaCorriente(ID);
   let totalCalc = total.saldo_total - monto;
   console.log(totalCalc);
+  const payLoad = {
+    cliente_id,
+    cuenta_corriente_id: ID,
+    venta_id,
+    monto,
+    metodo_pago_id: metodo_pago || null,
+    cheque_id,
+    estado_pago,
+  }
+  console.log("payload", payLoad);
   if (totalCalc < 0 || totalCalc === null || totalCalc === undefined || !ID) {
     return res
       .status(400)
       .json({ message: "El monto supera el total de la cuenta corriente" });
   } else {
+    await cuentaCorrienteModel.updateLogPago(payLoad);
     await cuentaCorrienteModel.payByCuentaCorriente(monto, ID);
     await cuentaCorrienteModel.actualizarMetodoPago(metodo_pago, venta_id);
     await cuentaCorrienteModel.payCuentaByTotal(monto, cliente_id);

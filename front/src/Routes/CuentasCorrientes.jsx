@@ -37,6 +37,8 @@ function CuentasCorrientes() {
   const [hasSearched, setHasSearched] = useState(false); // Nuevo estado para controlar la búsqueda
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { confirm } = Modal;
+  let idCheque = null;
+  let estado_pago = "";
   const [form] = Form.useForm();
   const fetchCuentasCorrientes = async (clientId) => {
     setLoading(true);
@@ -83,6 +85,7 @@ function CuentasCorrientes() {
   };
 
   const handleClienteChange = (cliente) => {
+    console.log(cliente);
     setClient(cliente);
   };
 
@@ -97,10 +100,10 @@ function CuentasCorrientes() {
   };
 
   const handlePayMonto = async () => {
-    console.log(cuentaCorriente);
-    console.log(client);
-    console.log(monto);
-    console.log(metodoPago);
+    console.log("cuenta corriente", cuentaCorriente);
+    console.log("cliente", client);
+    console.log("monto", monto);
+    console.log("metodo de pago", metodoPago);
     if (!monto || monto <= 0) {
       Modal.warning({
         title: "Advertencia",
@@ -119,6 +122,13 @@ function CuentasCorrientes() {
       });
       return;
     }
+    if (monto === cuentaCorriente.saldo_total) {
+      estado_pago = "CANCELADO";
+    } else {
+      estado_pago = "PARCIAL";
+    }
+
+    console.log("estado de pago", estado_pago);
     confirm({
       title: "¿Esta seguro de pagar este monto?",
       icon: <ExclamationCircleOutlined />,
@@ -127,18 +137,26 @@ function CuentasCorrientes() {
       onOk: async () => {
         try {
           if (cheque) {
-            await axios.post("http://localhost:3001/addCheque", cheque, {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
+            const response = await axios.post(
+              "http://localhost:3001/addCheque",
+              cheque,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            idCheque = response.data.cheque[0].id;
           }
+          console.log("id del cheque", idCheque);
           await axios.put("http://localhost:3001/payByCuentaCorriente", {
             monto: monto,
             cliente_id: client,
             ID: cuentaCorriente.id,
             venta_id: cuentaCorriente.venta_id,
             metodo_pago: metodoPago,
+            cheque_id: idCheque,
+            estado_pago: estado_pago,
           });
           notification.success({
             message: "Exito",
@@ -181,11 +199,17 @@ function CuentasCorrientes() {
       onOk: async () => {
         try {
           if (cheque) {
-            await axios.post("http://localhost:3001/addCheque", cheque, {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
+            const response = await axios.post(
+              "http://localhost:3001/addCheque",
+              cheque,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            idCheque = response.data.cheque[0].id;
+            console.log("id del cheque", response.data.cheque[0].id);
           }
           await axios.put("http://localhost:3001/payCuentaByTotal", {
             monto: monto,

@@ -18,6 +18,7 @@ import CuentasCorrientes from "./Routes/CuentasCorrientes";
 import Gastos from "./Routes/Gastos";
 import ArticulosDetalles from "./Routes/ArticulosDetalles ";
 import Cheques from "./Routes/Cheques";
+import HistorialPago from "./Routes/HistorialPago";
 function App() {
   return (
     <Routes>
@@ -39,6 +40,7 @@ function App() {
       <Route path="/CuentasCorrientes" element={<CuentasCorrientes />} />
       <Route path="/Gastos" element={<Gastos />} />
       <Route path="/Cheques" element={<Cheques />} />
+      <Route path="/HistorialPago/:id" element={<HistorialPago />} />
     </Routes>
   );
 }

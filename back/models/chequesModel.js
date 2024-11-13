@@ -27,6 +27,11 @@ const addCheque = async ({
       fecha_cobro,
       importe,
     ]);
+    const selectQuery = `
+      SELECT * FROM cheque WHERE nro_cheque = ? AND banco = ? ORDER BY id DESC LIMIT 1;
+    `;
+    const [cheque] = await db.query(selectQuery, [nro_cheque, banco]);
+    return cheque;
   } catch (err) {
     throw err;
   }

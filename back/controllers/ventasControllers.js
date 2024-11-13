@@ -151,8 +151,10 @@ const updateVentas = async (req, res) => {
 const getVentasByClientes = async (req, res) => {
   try {
     const cliente_id = req.params.ID;
+    console.log("id desde el back", cliente_id)
     const ventas = await ventasModel.getVentasByClientes(cliente_id);
     res.json(ventas);
+    console.log(ventas);
   } catch (error) {
     console.error("Error al obtener las ventas por cliente:", error);
     res.status(500).json({ error: "Error al obtener las ventas por cliente" });

@@ -42,6 +42,7 @@ function Ventas() {
   const [selectedOferta, setSelectedOferta] = useState(""); // Estado para el valor del input de la oferta
   const { confirm } = Modal;
   const navigate = useNavigate();
+  const [client, setClient] = useState(null);
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/ventas");
@@ -282,6 +283,34 @@ function Ventas() {
     setVenta((prevVenta) => ({ ...prevVenta, articulos: updatedArticulos }));
     console.log("Artículos actualizados: ", updatedArticulos);
   };
+  const fetchVentasByClient = async (cliente) => {
+    console.log("id desde el front", cliente);
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/ventasCliente/${cliente}`
+      );
+      setData(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching ventas by client:", error);
+    }
+  };
+  const handleClietChange = (cliente) => {
+    setClient(cliente);
+  };
+  const handleSelectedClient = () => {
+    if (!client) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "Por favor, selecciona un cliente.",
+        icon: <ExclamationCircleOutlined />,
+        timer: 1500,
+      });
+    } else {
+      fetchVentasByClient(client);
+      // setHasSearched(true); // Activar después de hacer clic en Buscar
+    }
+  };
 
   const columns = [
     {
@@ -385,11 +414,12 @@ function Ventas() {
     {
       name: "Método de Pago",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.metodo_pago}
-        >
-          <span>{row.metodo_pago || "No pagado"}</span>
+        <Tooltip className={row.pago === 1 ? "strikethrough" : ""}>
+          <span>
+            <Link to={`/HistorialPago/${row.id}`}>
+              <button>Ver historial de pago</button>
+            </Link>
+          </span>
         </Tooltip>
       ),
       sortable: true,
@@ -448,6 +478,16 @@ function Ventas() {
       >
         Ver Cheques
       </Button>
+      <div style={{ display: "flex", width: "30%" }}>
+        <ClienteInput
+          value={client}
+          onChangeCliente={handleClietChange}
+          onInputChange={setClient}
+        />
+        <Button onClick={handleSelectedClient} type="primary">
+          Buscar
+        </Button>
+      </div>
       <DataTable
         columns={columns}
         data={data}

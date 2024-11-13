@@ -105,6 +105,23 @@ const actualizarMetodoPago = async (metodo_pago, venta_id) => {
     throw err;
   }
 };
+const updateLogPago = async (payLoad) => {
+  try {
+    const query = queriesCuentasCorrientes.updateLogPago;
+    const [rows] = await db.query(query, [
+      payLoad.cliente_id,
+      payLoad.cuenta_corriente_id,
+      payLoad.venta_id,
+      payLoad.monto,
+      payLoad.metodo_pago_id,
+      payLoad.cheque_id,
+      payLoad.estado_pago,
+    ]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+}
 module.exports = {
   getAllCuentasCorrientesByCliente,
   payByCuentaCorriente,
@@ -117,4 +134,5 @@ module.exports = {
   getVentaId,
   setEstadoCuentaCorriente,
   actualizarMetodoPago,
+  updateLogPago
 };
