@@ -2,11 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import dayjs from "dayjs";
-import { Button } from "antd";
-import {
-  customCellsStyles,
-  customHeaderStyles,
-} from "../style/dataTableStyles";
 
 const ChequesTable = () => {
   const [cheques, setCheques] = useState([]);

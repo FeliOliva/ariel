@@ -103,7 +103,7 @@ function Ofertas() {
     if (selectedArticulo.precio_oferta === null) {
       Modal.warning({
         title: "Advertencia",
-        content: "No cargaste un articulo.",
+        content: "Este artículo no tiene un precio de oferta.",
         icon: <ExclamationCircleOutlined />,
       });
       return;

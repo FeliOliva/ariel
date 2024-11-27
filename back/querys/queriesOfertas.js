@@ -30,6 +30,7 @@ module.exports = {
     a.codigo_producto AS cod_articulo,
     a.sublinea_id,
     a.linea_id,
+    a.stock,
     d.cantidad,
     d.precioOferta,
     (d.cantidad * d.precioOferta) AS subtotal,

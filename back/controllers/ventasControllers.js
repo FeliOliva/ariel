@@ -13,9 +13,9 @@ const addVenta = async (req, res) => {
   try {
     const { cliente_id, nroVenta, zona_id, pago, descuento, detalles } =
       req.body;
-
     // Verificar el stock de cada artículo primero
     for (const detalle of detalles) {
+      console.log("hola")
       const result = await ventasModel.checkStock(
         detalle.articulo_id,
         detalle.cantidad
@@ -26,7 +26,6 @@ const addVenta = async (req, res) => {
         });
       }
     }
-    console.log(detalles);
 
     // Crear la venta
     const ventaId = await ventasModel.addVenta(

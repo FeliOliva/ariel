@@ -94,10 +94,19 @@ function Ventas() {
   };
 
   const handleAddArticulo = () => {
-    console.log(selectedArticulo);
-    console.log(cantidad);
-    console.log(selectedArticulo.stock);
     if (selectedArticulo && cantidad > 0) {
+      const articuloExiste = venta.articulos.some(
+        (articulo) => articulo.id === selectedArticulo.id
+      );
+
+      if (articuloExiste) {
+        Modal.warning({
+          title: "Advertencia",
+          content: "Este artículo ya fue agregado en la venta.",
+          icon: <ExclamationCircleOutlined />,
+        });
+        return;
+      }
       if (selectedArticulo.stock < cantidad) {
         Modal.warning({
           title: "Advertencia",
@@ -180,13 +189,15 @@ function Ventas() {
           pago: 0,
           detalles: venta.articulos.map((articulo) => ({
             articulo_id: articulo.value, // Usamos el ID del artículo
-            costo: articulo.costo, // Asegúrate de que este campo esté presente
+            costo: articulo.costo ? articulo.costo : 0, // Asegúrate de que este campo esté presente
             cantidad: articulo.quantity,
-            precio_monotributista: articulo.precio_monotributista,
+            precio_monotributista: articulo.precio_monotributista
+              ? articulo.precio_monotributista
+              : articulo.price,
             isGift: articulo.isGift ? true : false,
           })),
         };
-
+        console.log("venta data", ventaData);
         confirm({
           title: "Confirmar",
           content: "¿Desea registrar la venta?",
@@ -234,23 +245,55 @@ function Ventas() {
           `http://localhost:3001/detalleOferta/${selectedOferta.id}`
         );
         const { productos } = response.data;
+        // Filtrar los productos que ya están en la lista de venta
+        const productosDuplicados = productos.filter((producto) =>
+          venta.articulos.some((articulo) => articulo.id === producto.id)
+        );
 
+        if (productosDuplicados.length > 0) {
+          const nombresDuplicados = productosDuplicados
+            .map((producto) => producto.nombre)
+            .join(", ");
+          Modal.warning({
+            title: "Advertencia",
+            content: `Los siguientes productos ya están en la venta: ${nombresDuplicados}`,
+            icon: <ExclamationCircleOutlined />,
+          });
+          return;
+        }
+        // Valida cada producto antes de agregarlos
+        const productosSinStock = productos.filter(
+          (producto) => producto.cantidad > producto.stock
+        );
+
+        // Si algún producto tiene stock insuficiente, muestra advertencia y detén el proceso
+        if (productosSinStock.length > 0) {
+          const nombresSinStock = productosSinStock
+            .map(
+              (producto) =>
+                `${producto.nombre} (Stock: ${producto.stock}, Cantidad requerida: ${producto.cantidad})`
+            )
+            .join(", ");
+          Modal.warning({
+            title: "Advertencia",
+            content: `No hay suficiente stock para los siguientes artículos: ${nombresSinStock}`,
+            icon: <ExclamationCircleOutlined />,
+          });
+          return;
+        }
         // Itera sobre los productos y agrega cada uno a la lista de artículos de la venta
         productos.forEach((producto) => {
+          console.log("producto", producto);
           setVenta((prev) => ({
             ...prev,
             articulos: [
               ...prev.articulos,
               {
                 id: producto.id,
-                nombre: producto.nombre,
-                precio: parseFloat(producto.precio), // Convierte el precio a número
-                cantidad: producto.cantidad, // La cantidad que viene en el producto de la oferta
-                costo: producto.precio * 0.8, // Ejemplo de cálculo de costo, ajusta según tu lógica
-                precio_monotributista: parseFloat(producto.precio), // Puedes modificar este valor si es diferente
                 label: `${producto.nombre} - ${producto.nombre_linea} - ${producto.nombre_sublinea}`,
                 value: producto.id,
                 quantity: producto.cantidad, // O la cantidad que desees usar por defecto
+                price: parseFloat(producto.precio),
               },
             ],
           }));

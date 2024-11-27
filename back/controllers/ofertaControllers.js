@@ -82,6 +82,7 @@ const getOfertaById = async (req, res) => {
           nombre_sublinea: oferta.nombre_sublinea,
           precio: oferta.precioOferta,
           cantidad: oferta.cantidad,
+          stock: oferta.stock
         })),
       };
       res.json(data);
