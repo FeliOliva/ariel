@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
+import imageUrl from "../logoRenacer.png";
 
 const ArticulosDetalles = () => {
   const [data, setData] = useState([]);
@@ -50,17 +51,39 @@ const ArticulosDetalles = () => {
   const handleGeneratePDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
     const pageHeight = pdf.internal.pageSize.height;
-    const marginTop = 20;
-    const titleHeight = 10; // Altura aproximada del título
-    const rowHeight = 10; // Altura aproximada por fila de la tabla
-    const minRowsOnPage = 2; // Mínimo de filas que deben imprimirse con el título
+    const pageWidth = pdf.internal.pageSize.width;
+    const marginTop = 40;
+    const titleHeight = 10;
+    const rowHeight = 7;
+    const minRowsOnPage = 2;
+    const logoWidth = 30;
+    const logoHeight = 30;
+
+    const phone = "Teléfono: +123 456 789";
+    const instagram = "Instagram: @distribuidoraRenacer";
+
+    // Function to add header with image and text
+    const addHeader = (doc, isFirstPage = false) => {
+      // Add logo to the top-left corner on all pages
+      doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
+
+      if (isFirstPage) {
+        // First page: add text to the right of the logo
+        doc.setFontSize(20);
+        doc.text("Distribuidora Renacer", logoWidth + 10, 20);
+        doc.setFontSize(12);
+        doc.text(phone, logoWidth + 10, 30);
+        doc.text(instagram, logoWidth + 10, 37);
+      }
+    };
 
     if (data.length > 0) {
+      addHeader(pdf, true); // Header on the first page
+
       pdf.setFontSize(14);
-      pdf.text("Lista de Artículos", 10, marginTop);
 
       const groupedData = groupByLine(data);
-      let currentY = marginTop + 10; // Inicializar después del título principal
+      let currentY = marginTop;
 
       Object.keys(groupedData).forEach((line) => {
         const lineTitle = `LÍNEA ${line}`;
@@ -76,25 +99,27 @@ const ArticulosDetalles = () => {
             }
           ),
         }));
-
-        // Calcular el espacio necesario para el título y las primeras filas
-        const requiredHeight =
-          titleHeight + rowHeight * Math.min(minRowsOnPage, tableData.length);
-
-        // Si no hay suficiente espacio en la página, agregar una nueva
-        if (currentY + requiredHeight > pageHeight) {
+        // Ajustar espacio si estamos en la primera página
+        if (pdf.internal.getNumberOfPages() === 1 && currentY === marginTop) {
+          currentY += 20; // Añadir espacio extra al primer título en la primera página
+        }
+        // If there's not enough space on the page, add a new one
+        if (currentY + titleHeight + rowHeight * minRowsOnPage > pageHeight) {
           pdf.addPage();
-          currentY = marginTop; // Reiniciar posición en la nueva página
+          addHeader(pdf, false);
+          currentY = marginTop;
         }
 
-        // Imprimir el título
-        const lineWidth = pdf.getTextWidth(lineTitle);
-        const xPosition = (pdf.internal.pageSize.width - lineWidth) / 2;
+        // Print the title
         pdf.setFontSize(16);
-        pdf.text(lineTitle, xPosition, currentY);
-        currentY += titleHeight;
+        pdf.setTextColor(0);
+        pdf.setFillColor(255, 255, 255);
+        const titleX = (pageWidth - pdf.getTextWidth(lineTitle)) / 2;
+        pdf.rect(0, currentY - 5, pageWidth, titleHeight + 10, "F");
+        pdf.text(lineTitle, titleX, currentY);
+        currentY += titleHeight + 5;
 
-        // Imprimir la tabla
+        // Table configuration
         pdf.autoTable({
           startY: currentY,
           head: [["Código", "Artículo", "Sublínea", "Precio"]],
@@ -105,17 +130,42 @@ const ArticulosDetalles = () => {
             row.precio,
           ]),
           theme: "grid",
-          styles: { fontSize: 10 },
+          styles: { fontSize: 8, cellPadding: 1 },
+          headStyles: {
+            fillColor: [200, 200, 200],
+            textColor: 0,
+            fontStyle: "bold",
+          },
+          margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
+          tableWidth: pageWidth - 10,
+          columnStyles: {
+            0: { cellWidth: 20 },
+            1: { cellWidth: "auto" },
+            2: { cellWidth: 35 },
+            3: { cellWidth: 25 },
+          },
           didDrawPage: (data) => {
-            currentY = data.cursor.y + 10; // Actualizar posición para la siguiente línea
+            addHeader(pdf, false);
+          },
+          willDrawCell: (data) => {
+            const { row, column, section } = data;
+            if (section === "body") {
+              if (row.index % 2 === 0) {
+                pdf.setFillColor(240, 240, 240);
+              } else {
+                pdf.setFillColor(255, 255, 255);
+              }
+            }
           },
         });
+
+        // Update position for the next group
+        currentY = pdf.lastAutoTable.finalY + 10;
       });
 
       pdf.save("articulos.pdf");
     }
   };
-
   const columns = [
     {
       name: "Código",
