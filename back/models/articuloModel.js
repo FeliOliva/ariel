@@ -203,6 +203,16 @@ const deshacerCambios = async (
   }
 };
 
+const getArticulosOrdenados = async () => {
+  try {
+    const query = queriesArticulos.getArticulosOrdenados;
+    const [rows] = await db.query(query);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -218,4 +228,5 @@ module.exports = {
   updateLogPrecios,
   logsPreciosById,
   deshacerCambios,
+  getArticulosOrdenados,
 };

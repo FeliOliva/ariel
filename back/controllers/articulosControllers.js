@@ -223,6 +223,14 @@ const deshacerCambios = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getArticulosOrdenados = async (req, res) => {
+  try {
+    const articulos = await articuloModel.getArticulosOrdenados();
+    res.json(articulos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 
 module.exports = {
   getAllArticulos,
@@ -239,4 +247,5 @@ module.exports = {
   updateLogPrecios,
   logsPreciosById,
   deshacerCambios,
+  getArticulosOrdenados
 };

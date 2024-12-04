@@ -13,8 +13,20 @@ const ArticulosDetalles = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/articulos");
-        setData(response.data);
+        const response = await axios.get(
+          "http://localhost:3001/getArticulosOrdenados"
+        );
+
+        // Ordenar los datos por línea y sublínea
+        const sortedData = response.data.sort((a, b) => {
+          if (a.linea_nombre < b.linea_nombre) return -1;
+          if (a.linea_nombre > b.linea_nombre) return 1;
+          if (a.sublinea_nombre < b.sublinea_nombre) return -1;
+          if (a.sublinea_nombre > b.sublinea_nombre) return 1;
+          return 0;
+        });
+
+        setData(sortedData);
       } catch (error) {
         console.error("Error fetching the data:", error);
       } finally {
@@ -24,32 +36,80 @@ const ArticulosDetalles = () => {
     fetchData();
   }, []);
 
+  // Agrupar los artículos por línea
+  const groupByLine = (data) => {
+    return data.reduce((acc, item) => {
+      if (!acc[item.linea_nombre]) {
+        acc[item.linea_nombre] = [];
+      }
+      acc[item.linea_nombre].push(item);
+      return acc;
+    }, {});
+  };
+
   const handleGeneratePDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
+    const pageHeight = pdf.internal.pageSize.height;
+    const marginTop = 20;
+    const titleHeight = 10; // Altura aproximada del título
+    const rowHeight = 10; // Altura aproximada por fila de la tabla
+    const minRowsOnPage = 2; // Mínimo de filas que deben imprimirse con el título
 
     if (data.length > 0) {
       pdf.setFontSize(14);
-      pdf.text("Lista de Artículos", 10, 20);
+      pdf.text("Lista de Artículos", 10, marginTop);
 
-      const tableData = data.map((row) => ({
-        codigo: row.codigo_producto,
-        nombre: row.nombre,
-        precio: parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }), // Formato de precio con dos decimales
-      }));
+      const groupedData = groupByLine(data);
+      let currentY = marginTop + 10; // Inicializar después del título principal
 
-      pdf.autoTable({
-        startY: 30,
-        head: [["Código", "Nombre", "Precio"]],
-        body: tableData.map((row) => [
-          row.codigo,
-          row.nombre,
-          row.precio, // Usar la propiedad 'precio' en vez de 'precio_monotributista'
-        ]),
-        theme: "grid",
-        styles: { fontSize: 10 },
+      Object.keys(groupedData).forEach((line) => {
+        const lineTitle = `LÍNEA ${line}`;
+        const tableData = groupedData[line].map((row) => ({
+          codigo: row.codigo_producto,
+          nombre: row.articulo_nombre,
+          sublinea: row.sublinea_nombre,
+          precio: parseFloat(row.precio_monotributista).toLocaleString(
+            "es-ES",
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          ),
+        }));
+
+        // Calcular el espacio necesario para el título y las primeras filas
+        const requiredHeight =
+          titleHeight + rowHeight * Math.min(minRowsOnPage, tableData.length);
+
+        // Si no hay suficiente espacio en la página, agregar una nueva
+        if (currentY + requiredHeight > pageHeight) {
+          pdf.addPage();
+          currentY = marginTop; // Reiniciar posición en la nueva página
+        }
+
+        // Imprimir el título
+        const lineWidth = pdf.getTextWidth(lineTitle);
+        const xPosition = (pdf.internal.pageSize.width - lineWidth) / 2;
+        pdf.setFontSize(16);
+        pdf.text(lineTitle, xPosition, currentY);
+        currentY += titleHeight;
+
+        // Imprimir la tabla
+        pdf.autoTable({
+          startY: currentY,
+          head: [["Código", "Artículo", "Sublínea", "Precio"]],
+          body: tableData.map((row) => [
+            row.codigo,
+            row.nombre,
+            row.sublinea,
+            row.precio,
+          ]),
+          theme: "grid",
+          styles: { fontSize: 10 },
+          didDrawPage: (data) => {
+            currentY = data.cursor.y + 10; // Actualizar posición para la siguiente línea
+          },
+        });
       });
 
       pdf.save("articulos.pdf");
@@ -64,7 +124,12 @@ const ArticulosDetalles = () => {
     },
     {
       name: "Nombre",
-      selector: (row) => row.nombre,
+      selector: (row) =>
+        row.articulo_nombre +
+        " " +
+        row.linea_nombre +
+        " " +
+        row.sublinea_nombre,
       sortable: true,
     },
     {

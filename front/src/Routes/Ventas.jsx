@@ -23,7 +23,11 @@ import {
   customCellsStyles,
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import OfertasInput from "../components/OfertasInput";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  ExclamationCircleOutlined,
+  CloseOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 
 function Ventas() {
   const [data, setData] = useState([]);
@@ -354,6 +358,10 @@ function Ventas() {
       // setHasSearched(true); // Activar después de hacer clic en Buscar
     }
   };
+  const handleClearSearch = () => {
+    fetchVentasByClient("");
+    fetchData(); // Limpiar el filtro y mostrar todos los datos
+  };
 
   const columns = [
     {
@@ -527,9 +535,17 @@ function Ventas() {
           onChangeCliente={handleClietChange}
           onInputChange={setClient}
         />
+
         <Button onClick={handleSelectedClient} type="primary">
-          Buscar
+          <span>
+            <SearchOutlined />
+          </span>
         </Button>
+        <Button
+          icon={<CloseOutlined />}
+          onClick={handleClearSearch}
+          style={{ width: "40px" }} // Ajusta el tamaño del botón
+        />
       </div>
       <DataTable
         columns={columns}

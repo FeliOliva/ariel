@@ -1,5 +1,4 @@
 module.exports = {
-  // Consulta para obtener el historial de pago solo por `venta_id`
   findByVentaID: `
       SELECT lp.*, c.nombre, c.apellido, mp.metodo, v.nroVenta, ch.nro_cheque
       FROM log_pago AS lp
@@ -9,7 +8,6 @@ module.exports = {
       LEFT JOIN cheque AS ch ON lp.cheque_id = ch.id
       WHERE lp.venta_id = ?;
     `,
-  // Consulta para obtener el historial de pago por `venta_id` y `cliente_id`
   findByVentaAndCliente: `
       SELECT * FROM log_pago 
       WHERE venta_id = ? AND cliente_id = ?;
