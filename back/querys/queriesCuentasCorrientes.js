@@ -32,7 +32,7 @@ WHERE c.id = ?;
   getTotalCuentaCorriente: `SELECT saldo_total FROM cuenta_corriente WHERE id = ?;`,
   getTotalPagoCuentCorriente: `SELECT monto_total FROM pagos_cuenta_corriente WHERE cliente_id = ?;`,
   getCuentasByClienteOrdenadas: `
-    SELECT id, saldo_total 
+    SELECT id, saldo_total, venta_id 
     FROM cuenta_corriente 
     WHERE cliente_id = ? 
     ORDER BY saldo_total ASC;
@@ -49,7 +49,7 @@ WHERE c.id = ?;
   `,
   actualizarPagoEnVenta: `
     UPDATE venta 
-    SET pago = 1 
+    SET pago = ? 
     WHERE id = ?;
   `,
   getVentaId: `
@@ -68,6 +68,6 @@ WHERE c.id = ?;
     WHERE id = ?;
   `,
   updateLogPago: `
-    INSERT INTO log_pago(cliente_id, cuenta_corriente_id, venta_id, monto, metodo_pago_id, cheque_id, estado_pago) VALUES (?, ?, ?, ?, ?, ?, ?);
+    INSERT INTO log_pago(cliente_id, cuenta_corriente_id, venta_id, monto, metodo_pago_id, total_restante, cheque_id, estado_pago) VALUES (?, ?, ?, ?, ?, ?, ?,?);
   `,
 };

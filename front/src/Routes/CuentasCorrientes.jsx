@@ -122,6 +122,15 @@ function CuentasCorrientes() {
       });
       return;
     }
+    if (!metodoPago) {
+      Modal.warning({
+        title: "Advertencia",
+        content: "No has seleccionado un metodo de pago.",
+        icon: <ExclamationCircleOutlined />,
+        timer: 1500,
+      });
+      return;
+    }
     if (monto === cuentaCorriente.saldo_total) {
       estado_pago = "CANCELADO";
     } else {
@@ -215,6 +224,7 @@ function CuentasCorrientes() {
             monto: monto,
             cliente_id: client,
             metodo_pago: metodoPago,
+            cheque_id: idCheque || null,
           });
           notification.success({
             message: "Exito",

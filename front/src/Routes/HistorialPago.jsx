@@ -50,6 +50,15 @@ const HistorialPago = () => {
       sortable: true,
     },
     {
+      name: "Total Restante",
+      selector: (row) => (
+        <Tooltip title={row.total_restante}>
+          <span>{row.total_restante}</span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
       name: "Monto",
       selector: (row) => (
         <Tooltip title={row.monto}>

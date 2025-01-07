@@ -71,9 +71,9 @@ const actualizarSaldoCuentaCorriente = async (cuenta_id, nuevo_saldo) => {
     throw err;
   }
 };
-const actualizarPagoEnVenta = async (venta_id) => {
+const actualizarPagoEnVenta = async (venta_id, pago) => {
   try {
-    await db.query(queriesCuentasCorrientes.actualizarPagoEnVenta, [venta_id]);
+    await db.query(queriesCuentasCorrientes.actualizarPagoEnVenta, [pago, venta_id]);
   } catch (err) {
     throw err;
   }
@@ -114,6 +114,7 @@ const updateLogPago = async (payLoad) => {
       payLoad.venta_id,
       payLoad.monto,
       payLoad.metodo_pago_id,
+      payLoad.total_restante,
       payLoad.cheque_id,
       payLoad.estado_pago,
     ]);

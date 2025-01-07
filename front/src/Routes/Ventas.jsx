@@ -99,18 +99,19 @@ function Ventas() {
 
   const handleAddArticulo = () => {
     if (selectedArticulo && cantidad > 0) {
-      const articuloExiste = venta.articulos.some(
-        (articulo) => articulo.id === selectedArticulo.id
-      );
+      //ESTO ERA PARA VALIDAR QUE NO ENTRE MAS DE UN ARTICULO
+      // const articuloExiste = venta.articulos.some(
+      //   (articulo) => articulo.id === selectedArticulo.id
+      // );
 
-      if (articuloExiste) {
-        Modal.warning({
-          title: "Advertencia",
-          content: "Este artículo ya fue agregado en la venta.",
-          icon: <ExclamationCircleOutlined />,
-        });
-        return;
-      }
+      // if (articuloExiste) {
+      //   Modal.warning({
+      //     title: "Advertencia",
+      //     content: "Este artículo ya fue agregado en la venta.",
+      //     icon: <ExclamationCircleOutlined />,
+      //   });
+      //   return;
+      // }
       if (selectedArticulo.stock < cantidad) {
         Modal.warning({
           title: "Advertencia",
@@ -122,6 +123,8 @@ function Ventas() {
         });
         return;
       }
+
+      const uniqueId = `${selectedArticulo.id}-${Date.now()}`; // Generación del ID único
       setVenta((prev) => ({
         ...prev,
         articulos: [
@@ -137,13 +140,15 @@ function Ventas() {
               " - " +
               selectedArticulo.sublinea_nombre,
             value: selectedArticulo.id,
+            uniqueId,
+            isGift: false,
           },
         ],
       }));
       console.log(venta);
-      setSelectedArticulo(null); // Reset selected article after adding
-      setCantidad(0); // Reset quantity to 1 after adding
-      setArticuloValue(""); // Reset input value
+      setSelectedArticulo(null);
+      setCantidad(0);
+      setArticuloValue("");
     } else {
       Modal.warning({
         title: "Advertencia",
@@ -153,17 +158,19 @@ function Ventas() {
     }
   };
 
-  const handleDeleteArticulo = (id) => {
+  const handleDeleteArticulo = (uniqueId) => {
     setVenta((prev) => ({
       ...prev,
-      articulos: prev.articulos.filter((articulo) => articulo.id !== id),
+      articulos: prev.articulos.filter(
+        (articulo) => articulo.uniqueId !== uniqueId
+      ),
     }));
   };
-  const handleGiftChange = (id, isGift) => {
+  const handleGiftChange = (uniqueId, isGift) => {
     setVenta((prev) => ({
       ...prev,
       articulos: prev.articulos.map((articulo) =>
-        articulo.id === id
+        articulo.uniqueId === uniqueId
           ? {
               ...articulo,
               isGift, // Actualiza simplemente el estado de "isGift"
@@ -321,9 +328,9 @@ function Ventas() {
   const handleGoToCheques = () => {
     navigate("/cheques");
   };
-  const handleEditPrecio = (id, newPrice) => {
+  const handleEditPrecio = (uniqueId, newPrice) => {
     const updatedArticulos = venta.articulos.map((item) =>
-      item.id === id
+      item.uniqueId === uniqueId
         ? { ...item, precio_monotributista: newPrice, price: newPrice }
         : item
     );
@@ -479,10 +486,20 @@ function Ventas() {
       name: "Pago",
       selector: (row) => (
         <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.pago ? "Pagado" : "No Pagado"}
+          className={
+            row.pago === 1 ? "strikethrough" : row.pago === 2 ? "Parcial" : ""
+          }
+          title={
+            row.pago === 1 ? "Pagado" : row.pago === 2 ? "Parcial" : "No Pagado"
+          }
         >
-          <span>{row.pago ? "Pagado" : "No Pagado"}</span>
+          <span>
+            {row.pago === 1
+              ? "Pagado"
+              : row.pago === 2
+              ? "Parcial"
+              : "No Pagado"}
+          </span>
         </Tooltip>
       ),
       sortable: true,

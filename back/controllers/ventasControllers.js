@@ -15,7 +15,6 @@ const addVenta = async (req, res) => {
       req.body;
     // Verificar el stock de cada artículo primero
     for (const detalle of detalles) {
-      console.log("hola")
       const result = await ventasModel.checkStock(
         detalle.articulo_id,
         detalle.cantidad

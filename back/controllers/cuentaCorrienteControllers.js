@@ -15,6 +15,7 @@ const payByCuentaCorriente = async (req, res) => {
   const { monto, cliente_id, venta_id, metodo_pago, cheque_id, estado_pago, ID } = req.body;
   const total = await cuentaCorrienteModel.getTotalCuentaCorriente(ID);
   let totalCalc = total.saldo_total - monto;
+  let total_restante = totalCalc;
   console.log(totalCalc);
   const payLoad = {
     cliente_id,
@@ -22,10 +23,11 @@ const payByCuentaCorriente = async (req, res) => {
     venta_id,
     monto,
     metodo_pago_id: metodo_pago || null,
+    total_restante,
     cheque_id,
     estado_pago,
   }
-  console.log("payload", payLoad);
+  console.log("PayLoad", payLoad)
   if (totalCalc < 0 || totalCalc === null || totalCalc === undefined || !ID) {
     return res
       .status(400)
@@ -35,24 +37,27 @@ const payByCuentaCorriente = async (req, res) => {
     await cuentaCorrienteModel.payByCuentaCorriente(monto, ID);
     await cuentaCorrienteModel.actualizarMetodoPago(metodo_pago, venta_id);
     await cuentaCorrienteModel.payCuentaByTotal(monto, cliente_id);
+    await cuentaCorrienteModel.actualizarPagoEnVenta(venta_id, 2);
     if (totalCalc === 0) {
-      await cuentaCorrienteModel.actualizarPagoEnVenta(venta_id);
+      await cuentaCorrienteModel.actualizarPagoEnVenta(venta_id, 1);
       await cuentaCorrienteModel.setEstadoCuentaCorriente(ID);
     }
     return res.status(200).json("Cuenta corriente pagada con exito");
   }
 };
 const payCuentaByTotal = async (req, res) => {
-  const { monto, metodo_pago, cliente_id } = req.body;
-
+  const { monto, metodo_pago, cliente_id, cheque_id } = req.body;
+  console.log("metodo de pago", metodo_pago);
+  console.log("monto", monto);
+  console.log("cliente", cliente_id);
+  console.log("cheque", cheque_id);
+  let estado_pago;
+  let total_restante;
   try {
     const total = await cuentaCorrienteModel.getTotalPagoCuentaCorriente(
       cliente_id
     );
-    console.log("total");
-    console.log(total.monto_total);
     totalCalc = total.monto_total - monto;
-    console.log(totalCalc);
     if (
       totalCalc < 0 ||
       totalCalc === null ||
@@ -73,9 +78,9 @@ const payCuentaByTotal = async (req, res) => {
       for (let cuenta of cuentas) {
         let saldo = parseFloat(cuenta.saldo_total);
         if (montoRestante <= 0) break;
-        // 3. Descontar el saldo de la cuenta corriente
         if (montoRestante >= saldo) {
           // Si el monto restante es mayor o igual al saldo, poner la cuenta en cero
+          estado_pago = "CANCELADO";
           await cuentaCorrienteModel.actualizarSaldoCuentaCorriente(
             cuenta.id,
             0
@@ -83,20 +88,36 @@ const payCuentaByTotal = async (req, res) => {
           const response = await cuentaCorrienteModel.getVentaId(cuenta.id);
           console.log(response.venta_id);
           montoRestante -= saldo; // Restar el saldo descontado del monto restante
-          await cuentaCorrienteModel.actualizarPagoEnVenta(response.venta_id);
+          total_restante = 0;
+          await cuentaCorrienteModel.actualizarPagoEnVenta(response.venta_id, 1);
           await cuentaCorrienteModel.actualizarMetodoPago(
             metodo_pago,
             response.venta_id
           );
           await cuentaCorrienteModel.setEstadoCuentaCorriente(cuenta.id);
         } else {
-          // Si el monto restante es menor que el saldo, solo descontar parte del saldo
+          const response = await cuentaCorrienteModel.getVentaId(cuenta.id);
+          await cuentaCorrienteModel.actualizarPagoEnVenta(response.venta_id, 2);
+          estado_pago = "PARCIAL";
+          total_restante = saldo - montoRestante;
           await cuentaCorrienteModel.actualizarSaldoCuentaCorriente(
             cuenta.id,
             saldo - montoRestante
           );
           montoRestante = 0; // El monto restante se agota
         }
+        const payLoad = {
+          cliente_id,
+          cuenta_corriente_id: cuenta.id,
+          venta_id: cuenta.venta_id,
+          monto,
+          metodo_pago_id: metodo_pago || null,
+          total_restante: total_restante,
+          cheque_id,
+          estado_pago,
+        }
+        console.log("payload", payLoad);
+        await cuentaCorrienteModel.updateLogPago(payLoad);
       }
       res.status(200).json("Cuenta corriente pagada con éxito");
     }

@@ -7,6 +7,7 @@ import {
   IconButton,
   Checkbox,
   TextField,
+  Box,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -18,32 +19,29 @@ const DynamicList = ({ items, onDelete, onGiftChange, onEdit }) => {
 
   // Función para manejar el clic en editar
   const handleEditClick = (item) => {
-    setEditingItemId(item.id);
-    setEditedPrice(item.price); // Inicializa con el precio actual
-    console.log(item.price);
+    setEditingItemId(item.uniqueId); // Cambiar a uniqueId
+    setEditedPrice(item.price);
   };
 
   // Función para guardar el precio editado
-  const handleSaveClick = (itemId) => {
-    console.log("itemiId", itemId);
+  const handleSaveClick = (uniqueId) => {
     const parsedPrice = parseFloat(editedPrice);
     if (!isNaN(parsedPrice)) {
-      onEdit(itemId, parsedPrice); // Pasa el precio como número
+      onEdit(uniqueId, parsedPrice);
     }
-    setEditingItemId(null); // Finaliza el modo edición
-    console.log("editedPrice", editedPrice);
+    setEditingItemId(null);
   };
+
   return (
     <List>
       {items.map((item) => (
-        <ListItem key={item.id}>
-          {/* Usa el ID como key */}
+        <ListItem key={item.uniqueId}>
           <ListItemText
             primary={item.label}
             secondary={
               <>
                 {`Cantidad: ${item.quantity} `}
-                {editingItemId === item.id ? (
+                {editingItemId === item.uniqueId ? ( // Cambiar a uniqueId
                   <TextField
                     value={editedPrice}
                     onChange={(e) => setEditedPrice(e.target.value)}
@@ -51,29 +49,28 @@ const DynamicList = ({ items, onDelete, onGiftChange, onEdit }) => {
                     label="Precio"
                   />
                 ) : (
-                  `Precio: $${item?.price ? item.price : editedPrice}`
+                  `Precio: $${item.price}`
                 )}
               </>
             }
           />
-          <Checkbox
-            checked={!!item.isGift} // Asegúrate de que sea un valor booleano
-            onChange={(e) => onGiftChange(item.id, e.target.checked)} // Manejo del cambio de estado
-            label="Es regalo"
-          />
-          <ListItemSecondaryAction>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Checkbox
+              checked={!!item.isGift}
+              onChange={(e) => onGiftChange(item.uniqueId, e.target.checked)} // Cambiar a uniqueId
+            />
             <IconButton
               edge="end"
               aria-label="delete"
-              onClick={() => onDelete(item.id)} // Pasa el ID en lugar del índice
+              onClick={() => onDelete(item.uniqueId)} // Cambiar a uniqueId
             >
               <DeleteIcon />
             </IconButton>
-            {editingItemId === item.id ? (
+            {editingItemId === item.uniqueId ? ( // Cambiar a uniqueId
               <IconButton
                 edge="end"
                 aria-label="save"
-                onClick={() => handleSaveClick(item.id)}
+                onClick={() => handleSaveClick(item.uniqueId)} // Cambiar a uniqueId
               >
                 <SaveIcon />
               </IconButton>
@@ -86,7 +83,7 @@ const DynamicList = ({ items, onDelete, onGiftChange, onEdit }) => {
                 <EditIcon />
               </IconButton>
             )}
-          </ListItemSecondaryAction>
+          </Box>
         </ListItem>
       ))}
     </List>

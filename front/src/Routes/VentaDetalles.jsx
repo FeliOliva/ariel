@@ -49,7 +49,6 @@ const VentaDetalles = () => {
         const response = await axios.get(
           `http://localhost:3001/getVentaByID/${id}`
         );
-        console.log(id);
         console.log("response ", response.data);
         const {
           detalles,
@@ -180,28 +179,44 @@ const VentaDetalles = () => {
       const rightX = 140;
 
       pdf.setFontSize(12);
-      pdf.text(`Total Importe: ${ventaInfo.total_importe}`, rightX, finalY);
 
-      pdf.text(
-        `Descuento: ${parseFloat(ventaInfo.descuento).toLocaleString("es-ES", {
+      // Aumentamos el espaciado entre las líneas
+      const lineHeight = 8; // Espaciado entre líneas
+
+      // Total
+      const total = parseFloat(ventaInfo.total_importe).toLocaleString(
+        "es-ES",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      );
+      pdf.text(`Total: ${total}`, rightX, finalY);
+
+      // Descuento
+      const descuento = parseFloat(ventaInfo.descuento).toLocaleString(
+        "es-ES",
+        {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        })}%`,
-        rightX,
-        finalY + 5
+        }
       );
+      pdf.text(`Descuento: ${descuento}%`, rightX, finalY + lineHeight);
 
+      // Total con Descuento
+      const totalConDescuento = parseFloat(
+        ventaInfo.total_con_descuento
+      ).toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
       pdf.text(
-        `Total con Descuento: ${Math.round(
-          parseFloat(ventaInfo.total_con_descuento).toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })
-        )}`,
+        `Total con Descuento: ${totalConDescuento}`,
         rightX,
-        finalY + 10
+        finalY + lineHeight * 2
       );
 
+      // Información adicional al pie de página
       const bottomY = pdf.internal.pageSize.height - 10;
       pdf.setFontSize(10);
       pdf.text(`Nro Venta: ${ventaInfo.nroVenta}`, 10, bottomY);
