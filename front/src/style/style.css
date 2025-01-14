@@ -88,3 +88,17 @@
 .graph-container button:hover {
   background-color: #40a9ff;
 }
+.tables-container {
+  display: inline;
+
+  gap: 500px; /* Espacio entre las tablas */
+}
+
+.table-wrapper {
+  flex: 1; /* Ambas tablas tendrán el mismo ancho */
+  border: 1px solid #ccc; /* Borde alrededor de cada tabla */
+  border-radius: 8px; /* Opcional: bordes redondeados */
+  padding: 16px;
+  background-color: #f9f9f9; /* Opcional: fondo claro */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Opcional: sombra */
+}

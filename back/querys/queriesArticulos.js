@@ -120,8 +120,10 @@ DELETE FROM precio_log
 WHERE id = ?;
 `,
     getArticulosOrdenados: `
-    SELECT 
+   SELECT 
     a.nombre AS articulo_nombre,
+    a.mediciones AS articulo_medicion,
+    a.estado AS estado,
     l.nombre AS linea_nombre,
     sl.nombre AS sublinea_nombre,
     a.id AS articulo_id,
@@ -140,6 +142,7 @@ WHERE
     l.estado = 1 AND sl.estado = 1 
 ORDER BY 
     l.nombre ASC, 
-    sl.nombre ASC; 
+    sl.nombre ASC,
+    a.nombre ASC; 
 `,
 };

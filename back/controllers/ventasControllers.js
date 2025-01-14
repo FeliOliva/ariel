@@ -11,7 +11,7 @@ const getAllVentas = async (req, res) => {
 };
 const addVenta = async (req, res) => {
   try {
-    const { cliente_id, nroVenta, zona_id, pago, descuento, detalles } =
+    const { cliente_id, nroVenta, zona_id, descuento, detalles } =
       req.body;
     // Verificar el stock de cada artículo primero
     for (const detalle of detalles) {
@@ -31,8 +31,7 @@ const addVenta = async (req, res) => {
       cliente_id,
       nroVenta,
       zona_id,
-      descuento,
-      pago
+      descuento
     );
     let totalVenta = 0;
     let sub_total = 0;
@@ -76,30 +75,6 @@ const addVenta = async (req, res) => {
     );
     // Actualizar la venta con el total y el total con descuento
     await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
-
-    // En lugar de guardar el total de la venta en cuenta corriente, guarda el total con descuento
-    await ventasModel.addCuentaCorriente(
-      cliente_id,
-      totalConDescuento,
-      ventaId
-    );
-
-    // Calcular el saldo acumulado para este cliente en cuenta corriente
-    const saldoTotal = await ventasModel.getSaldoTotalCuentaCorriente(
-      cliente_id
-    );
-
-    // Actualizar el monto total en pagos de cuenta corriente
-    const pagoExistente = await ventasModel.getPagoCuentaCorrienteByClienteId(
-      cliente_id
-    );
-
-    if (pagoExistente) {
-      await ventasModel.updatePagoCuentaCorriente(cliente_id, saldoTotal); // Usamos saldoTotal que incluye el descuento
-    } else {
-      await ventasModel.addPagoCuentaCorriente(cliente_id, saldoTotal); // Lo mismo aquí, agregamos el saldo con descuento
-    }
-
     res.status(201).json({ message: "Venta agregada con éxito" });
   } catch (error) {
     console.error("Error al agregar la venta:", error);
@@ -146,18 +121,6 @@ const updateVentas = async (req, res) => {
   }
 };
 
-const getVentasByClientes = async (req, res) => {
-  try {
-    const cliente_id = req.params.ID;
-    console.log("id desde el back", cliente_id)
-    const ventas = await ventasModel.getVentasByClientes(cliente_id);
-    res.json(ventas);
-    console.log(ventas);
-  } catch (error) {
-    console.error("Error al obtener las ventas por cliente:", error);
-    res.status(500).json({ error: "Error al obtener las ventas por cliente" });
-  }
-};
 
 const getVentasByZona = async (req, res) => {
   try {
@@ -181,6 +144,17 @@ const getVentasByProducto = async (req, res) => {
   }
 };
 
+const getVentasByClientes = async (req, res) => {
+  try {
+    const cliente_id = req.params.ID;
+    const ventas = await ventasModel.getVentasByClientes(cliente_id);
+    res.json(ventas);
+    console.log(ventas);
+  } catch (error) {
+    console.error("Error al obtener las ventas por cliente:", error);
+    res.status(500).json({ error: "Error al obtener las ventas por cliente" });
+  }
+};
 const getVentaByID = async (req, res) => {
   try {
     const venta_id = req.params.ID;
@@ -200,6 +174,7 @@ const getVentaByID = async (req, res) => {
         total_con_descuento: detalleVentas[0].total_con_descuento,
         venta_id: detalleVentas[0].id_venta,
         farmacia: detalleVentas[0].farmacia,
+        localidad: detalleVentas[0].localidad,
         detalles: detalleVentas.map((detalle) => ({
           articulo_id: detalle.articulo_id,
           nombre:
@@ -223,6 +198,46 @@ const getVentaByID = async (req, res) => {
     res.status(500).json({ error: "Error al obtener la venta por ID" });
   }
 };
+const getVentasByClientesxFecha = async (req, res) => {
+  try {
+    const { ID: cliente_id } = req.params;
+    const { fecha_inicio, fecha_fin } = req.query;
+
+    console.log("ID desde el back:", cliente_id);
+    console.log("Fecha inicio:", fecha_inicio);
+    console.log("Fecha fin:", fecha_fin);
+
+    // Validar los parámetros requeridos
+    if (!cliente_id) {
+      return res.status(400).json({ error: "ID de cliente no proporcionado" });
+    }
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res
+        .status(400)
+        .json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+    }
+
+    // Llamar al modelo con los parámetros
+    const ventas = await ventasModel.getVentasByClientesxFecha(
+      cliente_id,
+      fecha_inicio,
+      fecha_fin
+    );
+
+    console.log("Ventas obtenidas:", ventas);
+
+    // Manejar el caso de que no existan ventas
+    if (!ventas || ventas.length === 0) {
+      return res.json([]); // Devuelve un array vacío
+    }
+
+    res.json(ventas);
+  } catch (error) {
+    console.error("Error al obtener ventas:", error);
+    res.status(500).json({ error: "Error interno del servidor al obtener ventas" });
+  }
+}
 
 module.exports = {
   getAllVentas,
@@ -234,4 +249,5 @@ module.exports = {
   getVentasByZona,
   getVentasByProducto,
   getVentaByID,
+  getVentasByClientesxFecha
 };

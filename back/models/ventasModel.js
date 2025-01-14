@@ -11,7 +11,7 @@ const getAllVentas = async () => {
   }
 };
 
-const addVenta = async (cliente_id, nroVenta, zona_id, descuento, pago) => {
+const addVenta = async (cliente_id, nroVenta, zona_id, descuento) => {
   try {
     const query = queriesVentas.addVenta;
     const [result] = await db.query(query, [
@@ -19,7 +19,6 @@ const addVenta = async (cliente_id, nroVenta, zona_id, descuento, pago) => {
       nroVenta,
       zona_id,
       descuento,
-      pago,
     ]);
     return result.insertId;
   } catch (err) {
@@ -151,10 +150,6 @@ const getVentaByID = async (venta_id) => {
   }
 };
 
-const addCuentaCorriente = async (cliente_id, saldo_total, ventaId) => {
-  const query = queriesVentas.addCuentaCorriente;
-  await db.query(query, [cliente_id, saldo_total, ventaId]);
-};
 
 const getTotal = async (venta_id) => {
   try {
@@ -165,41 +160,20 @@ const getTotal = async (venta_id) => {
     throw err;
   }
 };
-const getCuentaCorrienteByClienteId = async (cliente_id) => {
-  const query = queriesVentas.getCuentaCorrienteByClienteId;
-  const [rows] = await db.query(query, [cliente_id]);
-  return rows.length ? rows[0] : null;
-};
-
-const updatePagoCuentaCorriente = async (cliente_id, monto_total) => {
-  const query = queriesVentas.updatePagoCuentaCorriente;
-  await db.query(query, [monto_total, cliente_id]);
-};
-const updateCuentaCorriente = async (cliente_id, saldo_total) => {
-  const query = queriesVentas.updateCuentaCorriente;
-  await db.query(query, [saldo_total, cliente_id]);
-};
-
-const getPagoCuentaCorrienteByClienteId = async (cliente_id) => {
-  const query = queriesVentas.getPagoCuentaCorrienteByClienteId;
-  const [rows] = await db.query(query, [cliente_id]);
-  return rows.length ? rows[0] : null;
-};
-
-const addPagoCuentaCorriente = async (cliente_id, monto_total) => {
-  const query = queriesVentas.addPagoCuentaCorriente;
-  await db.query(query, [cliente_id, monto_total]);
-};
-const getSaldoTotalCuentaCorriente = async (cliente_id) => {
-  const query = queriesVentas.getSaldoTotalCuentaCorriente;
-  const [rows] = await db.query(query, [cliente_id]);
-  return rows[0].saldo_acumulado || 0;
-};
 const updateVentaTotal = async (total, total_con_descuento, ventaId) => {
   const query = queriesVentas.updateVentaTotal;
   await db.query(query, [total, total_con_descuento, ventaId]);
 };
-
+const getVentasByClientesxFecha = async (cliente_id, fecha_inicio, fecha_fin) => {
+  try {
+    const query = queriesVentas.getVentasByClientesxFecha;
+    const [rows] = await db.query(query, [fecha_inicio, fecha_fin, cliente_id, fecha_inicio, fecha_fin]);
+    return rows;
+  } catch (err) {
+    console.error("Error en getVentasByClientes:", err);
+    throw err;
+  }
+}
 module.exports = {
   getAllVentas,
   addVenta,
@@ -214,13 +188,7 @@ module.exports = {
   getVentasByZona,
   getVentasByProducto,
   getVentaByID,
-  addCuentaCorriente,
   getTotal,
-  getCuentaCorrienteByClienteId,
-  addPagoCuentaCorriente,
-  getPagoCuentaCorrienteByClienteId,
-  updatePagoCuentaCorriente,
-  updateCuentaCorriente,
-  getSaldoTotalCuentaCorriente,
   updateVentaTotal,
+  getVentasByClientesxFecha
 };

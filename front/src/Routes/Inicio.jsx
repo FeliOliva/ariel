@@ -357,7 +357,7 @@ const Inicio = () => {
       label: {
         rotate: -45,
         style: { fill: "#AAAAAA" },
-        formatter: (text) => text.replace(/\/\d{4}$/, ""), // Muestra solo día y mes si aplica
+        formatter: (text) => text.replace(/\/\d{4}$/, ""),
       },
     },
     yAxis: { title: { text: "Ventas" } },
@@ -369,6 +369,7 @@ const Inicio = () => {
   console.log("total en limpio", totalEnLimpio);
   const TotalConEntrega = parseInt(totalIngresos) - parseInt(totalEntregas);
   console.log("total con entregas", TotalConEntrega);
+  
   return (
     <MenuLayout>
       <Header style={{ color: "#fff", textAlign: "center", fontSize: "1.5em" }}>

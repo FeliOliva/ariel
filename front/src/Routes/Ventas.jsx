@@ -197,7 +197,6 @@ function Ventas() {
           nroVenta: venta.nroVenta,
           zona_id: venta.cliente.zona_id,
           descuento: venta.descuento,
-          pago: 0,
           detalles: venta.articulos.map((articulo) => ({
             articulo_id: articulo.value, // Usamos el ID del artículo
             costo: articulo.costo ? articulo.costo : 0, // Asegúrate de que este campo esté presente
@@ -374,10 +373,7 @@ function Ventas() {
     {
       name: "Nro. Venta",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.nroVenta}
-        >
+        <Tooltip title={row.nroVenta}>
           <span>
             <span>{row.nroVenta}</span>
           </span>
@@ -388,10 +384,7 @@ function Ventas() {
     {
       name: "Fecha",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={format(new Date(row.fecha_venta), "dd/MM/yyyy")}
-        >
+        <Tooltip title={format(new Date(row.fecha_venta), "dd/MM/yyyy")}>
           <span>{format(new Date(row.fecha_venta), "dd/MM/yyyy")}</span>
         </Tooltip>
       ),
@@ -400,10 +393,7 @@ function Ventas() {
     {
       name: "Farmacia",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.farmacia}
-        >
+        <Tooltip title={row.farmacia}>
           <span>{row.farmacia}</span>
         </Tooltip>
       ),
@@ -412,10 +402,7 @@ function Ventas() {
     {
       name: "Cliente",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.nombre_cliente + " " + row.apellido_cliente}
-        >
+        <Tooltip title={row.nombre_cliente + " " + row.apellido_cliente}>
           <span>{row.nombre_cliente + " " + row.apellido_cliente}</span>
         </Tooltip>
       ),
@@ -424,22 +411,16 @@ function Ventas() {
     {
       name: "Zona",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.nombre_zona}
-        >
+        <Tooltip title={row.nombre_zona}>
           <span>{row.nombre_zona}</span>
         </Tooltip>
       ),
       sortable: true,
     },
     {
-      name: "Total Precio Monotributista",
+      name: "Sub total",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.total}
-        >
+        <Tooltip title={row.total}>
           <span>{row.total}</span>
         </Tooltip>
       ),
@@ -448,58 +429,17 @@ function Ventas() {
     {
       name: "Descuento",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.descuento}
-        >
-          <span>{row.descuento}</span>
+        <Tooltip title={row.descuento + "%"}>
+          <span>{row.descuento}%</span>
         </Tooltip>
       ),
       sortable: true,
     },
     {
-      name: "Total con descuento",
+      name: "Total",
       selector: (row) => (
-        <Tooltip
-          className={row.pago === 1 ? "strikethrough" : ""}
-          title={row.total_con_descuento}
-        >
+        <Tooltip title={row.total_con_descuento}>
           <span>{row.total_con_descuento}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Método de Pago",
-      selector: (row) => (
-        <Tooltip className={row.pago === 1 ? "strikethrough" : ""}>
-          <span>
-            <Link to={`/HistorialPago/${row.id}`}>
-              <button>Ver historial de pago</button>
-            </Link>
-          </span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Pago",
-      selector: (row) => (
-        <Tooltip
-          className={
-            row.pago === 1 ? "strikethrough" : row.pago === 2 ? "Parcial" : ""
-          }
-          title={
-            row.pago === 1 ? "Pagado" : row.pago === 2 ? "Parcial" : "No Pagado"
-          }
-        >
-          <span>
-            {row.pago === 1
-              ? "Pagado"
-              : row.pago === 2
-              ? "Parcial"
-              : "No Pagado"}
-          </span>
         </Tooltip>
       ),
       sortable: true,

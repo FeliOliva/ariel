@@ -22,11 +22,9 @@ const RoutesOfertas = require("./routes/ofertasRoutes");
 const RoutesFilter = require("./routes/filterRoutes");
 const RoutesCompras = require("./routes/comprasRoutes");
 const RoutesTipoCliente = require("./routes/tipoClienteRoutes");
-const RoutesCuentaCorrientes = require("./routes/cuentasCorrientesRoutes");
 const RoutesGastos = require("./routes/GatosRoutes");
-const RoutesMetodosPagos = require("./routes/metodosPagoRoutes");
 const RoutesCheques = require("./routes/chequesRoutes");
-const RoutesHistorialPago = require("./routes/HistorialPagoRoutes");
+const RoutesPagos = require("./routes/pagosRoutes");
 
 app.use(
   "/",
@@ -42,11 +40,9 @@ app.use(
   RoutesFilter,
   RoutesCompras,
   RoutesTipoCliente,
-  RoutesCuentaCorrientes,
   RoutesGastos,
-  RoutesMetodosPagos,
   RoutesCheques,
-  RoutesHistorialPago
+  RoutesPagos
 );
 
 app.listen(PORT, () => {

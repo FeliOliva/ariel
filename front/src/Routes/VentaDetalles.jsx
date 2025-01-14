@@ -52,7 +52,7 @@ const VentaDetalles = () => {
         console.log("response ", response.data);
         const {
           detalles,
-          venta_id, // Asegúrate de que el backend envíe el venta_id en la respuesta
+          venta_id,
           nombre_cliente,
           nroVenta,
           fecha,
@@ -63,13 +63,16 @@ const VentaDetalles = () => {
           direccion,
           nombre_tipo_cliente,
           farmacia,
-          sub_total,
+          localidad,
         } = response.data;
 
         if (Array.isArray(detalles)) {
+          // Ordenar los datos por la propiedad `nombre` (descripción)
+          detalles.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
           setData(detalles);
           setVentaInfo({
-            venta_id, // Guarda el venta_id en ventaInfo
+            venta_id,
             nombre_cliente,
             nroVenta,
             fecha,
@@ -80,6 +83,7 @@ const VentaDetalles = () => {
             direccion,
             nombre_tipo_cliente,
             farmacia,
+            localidad,
           });
           console.log("venta info", ventaInfo);
         } else {
@@ -107,9 +111,9 @@ const VentaDetalles = () => {
 
       // Aquí agregamos el nombre de la farmacia
       pdf.setFontSize(10);
-      pdf.text(`${ventaInfo.nombre_cliente}`, 10, 35);
-      pdf.text(`${ventaInfo.direccion}`, 10, 40);
-      pdf.text(`${ventaInfo.farmacia}`, 10, 45);
+      pdf.text(`${ventaInfo.farmacia}`, 10, 35);
+      pdf.text(`${ventaInfo.nombre_cliente}`, 10, 40);
+      pdf.text(`${ventaInfo.localidad}`, 10, 45);
       pdf.text(`${ventaInfo.nombre_tipo_cliente}`, 10, 50);
 
       const fecha = new Date(ventaInfo.fecha);

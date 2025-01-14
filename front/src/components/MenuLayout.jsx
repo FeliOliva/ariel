@@ -41,7 +41,7 @@ const MenuLayout = ({ children }) => {
         navigate("/Ofertas");
         break;
       case "7":
-        navigate("/CuentasCorrientes");
+        navigate("/ResumenCuenta");
         break;
       case "8":
         navigate("/Linea");
@@ -68,7 +68,7 @@ const MenuLayout = ({ children }) => {
         return ["5"];
       case "/Ofertas":
         return ["6"];
-      case "/CuentasCorrientes":
+      case "/ResumenCuenta":
         return ["7"];
       case "/Linea":
         return ["8"];
@@ -122,7 +122,7 @@ const MenuLayout = ({ children }) => {
             {
               key: "7",
               icon: <SubnodeOutlined />,
-              label: "Cuentas Corrientes",
+              label: "Resumen de cuentas",
             },
             {
               key: "8",

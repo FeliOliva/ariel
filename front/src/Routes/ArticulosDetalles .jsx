@@ -18,14 +18,30 @@ const ArticulosDetalles = () => {
           "http://localhost:3001/getArticulosOrdenados"
         );
 
-        // Ordenar los datos por línea y sublínea
-        const sortedData = response.data.sort((a, b) => {
-          if (a.linea_nombre < b.linea_nombre) return -1;
-          if (a.linea_nombre > b.linea_nombre) return 1;
-          if (a.sublinea_nombre < b.sublinea_nombre) return -1;
-          if (a.sublinea_nombre > b.sublinea_nombre) return 1;
-          return 0;
+        // Filtrar los artículos activos (estado = 1)
+        const filteredData = response.data.filter((item) => item.estado === 1);
+
+        // Agrupar y ordenar los datos
+        const groupedData = filteredData.reduce((acc, item) => {
+          const key = `${item.linea_nombre} > ${item.sublinea_nombre}`;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(item);
+          return acc;
+        }, {});
+
+        // Ordenar los artículos dentro de cada grupo estrictamente por nombre
+        Object.keys(groupedData).forEach((key) => {
+          groupedData[key].sort((a, b) =>
+            a.articulo_nombre.localeCompare(b.articulo_nombre)
+          );
         });
+
+        // Aplanar los datos para renderizarlos en orden
+        const sortedData = Object.entries(groupedData)
+          .sort(([keyA], [keyB]) => keyA.localeCompare(keyB)) // Ordenar las claves (línea > sublínea)
+          .flatMap(([key, items]) => items); // Aplanar los artículos
 
         setData(sortedData);
       } catch (error) {
@@ -34,6 +50,7 @@ const ArticulosDetalles = () => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -59,16 +76,13 @@ const ArticulosDetalles = () => {
     const logoWidth = 30;
     const logoHeight = 30;
 
-    const phone = "Teléfono: +123 456 789";
+    const phone = "Teléfono: +54 9 3518 16-8151";
     const instagram = "Instagram: @distribuidoraRenacer";
 
     // Function to add header with image and text
     const addHeader = (doc, isFirstPage = false) => {
-      // Add logo to the top-left corner on all pages
       doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
-
       if (isFirstPage) {
-        // First page: add text to the right of the logo
         doc.setFontSize(20);
         doc.text("Distribuidora Renacer", logoWidth + 10, 20);
         doc.setFontSize(12);
@@ -82,35 +96,42 @@ const ArticulosDetalles = () => {
 
       pdf.setFontSize(14);
 
+      // Agrupar los datos por línea
       const groupedData = groupByLine(data);
+
+      // Ordenar los artículos por nombre dentro de cada línea
+      Object.keys(groupedData).forEach((line) => {
+        groupedData[line].sort((a, b) =>
+          a.articulo_nombre.localeCompare(b.articulo_nombre)
+        );
+      });
+
       let currentY = marginTop;
 
       Object.keys(groupedData).forEach((line) => {
         const lineTitle = `LÍNEA ${line}`;
         const tableData = groupedData[line].map((row) => ({
           codigo: row.codigo_producto,
-          nombre: row.articulo_nombre,
+          nombre: row.articulo_nombre + " " + row.articulo_medicion,
           sublinea: row.sublinea_nombre,
-          precio: parseFloat(row.precio_monotributista).toLocaleString(
-            "es-ES",
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          ),
+          precio:
+            "$" +
+            parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }),
         }));
-        // Ajustar espacio si estamos en la primera página
+
         if (pdf.internal.getNumberOfPages() === 1 && currentY === marginTop) {
-          currentY += 20; // Añadir espacio extra al primer título en la primera página
+          currentY += 20;
         }
-        // If there's not enough space on the page, add a new one
+
         if (currentY + titleHeight + rowHeight * minRowsOnPage > pageHeight) {
           pdf.addPage();
           addHeader(pdf, false);
           currentY = marginTop;
         }
 
-        // Print the title
         pdf.setFontSize(16);
         pdf.setTextColor(0);
         pdf.setFillColor(255, 255, 255);
@@ -119,7 +140,6 @@ const ArticulosDetalles = () => {
         pdf.text(lineTitle, titleX, currentY);
         currentY += titleHeight + 5;
 
-        // Table configuration
         pdf.autoTable({
           startY: currentY,
           head: [["Código", "Artículo", "Sublínea", "Precio"]],
@@ -159,13 +179,13 @@ const ArticulosDetalles = () => {
           },
         });
 
-        // Update position for the next group
         currentY = pdf.lastAutoTable.finalY + 10;
       });
 
       pdf.save("articulos.pdf");
     }
   };
+
   const columns = [
     {
       name: "Código",
