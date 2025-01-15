@@ -110,17 +110,23 @@ const ArticulosDetalles = () => {
 
       Object.keys(groupedData).forEach((line) => {
         const lineTitle = `LÍNEA ${line}`;
-        const tableData = groupedData[line].map((row) => ({
-          codigo: row.codigo_producto,
-          nombre: row.articulo_nombre + " " + row.articulo_medicion,
-          sublinea: row.sublinea_nombre,
-          precio:
-            "$" +
-            parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }),
-        }));
+        const tableData = groupedData[line].map((row) => {
+          // Verifica si la medición es un guion y, en ese caso, lo omite
+          const medicion =
+            row.articulo_medicion === "-" ? "" : row.articulo_medicion;
+
+          return {
+            codigo: row.codigo_producto,
+            nombre: row.articulo_nombre + " " + medicion, // Usar medición solo si no es un guion
+            sublinea: row.sublinea_nombre,
+            precio:
+              "$" +
+              parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }),
+          };
+        });
 
         if (pdf.internal.getNumberOfPages() === 1 && currentY === marginTop) {
           currentY += 20;
@@ -228,7 +234,7 @@ const ArticulosDetalles = () => {
           type="primary"
           style={{ marginBottom: 10 }}
         >
-          Generar PDF
+          Generar Lista de Artículos
         </Button>
 
         {loading ? (
