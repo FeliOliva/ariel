@@ -39,6 +39,8 @@ export default function ArticulosInput({
     .filter((articulo) => articulo.estado === 1)
     .map((articulo) => ({
       label:
+        articulo.codigo_producto +
+        " - " +
         articulo.nombre +
         " - " +
         articulo.mediciones +
