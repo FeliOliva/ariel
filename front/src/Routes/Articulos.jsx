@@ -410,7 +410,9 @@ function Articulos() {
             description: "El artículo ha sido editado con éxito.",
             duration: 1,
           });
-
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
           // Refiltrar los datos después de la edición
           filterData(searchValue);
           setTimeout(() => {}, 1500);
