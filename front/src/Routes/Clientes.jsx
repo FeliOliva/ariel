@@ -25,10 +25,13 @@ import {
   DeleteOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const Clientes = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clientes, setClientes] = useState([]);
   const [openAddDrawer, setOpenAddDrawer] = useState(false);
   const [openEditDrawer, setOpenEditDrawer] = useState(false);
   const [currentCliente, setCurrentCliente] = useState(null);
@@ -55,11 +58,56 @@ const Clientes = () => {
     try {
       const response = await axios.get("http://localhost:3001/clientes");
       setData(response.data);
+      setClientes(response.data);
+      console.log("clientes", response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
       setLoading(false);
     }
+  };
+  const handleGeneratePDF = () => {
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    // Título
+    pdf.setFontSize(16); // Aumentar tamaño del título
+    pdf.text("Lista de Clientes", 105, 20, { align: "center" });
+
+    // Preparar los datos de la tabla
+    const tableData = clientes.map((cliente) => ({
+      farmacia: cliente.farmacia,
+      nombre: cliente.nombre,
+      zona: cliente.zona_nombre,
+      localidad: cliente.localidad,
+      direccion: cliente.direccion,
+    }));
+
+    pdf.autoTable({
+      startY: 30,
+      head: [["Farmacia", "Nombre", "Zona", "Localidad", "Dirección"]],
+      body: tableData.map((cliente) => [
+        cliente.farmacia,
+        cliente.nombre,
+        cliente.zona,
+        cliente.localidad,
+        cliente.direccion,
+      ]),
+      theme: "grid",
+      styles: {
+        fontSize: 10, // Aumentar tamaño de la fuente
+        cellPadding: 3, // Incrementar ligeramente el espacio dentro de las celdas
+      },
+      columnStyles: {
+        0: { cellWidth: 30 }, // Farmacia
+        1: { cellWidth: 30 }, // Nombre
+        2: { cellWidth: 50 }, // Zona
+        3: { cellWidth: 25 }, // Localidad
+        4: { cellWidth: 50 }, // Dirección
+      },
+    });
+
+    // Descargar el PDF con un nombre específico
+    pdf.save("Lista_de_Clientes.pdf");
   };
 
   const handleAddCliente = async () => {
@@ -410,6 +458,13 @@ const Clientes = () => {
         </Button>
         <Button onClick={handleGoToZonas} type="primary">
           Ver Zonas
+        </Button>
+        <Button
+          onClick={handleGeneratePDF}
+          type="primary"
+          style={{ marginBottom: 20 }}
+        >
+          Generar lista
         </Button>
       </div>
       <Drawer

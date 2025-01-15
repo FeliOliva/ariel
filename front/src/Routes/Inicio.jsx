@@ -30,18 +30,18 @@ const Inicio = () => {
     };
     fetchVentas();
   });
-  useEffect(() => {
-    const fetchEntregas = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/totalPagos");
-        console.log("entregas", response.data[0][0].totalPagos);
-        setTotalEntregas(response.data[0][0].totalPagos);
-      } catch (error) {
-        console.error("Error al obtener las ventas:", error);
-      }
-    };
-    fetchEntregas();
-  });
+  // useEffect(() => {
+  //   const fetchEntregas = async () => {
+  //     try {
+  //       const response = await axios.get("http://localhost:3001/totalPagos");
+  //       console.log("entregas", response.data[0][0].totalPagos);
+  //       setTotalEntregas(response.data[0][0].totalPagos);
+  //     } catch (error) {
+  //       console.error("Error al obtener las pagos:", error);
+  //     }
+  //   };
+  //   fetchEntregas();
+  // });
   useEffect(() => {
     const fetchGastos = async () => {
       try {
@@ -49,7 +49,7 @@ const Inicio = () => {
         console.log("gastos", response.data[0][0].total);
         setTotalGastos(response.data[0][0].total);
       } catch (error) {
-        console.error("Error al obtener las ventas:", error);
+        console.error("Error al obtener el total de gastos:", error);
       }
     };
     fetchGastos();
@@ -61,7 +61,7 @@ const Inicio = () => {
         console.log("compras", response.data[0][0].total_importe);
         setTotalCompras(response.data[0][0].total_importe);
       } catch (error) {
-        console.error("Error al obtener las ventas:", error);
+        console.error("Error al obtener las el total de compras:", error);
       }
     };
     fetchCompras();
@@ -72,7 +72,7 @@ const Inicio = () => {
         const response = await axios.get("http://localhost:3001/totalClientes");
         setTotalClientes(response.data[0][0].total);
       } catch (error) {
-        console.error("Error al obtener las ventas:", error);
+        console.error("Error al obtener el total de clientes:", error);
       }
     };
     fetchClientes();

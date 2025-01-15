@@ -68,7 +68,7 @@ const getCompraByID = async (req, res) => {
         detalles: detalleCompra.map((detalle) => ({
           articulo_id: detalle.articulo_id,
           detalle_compra_id: detalle.detalle_compra_id,
-          nombre: detalle.nombre_articulo,
+          nombre: detalle.nombre_articulo + " " + detalle.medicion_articulo + " " + detalle.linea_articulo + " " + detalle.sublinea_articulo,
           costo: detalle.costo,
           precio_monotributista: detalle.precio_monotributista,
           cantidad: detalle.cantidad,

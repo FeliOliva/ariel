@@ -16,10 +16,13 @@ ORDER BY Compra.id DESC;
   addCompra: `INSERT INTO Compra (proveedor_id, nro_compra, total) VALUES (?, ?, ?);`,
   getCompraByID: `
   SELECT 
-	dc.id AS detalle_compra_id,
+    dc.id AS detalle_compra_id,
     dc.compra_id, 
     dc.articulo_id, 
-    a.nombre AS nombre_articulo, 
+    a.nombre AS nombre_articulo,
+    l.nombre AS linea_articulo, -- Nombre de la línea
+    sl.nombre AS sublinea_articulo, -- Nombre de la sublínea
+    a.mediciones AS medicion_articulo,
     dc.costo, 
     dc.precio_monotributista,
     dc.cantidad, 
@@ -28,11 +31,13 @@ ORDER BY Compra.id DESC;
     c.fecha_compra, 
     c.total, 
     p.nombre AS proveedor
-  FROM detalle_compra dc
-  INNER JOIN articulo a ON dc.articulo_id = a.id
-  INNER JOIN compra c ON dc.compra_id = c.id
-  INNER JOIN proveedor p ON c.proveedor_id = p.id
-  WHERE dc.compra_id = ?;
+FROM detalle_compra dc
+INNER JOIN articulo a ON dc.articulo_id = a.id
+LEFT JOIN linea l ON a.linea_id = l.id -- Unir con la tabla de líneas
+LEFT JOIN sublinea sl ON a.sublinea_id = sl.id -- Cambié 'a.sublinea' a 'a.sublinea_id' (verifica que el nombre sea correcto)
+INNER JOIN compra c ON dc.compra_id = c.id
+INNER JOIN proveedor p ON c.proveedor_id = p.id
+WHERE dc.compra_id = ?;
 `,
   getComprasByProveedor: `SELECT c.*, d.articulo_id, a.nombre AS articulo_nombre, d.cantidad, d.costo
 FROM Compra c
