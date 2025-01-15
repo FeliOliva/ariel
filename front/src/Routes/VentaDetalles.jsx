@@ -165,14 +165,13 @@ const VentaDetalles = () => {
     pdf.text(
       `Descuento (${ventaInfo.descuento}%): $${descuentoMonto}`,
       10,
-      finalY + 8
+      finalY + 5 // Reducir espacio entre esta línea y la anterior
     );
     pdf.text(
       `Total con Descuento: $${Math.round(ventaInfo.total_con_descuento)}`,
       10,
-      finalY + 16
+      finalY + 10 // Reducir espacio entre esta línea y la anterior
     );
-
     // Guardar PDF
     pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
   };
