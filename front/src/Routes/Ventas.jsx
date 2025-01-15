@@ -37,7 +37,9 @@ function Ventas() {
     articulos: [],
     cliente: null,
     nroVenta: "",
+    descuento: 0,
   });
+  const [totalVenta, setTotalVenta] = useState(0); // Estado para el total de la venta
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState(""); // Estado para el valor del input del artículo
@@ -81,6 +83,19 @@ function Ventas() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const calculateTotal = () => {
+    const subtotal = venta.articulos.reduce(
+      (sum, articulo) => sum + articulo.price * articulo.quantity,
+      0
+    );
+    const descuento = venta.descuento ? subtotal * (venta.descuento / 100) : 0;
+    return subtotal - descuento;
+  };
+
+  useEffect(() => {
+    setTotalVenta(calculateTotal());
+  }, [venta.articulos, venta.descuento]); // Actualiza el total cuando cambian los artículos o el descuento.
 
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
@@ -525,7 +540,6 @@ function Ventas() {
         closable={true}
         maskClosable={false}
         onClose={() => setOpen(false)}
-        footer={"Zona de ventas"}
         width={700}
       >
         <div style={{ display: "flex", margin: 10 }}>
@@ -598,6 +612,9 @@ function Ventas() {
           }
           style={{ marginBottom: 10, display: "flex", marginTop: 10 }}
         />
+        <div style={{ marginTop: 20, textAlign: "right", fontSize: "20px" }}>
+          <h3> Total: ${totalVenta.toLocaleString("es-ES")}</h3>
+        </div>
         <Button onClick={handleAddVenta} type="primary">
           Registrar Venta
         </Button>

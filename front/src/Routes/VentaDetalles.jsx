@@ -76,7 +76,7 @@ const VentaDetalles = () => {
             fecha,
             zona_nombre,
             total_importe,
-            descuento,
+            descuento: parseFloat(descuento),
             total_con_descuento,
             direccion,
             nombre_tipo_cliente,
