@@ -142,8 +142,10 @@ const VentaDetalles = () => {
       styles: {
         fontSize: 8,
         cellPadding: 2,
+        fontStyle: "bold",
       },
       columnStyles: {
+        1: { fontStyle: "bold" },
         0: { cellWidth: 30 },
         1: { cellWidth: 90 },
         2: { cellWidth: 35, halign: "right" },

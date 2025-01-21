@@ -35,7 +35,7 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
   const options = clientes
     .filter((cliente) => cliente.estado === 1)
     .map((cliente) => ({
-      label: cliente.nombre + " " + cliente.apellido,
+      label: cliente.farmacia + " - " + cliente.nombre + " " + cliente.apellido,
       value: cliente.id,
     }));
 
