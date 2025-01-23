@@ -130,9 +130,7 @@ const VentaDetalles = () => {
 
     pdf.autoTable({
       startY: 65,
-      head: [
-        ["Cantidad", "Descripción", "Código", "Precio Unitario", "Importe"],
-      ],
+      head: [["Cant", "Descripción", "Código", "Precio Unitario", "Importe"]],
       body: tableData.map((row) => [
         row.cantidad,
         row.nombre,
@@ -146,11 +144,11 @@ const VentaDetalles = () => {
         cellPadding: 2,
       },
       columnStyles: {
-        0: { cellWidth: 25 }, // Cantidad alineada a la derecha
+        0: { cellWidth: 10 }, // Cantidad alineada a la derecha
         1: { cellWidth: 70 }, // Descripción
         2: { cellWidth: 30 }, // Código
-        3: { cellWidth: 35, halign: "right" }, // Precio Unitario
-        4: { cellWidth: 35, halign: "right" }, // Importe
+        3: { cellWidth: 35 }, // Precio Unitario
+        4: { cellWidth: 35 }, // Importe
       },
     });
 
