@@ -61,12 +61,25 @@ FROM venta v
 JOIN cliente c ON v.cliente_id = c.id
 JOIN zona z ON v.zona_id = z.id
 WHERE v.cliente_id = ?;`,
-  getVentasByZona: `SELECT v.ID, p.nombre AS nombre_producto, c.nombre AS nombre_cliente, z.zona AS nombre_zona, v.cantidad AS cantidad, v.estado AS estado
-  FROM Ventas v
-  JOIN Producto p ON v.producto_id = p.ID
-  JOIN Cliente c ON v.cliente_id = c.ID
-  JOIN Zona z ON v.zona_id = z.ID
-  WHERE z.ID = ?;`,
+  getVentasByZona: `SELECT 
+    c.id AS cliente_id,
+    c.nombre AS cliente_nombre,
+    c.apellido AS cliente_apellido,
+    c.farmacia AS cliente_farmacia,
+    c.zona_id AS cliente_zona,
+    SUM(v.total_con_descuento) AS total_ventas
+FROM 
+    venta v
+JOIN 
+    cliente c ON v.cliente_id = c.id
+WHERE 
+    c.zona_id = ?
+    AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?)
+GROUP BY 
+    c.id, c.nombre, c.apellido, c.zona_id
+ORDER BY 
+    total_ventas DESC;
+`,
   getVentasByProducto: `SELECT v.ID, p.nombre AS nombre_producto, c.nombre AS nombre_cliente, z.zona AS nombre_zona, v.cantidad AS cantidad, v.estado AS estado
   FROM Ventas v
   JOIN Producto p ON v.producto_id = p.ID

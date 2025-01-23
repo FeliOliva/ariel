@@ -40,9 +40,19 @@ const updatePago = async (monto, metodo_pago, ID) => {
     }
 };
 
+const getPagosByZona_id = async (zona_id, fecha_inicio, fecha_fin) => {
+    try {
+        const query = queriesPagos.getPagosByZona_id;
+        const [rows] = await db.query(query, [zona_id, fecha_inicio, fecha_fin]);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+}
 module.exports = {
     getAllPagos,
     addPago,
     updatePago,
-    getPagosByClienteId
+    getPagosByClienteId,
+    getPagosByZona_id
 };

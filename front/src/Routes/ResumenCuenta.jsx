@@ -8,6 +8,9 @@ import { Tooltip } from "antd";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import isValid from "date-fns/isValid";
+import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const ResumenCuenta = () => {
   const [ventas, setVentas] = useState([]);
@@ -23,6 +26,73 @@ const ResumenCuenta = () => {
     totalPagos: 0,
     saldoPendiente: 0,
   });
+
+  const generatePDF = () => {
+    if (!selectedCliente) {
+      return message.warning("Por favor, seleccione un cliente.");
+    }
+    if (!rangoFechas || rangoFechas.length !== 2) {
+      return message.warning("Por favor, seleccione un rango de fechas.");
+    }
+
+    const doc = new jsPDF();
+
+    // Título del documento
+    doc.setFontSize(18);
+    doc.text("Resumen de Cuenta", 10, 10);
+
+    // Información del cliente
+    doc.setFontSize(12);
+    doc.text(
+      `Cliente: ${selectedCliente.nombre} ${selectedCliente.apellido}`,
+      10,
+      20
+    );
+    doc.text(`Rango de Fechas: ${rangoFechas[0]} - ${rangoFechas[1]}`, 10, 30);
+
+    // Tabla de Ventas
+    doc.text("Ventas", 10, 40);
+    const ventasTable = ventas.map((venta) => [
+      format(new Date(venta.fecha_venta), "dd/MM/yyyy"),
+      venta.nroVenta,
+      `$${venta.total_con_descuento_formateado}`,
+    ]);
+    doc.autoTable({
+      head: [["Fecha", "Nro. Venta", "Total"]],
+      body: ventasTable,
+      startY: 45,
+    });
+
+    // Tabla de Pagos
+    const pagosY = doc.lastAutoTable.finalY + 10;
+    doc.text("Pagos", 10, pagosY);
+    const pagosTable = pagos.map((pago) => [
+      format(new Date(pago.fecha_pago), "dd/MM/yyyy"),
+      pago.nro_pago,
+      `$${pago.monto}`,
+      pago.metodo_pago,
+    ]);
+    doc.autoTable({
+      head: [["Fecha", "Nro. Pago", "Monto", "Método de Pago"]],
+      body: pagosTable,
+      startY: pagosY + 5,
+    });
+
+    // Totales
+    const totalesY = doc.lastAutoTable.finalY + 10;
+    doc.text("Totales", 10, totalesY);
+    doc.text(`Total Ventas: $${totales.totalVentas}`, 10, totalesY + 10);
+    doc.text(`Total Pagos: $${totales.totalPagos}`, 10, totalesY + 20);
+    doc.text(`Saldo Pendiente: $${totales.saldoPendiente}`, 10, totalesY + 30);
+
+    // Guardar PDF
+    doc.save(`ResumenCuenta_${selectedCliente.nombre}.pdf`);
+  };
+  const navigate = useNavigate();
+
+  const goToResumenCuentaXZona = () => {
+    navigate("/ResumenCuentaXZona");
+  };
 
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
@@ -121,8 +191,8 @@ const ResumenCuenta = () => {
 
   const formatNumber = (value) => {
     return new Intl.NumberFormat("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -221,15 +291,72 @@ const ResumenCuenta = () => {
           <Button type="primary" onClick={handleSearch}>
             Buscar
           </Button>
+          <Button onClick={goToResumenCuentaXZona} type="primary">
+            Resumen de cuenta por zona
+          </Button>
         </div>
         {showTables && (
           <>
-            <h2>
-              Cliente: {selectedCliente?.nombre} {selectedCliente?.apellido}
-            </h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+                padding: "10px",
+                borderRadius: "5px",
+              }}
+            >
+              <h2>
+                Cliente: {selectedCliente?.nombre} {selectedCliente?.apellido}
+              </h2>
+              <Button
+                onClick={() => setDrawerVisible(true)}
+                style={{
+                  margin: "20px 0",
+                  backgroundColor: "green",
+                  color: "white",
+                }}
+              >
+                Agregar Pago
+              </Button>
+              <Button
+                onClick={generatePDF}
+                type="primary"
+                style={{ marginLeft: "10px" }}
+              >
+                Descargar Resumen
+              </Button>
+            </div>
+            <div style={{ marginBottom: "20px" }}>
+              <DataTable title="Ventas" columns={columns} data={ventas} />
+            </div>
+            <div style={{ marginBottom: "20px" }}>
+              <DataTable title="Pagos" columns={columns2} data={pagos} />
+            </div>
+            <AgregarPagoDrawer
+              visible={drawerVisible}
+              onClose={() => setDrawerVisible(false)}
+              clienteId={selectedCliente.id}
+              nextNroPago={nextNroPago}
+              onPagoAdded={(nuevoPago) => {
+                console.log("Nuevo Pago:", nuevoPago);
+
+                // Volver a cargar los datos
+                if (
+                  selectedCliente &&
+                  selectedCliente.id &&
+                  rangoFechas.length === 2
+                ) {
+                  fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
+                }
+
+                // Cerrar el drawer
+                setDrawerVisible(false);
+              }}
+            />
             <Row gutter={16}>
               <Col span={8}>
-                <Card>
+                <Card style={{ backgroundColor: "#F8D7DA" }}>
                   <Statistic
                     title="Total Ventas"
                     value={totales.totalVentas}
@@ -238,7 +365,7 @@ const ResumenCuenta = () => {
                 </Card>
               </Col>
               <Col span={8}>
-                <Card>
+                <Card style={{ backgroundColor: "#D4EDDA " }}>
                   <Statistic
                     title="Total Pagos"
                     value={totales.totalPagos}
@@ -259,37 +386,6 @@ const ResumenCuenta = () => {
                 </Card>
               </Col>
             </Row>
-            <Button
-              type="primary"
-              onClick={() => setDrawerVisible(true)}
-              style={{ margin: "20px 0" }}
-            >
-              Agregar Pago
-            </Button>
-            <DataTable title="Ventas" columns={columns} data={ventas} />
-            <DataTable title="Pagos" columns={columns2} data={pagos} />
-            <AgregarPagoDrawer
-              visible={drawerVisible}
-              onClose={() => setDrawerVisible(false)}
-              clienteId={selectedCliente.id}
-              nextNroPago={nextNroPago}
-              onPagoAdded={(nuevoPago) => {
-                console.log("Nuevo Pago:", nuevoPago);
-                message.success("Pago agregado exitosamente");
-
-                // Volver a cargar los datos
-                if (
-                  selectedCliente &&
-                  selectedCliente.id &&
-                  rangoFechas.length === 2
-                ) {
-                  fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
-                }
-
-                // Cerrar el drawer
-                setDrawerVisible(false);
-              }}
-            />
           </>
         )}
       </div>

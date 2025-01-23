@@ -120,10 +120,10 @@ const getVentasByClientes = async (cliente_id) => {
   }
 };
 
-const getVentasByZona = async (zona_id) => {
+const getVentasByZona = async (zona_id, fecha_inicio, fecha_fin) => {
   try {
     const query = queriesVentas.getVentasByZona;
-    const [rows] = await db.query(query, [zona_id]);
+    const [rows] = await db.query(query, [zona_id, fecha_inicio, fecha_fin]);
     return rows;
   } catch (err) {
     throw err;

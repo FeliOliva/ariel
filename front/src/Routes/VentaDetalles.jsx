@@ -10,6 +10,7 @@ import {
   InputNumber,
   notification,
   Modal,
+  message,
 } from "antd";
 import {
   customHeaderStyles,
@@ -17,11 +18,7 @@ import {
 } from "../style/dataTableStyles";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import {
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  ExclamationCircleOutlined,
-} from "@ant-design/icons";
+import { EditOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 
 const VentaDetalles = () => {
   const { id } = useParams();
@@ -39,9 +36,10 @@ const VentaDetalles = () => {
     descuento: "",
     farmacia: "",
   });
-  const [openUp, setOpenUp] = useState(false);
-  const [openDown, setOpenDown] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState(false);
   const [detalleVenta, setDetalleVenta] = useState({});
+  const [precio, setPrecio] = useState(0);
+  const [cantidad, setCantidad] = useState(0);
   const { confirm } = Modal;
 
   useEffect(() => {
@@ -66,7 +64,7 @@ const VentaDetalles = () => {
           farmacia,
           localidad,
         } = response.data;
-
+        console.log("venta id", response.data.venta_id);
         if (Array.isArray(detalles)) {
           setData(detalles);
           setVentaInfo({
@@ -121,20 +119,24 @@ const VentaDetalles = () => {
     // Línea divisoria
     pdf.line(10, 60, 200, 60);
 
-    // Tabla de detalles
+    // Tabla de detalles con alineación derecha para la cantidad
     const tableData = data.map((row) => ({
       cantidad: row.cantidad,
-      descripcion: row.nombre,
+      nombre: row.nombre,
+      cod_articulo: row.cod_articulo,
       precio_unitario: `$${Math.round(row.precio_monotributista)}`,
       importe: `$${Math.round(row.sub_total)}`,
     }));
 
     pdf.autoTable({
       startY: 65,
-      head: [["Cantidad", "Descripción", "Precio Unitario", "Importe"]],
+      head: [
+        ["Cantidad", "Descripción", "Código", "Precio Unitario", "Importe"],
+      ],
       body: tableData.map((row) => [
         row.cantidad,
-        row.descripcion,
+        row.nombre,
+        row.cod_articulo,
         row.precio_unitario,
         row.importe,
       ]),
@@ -142,14 +144,13 @@ const VentaDetalles = () => {
       styles: {
         fontSize: 8,
         cellPadding: 2,
-        fontStyle: "bold",
       },
       columnStyles: {
-        1: { fontStyle: "bold" },
-        0: { cellWidth: 30 },
-        1: { cellWidth: 90 },
-        2: { cellWidth: 35, halign: "right" },
-        3: { cellWidth: 35, halign: "right" },
+        0: { cellWidth: 25 }, // Cantidad alineada a la derecha
+        1: { cellWidth: 70 }, // Descripción
+        2: { cellWidth: 30 }, // Código
+        3: { cellWidth: 35, halign: "right" }, // Precio Unitario
+        4: { cellWidth: 35, halign: "right" }, // Importe
       },
     });
 
@@ -160,45 +161,79 @@ const VentaDetalles = () => {
 
     // Totales alineados a la izquierda
     const finalY = pdf.lastAutoTable.finalY + 10;
-    pdf.setFontSize(10); // Reducir tamaño de fuente
+    pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
 
     pdf.text(`Total: $${Math.round(ventaInfo.total_importe)}`, 10, finalY);
     pdf.text(
       `Descuento (${ventaInfo.descuento}%): $${descuentoMonto}`,
       10,
-      finalY + 5 // Reducir espacio entre esta línea y la anterior
+      finalY + 5
     );
     pdf.text(
       `Total con Descuento: $${Math.round(ventaInfo.total_con_descuento)}`,
       10,
-      finalY + 10 // Reducir espacio entre esta línea y la anterior
+      finalY + 10
     );
+
     // Guardar PDF
     pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
   };
 
-  const handleUpPrice = async (id) => {
-    const response = await axios.get(
-      `http://localhost:3001/detalleVenta/${id}`
-    );
-    setDetalleVenta({
-      id: response.data.id,
-      precio_monotributista: response.data.precio_monotributista,
-      cantidad: response.data.cantidad,
-    });
-    setOpenUp(true);
+  const handleEditPrice = async (detalleId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/detalleVenta/${detalleId}`
+      );
+      setDetalleVenta(response.data);
+      setPrecio(response.data.precio_monotributista);
+      setCantidad(response.data.cantidad);
+      setOpenDrawer(true);
+    } catch (error) {
+      console.error("Error fetching detalle de venta:", error);
+    }
   };
-  const handleDownPrice = async (id) => {
-    const response = await axios.get(
-      `http://localhost:3001/detalleVenta/${id}`
-    );
-    setDetalleVenta({
-      id: response.data.id,
-      precio_monotributista: response.data.precio_monotributista,
-      cantidad: response.data.cantidad,
+
+  const updatePrice = async () => {
+    confirm({
+      title: "Confirmar cambio de precio",
+      icon: <ExclamationCircleOutlined />,
+      content: "¿Está seguro de realizar este cambio?",
+      okText: "Sí",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          const payload = {
+            ID: detalleVenta.id,
+            new_precio_monotributista: precio,
+            cantidad,
+            venta_id: ventaInfo.venta_id,
+          };
+          console.log("payload", payload);
+          const response = await axios.put(
+            "http://localhost:3001/updateDetalleVenta",
+            payload
+          );
+
+          if (response.status === 200) {
+            message.success("Detalle actualizado correctamente");
+            setOpenDrawer(false);
+            setData((prevData) =>
+              prevData.map((item) =>
+                item.id === detalleVenta.id
+                  ? { ...item, precio_monotributista: precio, cantidad }
+                  : item
+              )
+            );
+          } else {
+            message.error("Error al actualizar el detalle");
+          }
+        } catch (error) {
+          console.error("Error al actualizar el detalle de venta:", error);
+          message.error("Error al actualizar el detalle de venta");
+        }
+      },
     });
-    setOpenDown(true);
   };
 
   const columns = [
@@ -242,23 +277,16 @@ const VentaDetalles = () => {
         </div>
       ),
     },
-    {
-      name: "Acciones",
-      cell: (row) => (
-        <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-          <Button
-            className="custom-button"
-            onClick={() => handleUpPrice(row.detalle_venta_id)}
-            icon={<ArrowUpOutlined />}
-          ></Button>
-          <Button
-            className="custom-button"
-            onClick={() => handleDownPrice(row.detalle_venta_id)}
-            icon={<ArrowDownOutlined />}
-          ></Button>
-        </div>
-      ),
-    },
+    // {
+    //   name: "Acciones",
+    //   cell: (row) => (
+    //     <Button
+    //       type="primary"
+    //       icon={<EditOutlined />}
+    //       onClick={() => handleEditPrice(row.detalle_venta_id)}
+    //     ></Button>
+    //   ),
+    // },
   ];
   return (
     <MenuLayout>
@@ -271,7 +299,7 @@ const VentaDetalles = () => {
         type="primary"
         style={{ marginLeft: 10 }}
       >
-        Generar PDF
+        Generar Factura
       </Button>
       {loading ? (
         <p>Cargando...</p>
@@ -286,6 +314,34 @@ const VentaDetalles = () => {
           }}
         />
       )}
+      <Drawer
+        title="Modificar Precio y Cantidad"
+        placement="right"
+        onClose={() => setOpenDrawer(false)}
+        open={openDrawer}
+      >
+        <div style={{ marginBottom: "16px" }}>
+          <label>Precio:</label>
+          <InputNumber
+            style={{ width: "100%" }}
+            min={0}
+            value={precio}
+            onChange={(value) => setPrecio(value)}
+          />
+        </div>
+        <div style={{ marginBottom: "16px" }}>
+          <label>Cantidad:</label>
+          <InputNumber
+            style={{ width: "100%" }}
+            min={0}
+            value={cantidad}
+            onChange={(value) => setCantidad(value)}
+          />
+        </div>
+        <Button type="primary" block onClick={updatePrice}>
+          Confirmar
+        </Button>
+      </Drawer>
     </MenuLayout>
   );
 };

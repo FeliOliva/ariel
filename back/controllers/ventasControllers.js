@@ -124,8 +124,34 @@ const updateVentas = async (req, res) => {
 
 const getVentasByZona = async (req, res) => {
   try {
-    const zona_id = req.params.ID;
-    const ventas = await ventasModel.getVentasByZona(zona_id);
+    const { ID: zona_id } = req.params;
+    const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
+    console.log("ID desde el back:", zona_id);
+
+    // Validar los parámetros requeridos
+    if (!zona_id) {
+      return res.status(400).json({ error: "ID de zona no proporcionado" });
+    }
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res
+        .status(400)
+        .json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+    }
+    // Llamar al modelo con los parámetros
+    const ventas = await ventasModel.getVentasByZona(
+      zona_id,
+      fecha_inicio,
+      fecha_fin
+    );
+
+    console.log("Ventas obtenidas:", ventas);
+
+    // Manejar el caso de que no existan ventas
+    if (!ventas || ventas.length === 0) {
+      return res.json([]); // Devuelve un array vacío
+    }
+
     res.json(ventas);
   } catch (error) {
     console.error("Error al obtener las ventas por zona:", error);
@@ -186,6 +212,7 @@ const getVentaByID = async (req, res) => {
             " " +
             detalle.nombre_sublinea,
           cantidad: detalle.cantidad,
+          cod_articulo: detalle.cod_articulo,
           precio_monotributista: detalle.precio_monotributista,
           sub_total: detalle.sub_total,
           detalle_venta_id: detalle.id_dv,

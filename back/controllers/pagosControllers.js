@@ -80,5 +80,43 @@ const updatePago = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+const getPagosByZona_id = async (req, res) => {
+    try {
+        const { ID: zona_id } = req.params;
+        const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
 
-module.exports = { getAllPagos, addPago, updatePago, getPagosByClienteId };
+        console.log("ID desde el back:", zona_id);
+
+        // Validar los parámetros requeridos
+        if (!zona_id) {
+            return res.status(400).json({ error: "ID de zona no proporcionado" });
+        }
+
+        if (!fecha_inicio || !fecha_fin) {
+            return res
+                .status(400)
+                .json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+        }
+
+        // Llamar al modelo con los parámetros
+        const pagos = await pagosModel.getPagosByZona_id(
+            zona_id,
+            fecha_inicio,
+            fecha_fin
+        );
+
+        console.log("Pagos obtenidos:", pagos);
+
+        // Manejar el caso de que no existan pagos
+        if (!pagos || pagos.length === 0) {
+            return res.json([]); // Devuelve un array vacío
+        }
+
+        res.json(pagos);
+    } catch (error) {
+        console.error("Error al obtener pagos:", error);
+        res.status(500).json({ error: "Error interno del servidor al obtener pagos" });
+    }
+}
+
+module.exports = { getAllPagos, addPago, updatePago, getPagosByClienteId, getPagosByZona_id };

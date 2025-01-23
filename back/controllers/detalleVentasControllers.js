@@ -14,6 +14,8 @@ const getDetalleVentaById = async (req, res) => {
 const updateDetalleVenta = async (req, res) => {
   try {
     const { ID, new_precio_monotributista, cantidad, venta_id } = req.body;
+    console.log("data al back en dv",req.body);
+    console.log("holaaa")
     const sub_total = new_precio_monotributista * cantidad;
     // Actualizamos el precio del detalle
     await detalleVentaModel.updateDetalleVenta(
