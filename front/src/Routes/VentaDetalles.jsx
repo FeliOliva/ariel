@@ -236,6 +236,16 @@ const VentaDetalles = () => {
 
   const columns = [
     {
+      name: "Unidades",
+      selector: (row) => row.cantidad,
+      sortable: true,
+      cell: (row) => (
+        <div style={{ fontSize: "12px", padding: "5px", textAlign: "center" }}>
+          {row.cantidad}
+        </div>
+      ),
+    },
+    {
       name: "Descripción",
       selector: (row) => row.nombre,
       sortable: true,
@@ -246,12 +256,12 @@ const VentaDetalles = () => {
       ),
     },
     {
-      name: "Unidades",
-      selector: (row) => row.cantidad,
+      name: "Codigo",
+      selector: (row) => row.cod_articulo,
       sortable: true,
       cell: (row) => (
         <div style={{ fontSize: "12px", padding: "5px", textAlign: "center" }}>
-          {row.cantidad}
+          {row.cod_articulo}
         </div>
       ),
     },
