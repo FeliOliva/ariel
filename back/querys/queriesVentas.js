@@ -96,14 +96,14 @@ ORDER BY
   dv.venta_id, 
   v.nroVenta,  -- Número de venta
   v.id AS id_venta,
-    v.total AS total_venta,
-	v.descuento AS descuento,
-  v.total_con_descuento AS total_con_descuento,  
-  dv.costo, 
-  dv.cantidad, 
-  dv.precio_monotributista, 
+  REPLACE(FORMAT(ROUND(v.total, 0), 0), ',', '.') AS total_venta, -- Total de la venta formateado
+  ROUND(v.descuento, 0) AS descuento, -- Porcentaje de descuento redondeado sin decimales
+  REPLACE(FORMAT(ROUND(v.total_con_descuento, 0), 0), ',', '.') AS total_con_descuento, -- Total con descuento formateado
+  REPLACE(FORMAT(ROUND(dv.costo, 0), 0), ',', '.') AS costo, -- Costo redondeado y formateado
+  dv.cantidad AS cantidad, -- Cantidad sin modificar
+  REPLACE(FORMAT(ROUND(dv.precio_monotributista, 0), 0), ',', '.') AS precio_monotributista, -- Precio redondeado y formateado
   dv.fecha, 
-  dv.sub_total,
+  REPLACE(FORMAT(ROUND(dv.sub_total, 0), 0), ',', '.') AS sub_total, -- Subtotal redondeado y formateado
   CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente_completo, -- Nombre completo del cliente
   c.direccion, -- Dirección del cliente
   c.cuil, -- CUIL del cliente

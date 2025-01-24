@@ -40,7 +40,7 @@ const getTotalCompras = async () => {
 const getTotalPagos = async () => {
   const query = `
     SELECT SUM(monto) AS totalPagos
-    FROM log_pago
+    FROM pagos
   `;
   const result = await db.query(query);
   return result;

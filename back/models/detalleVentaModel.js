@@ -10,10 +10,10 @@ const getDetalleVentaById = async (ID) => {
     throw err;
   }
 };
-const updateDetalleVenta = async (ID, new_precio_monotributista, sub_total) => {
+const updateDetalleVenta = async (ID, new_precio_monotributista, cantidad, sub_total) => {
   try {
     const query = queriesDetalleVenta.updateDetalleVenta;
-    await db.query(query, [new_precio_monotributista, sub_total, ID]);
+    await db.query(query, [new_precio_monotributista, cantidad, sub_total, ID]);
   } catch (err) {
     throw err;
   }

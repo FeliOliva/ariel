@@ -30,18 +30,18 @@ const Inicio = () => {
     };
     fetchVentas();
   });
-  // useEffect(() => {
-  //   const fetchEntregas = async () => {
-  //     try {
-  //       const response = await axios.get("http://localhost:3001/totalPagos");
-  //       console.log("entregas", response.data[0][0].totalPagos);
-  //       setTotalEntregas(response.data[0][0].totalPagos);
-  //     } catch (error) {
-  //       console.error("Error al obtener las pagos:", error);
-  //     }
-  //   };
-  //   fetchEntregas();
-  // });
+  useEffect(() => {
+    const fetchEntregas = async () => {
+      try {
+        const response = await axios.get("http://localhost:3001/totalPagos");
+        console.log("entregas", response.data[0][0].totalPagos);
+        setTotalEntregas(response.data[0][0].totalPagos);
+      } catch (error) {
+        console.error("Error al obtener las pagos:", error);
+      }
+    };
+    fetchEntregas();
+  });
   useEffect(() => {
     const fetchGastos = async () => {
       try {

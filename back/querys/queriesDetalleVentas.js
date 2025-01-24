@@ -5,6 +5,7 @@ module.exports = {
   updateDetalleVenta: `
     UPDATE detalle_venta 
 SET precio_monotributista = ?, 
+ cantidad = ?,
     sub_total = ?
 WHERE ID = ?;
 

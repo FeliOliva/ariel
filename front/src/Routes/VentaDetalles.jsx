@@ -124,8 +124,8 @@ const VentaDetalles = () => {
       cantidad: row.cantidad,
       nombre: row.nombre,
       cod_articulo: row.cod_articulo,
-      precio_unitario: `$${Math.round(row.precio_monotributista)}`,
-      importe: `$${Math.round(row.sub_total)}`,
+      precio_unitario: `$${row.precio_monotributista}`,
+      importe: `$${row.sub_total}`,
     }));
 
     pdf.autoTable({
@@ -152,24 +152,28 @@ const VentaDetalles = () => {
       },
     });
 
-    // Calcular el monto del descuento (redondeado a entero)
-    const descuentoMonto = Math.round(
-      (ventaInfo.total_importe * ventaInfo.descuento) / 100
+    const totalImporte = parseFloat(
+      ventaInfo.total_importe.replace(".", "").replace(",", ".")
     );
-
+    const descuentoMonto = (totalImporte * ventaInfo.descuento) / 100;
+    const descuentoMontoRedondeado = Math.round(descuentoMonto);
+    const descuentoMontoFormateado = descuentoMontoRedondeado.toLocaleString(
+      "es-AR",
+      { minimumFractionDigits: 0 }
+    );
     // Totales alineados a la izquierda
     const finalY = pdf.lastAutoTable.finalY + 10;
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
 
-    pdf.text(`Total: $${Math.round(ventaInfo.total_importe)}`, 10, finalY);
+    pdf.text(`Total: $${ventaInfo.total_importe}`, 10, finalY);
     pdf.text(
-      `Descuento (${ventaInfo.descuento}%): $${descuentoMonto}`,
+      `Descuento (${ventaInfo.descuento}%): $${descuentoMontoFormateado}`,
       10,
       finalY + 5
     );
     pdf.text(
-      `Total con Descuento: $${Math.round(ventaInfo.total_con_descuento)}`,
+      `Total con Descuento: $${ventaInfo.total_con_descuento}`,
       10,
       finalY + 10
     );
@@ -212,19 +216,13 @@ const VentaDetalles = () => {
             "http://localhost:3001/updateDetalleVenta",
             payload
           );
-
           if (response.status === 200) {
             message.success("Detalle actualizado correctamente");
-            setOpenDrawer(false);
-            setData((prevData) =>
-              prevData.map((item) =>
-                item.id === detalleVenta.id
-                  ? { ...item, precio_monotributista: precio, cantidad }
-                  : item
-              )
-            );
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
           } else {
-            message.error("Error al actualizar el detalle");
+            message.error("Error al actualizar el detalle de venta");
           }
         } catch (error) {
           console.error("Error al actualizar el detalle de venta:", error);
@@ -271,7 +269,7 @@ const VentaDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
-          ${Math.round(row.precio_monotributista)}
+          ${row.precio_monotributista}
         </div>
       ),
     },
@@ -281,20 +279,20 @@ const VentaDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
-          ${Math.round(row.sub_total)}
+          ${row.sub_total}
         </div>
       ),
     },
-    // {
-    //   name: "Acciones",
-    //   cell: (row) => (
-    //     <Button
-    //       type="primary"
-    //       icon={<EditOutlined />}
-    //       onClick={() => handleEditPrice(row.detalle_venta_id)}
-    //     ></Button>
-    //   ),
-    // },
+    {
+      name: "Acciones",
+      cell: (row) => (
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          onClick={() => handleEditPrice(row.detalle_venta_id)}
+        ></Button>
+      ),
+    },
   ];
   return (
     <MenuLayout>
@@ -322,6 +320,38 @@ const VentaDetalles = () => {
           }}
         />
       )}
+      <div style={{ textAlign: "right", marginTop: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "8px",
+          }}
+        >
+          <strong style={{ marginRight: "8px" }}>Total:</strong>
+          <span>${ventaInfo.total_importe}</span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "8px",
+          }}
+        >
+          <strong style={{ marginRight: "8px" }}>Descuento:</strong>
+          <span>{ventaInfo.descuento}%</span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <strong style={{ marginRight: "8px" }}>Total con Descuento:</strong>
+          <span>${ventaInfo.total_con_descuento}</span>
+        </div>
+      </div>
+
       <Drawer
         title="Modificar Precio y Cantidad"
         placement="right"
