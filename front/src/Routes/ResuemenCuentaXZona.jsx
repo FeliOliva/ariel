@@ -78,8 +78,8 @@ export default function ResumenCuentaXZona() {
       key: "totalVentas",
       render: (text) =>
         `$${text.toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         })}`,
     },
     {
@@ -89,8 +89,8 @@ export default function ResumenCuentaXZona() {
       render: (text) =>
         typeof text === "number"
           ? `$${text.toLocaleString("es-ES", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
             })}`
           : text,
     },
@@ -100,8 +100,8 @@ export default function ResumenCuentaXZona() {
       key: "saldo",
       render: (text) =>
         `$${text.toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         })}`,
     },
   ];
@@ -163,6 +163,13 @@ export default function ResumenCuentaXZona() {
           </Button>
           <Button onClick={handlePrint} disabled={datos.length === 0}>
             Imprimir Lista
+          </Button>
+          <Button
+            onClick={() => window.history.back()}
+            type="primary"
+            style={{ marginLeft: "auto" }}
+          >
+            Volver
           </Button>
         </Space>
         <Table

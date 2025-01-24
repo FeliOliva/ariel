@@ -42,13 +42,14 @@ const ResumenCuenta = () => {
     doc.text("Resumen de Cuenta", 10, 10);
 
     // Información del cliente
-    doc.setFontSize(12);
+    doc.setFontSize(10);
+    doc.text(`Farmacia: ${selectedCliente.farmacia}`, 10, 20);
     doc.text(
       `Cliente: ${selectedCliente.nombre} ${selectedCliente.apellido}`,
       10,
-      20
+      26
     );
-    doc.text(`Rango de Fechas: ${rangoFechas[0]} - ${rangoFechas[1]}`, 10, 30);
+    doc.text(`Rango de Fechas: ${rangoFechas[0]} - ${rangoFechas[1]}`, 10, 32);
 
     // Tabla de Ventas
     doc.text("Ventas", 10, 40);
@@ -97,7 +98,6 @@ const ResumenCuenta = () => {
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
       const params = { fecha_inicio: fechaInicio, fecha_fin: fechaFin };
-      console.log("params", params);
 
       const [ventasResponse, pagosResponse] = await Promise.all([
         axios.get(`http://localhost:3001/ventasxclientexfecha/${clienteId}`, {
@@ -110,7 +110,6 @@ const ResumenCuenta = () => {
 
       const ventasData = ventasResponse.data || [];
       const pagosData = pagosResponse.data || [];
-
       setVentas(ventasData);
       setPagos(pagosData);
 
