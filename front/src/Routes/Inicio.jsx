@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Row, Col, Card, Select, Button, DatePicker } from "antd";
+import {
+  Layout,
+  Row,
+  Col,
+  Card,
+  Select,
+  Button,
+  DatePicker,
+  Tooltip,
+} from "antd";
 import { Column } from "@ant-design/charts";
 import MenuLayout from "../components/MenuLayout";
 import ChequesTable from "./ChequesTable";
@@ -22,8 +31,9 @@ const Inicio = () => {
     const fetchVentas = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalVentas");
-        console.log("ventas", response.data[0][0].total_importe);
-        setTotalIngresos(response.data[0][0].total_importe);
+        const formattedTotal = formatNumber(response.data[0].total);
+        console.log("ventas", formattedTotal);
+        setTotalIngresos(formattedTotal);
       } catch (error) {
         console.error("Error al obtener las ventas:", error);
       }
@@ -34,8 +44,9 @@ const Inicio = () => {
     const fetchEntregas = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalPagos");
-        console.log("entregas", response.data[0][0].totalPagos);
-        setTotalEntregas(response.data[0][0].totalPagos);
+        const formattedTotal = formatNumber(response.data[0].total);
+        console.log("entregas", formattedTotal);
+        setTotalEntregas(formattedTotal);
       } catch (error) {
         console.error("Error al obtener las pagos:", error);
       }
@@ -46,8 +57,9 @@ const Inicio = () => {
     const fetchGastos = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalGastos");
-        console.log("gastos", response.data[0][0].total);
-        setTotalGastos(response.data[0][0].total);
+        const formattedTotal = formatNumber(response.data[0].total);
+        console.log("gastos", formattedTotal);
+        setTotalGastos(formattedTotal);
       } catch (error) {
         console.error("Error al obtener el total de gastos:", error);
       }
@@ -58,8 +70,9 @@ const Inicio = () => {
     const fetchCompras = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalCompras");
-        console.log("compras", response.data[0][0].total_importe);
-        setTotalCompras(response.data[0][0].total_importe);
+        const formattedTotal = formatNumber(response.data[0].total);
+        console.log("compras", formattedTotal);
+        setTotalCompras(formattedTotal);
       } catch (error) {
         console.error("Error al obtener las el total de compras:", error);
       }
@@ -70,13 +83,21 @@ const Inicio = () => {
     const fetchClientes = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalClientes");
-        setTotalClientes(response.data[0][0].total);
+        setTotalClientes(response.data[0].total);
       } catch (error) {
         console.error("Error al obtener el total de clientes:", error);
       }
     };
     fetchClientes();
   });
+  const formatNumber = (num) => {
+    if (!num) return "0"; // Manejar valores nulos o indefinidos
+    return new Intl.NumberFormat("es-ES").format(num);
+  };
+  const parseToNumber = (value) => {
+    if (!value) return 0; // Si el valor es null, undefined o 0, retorna 0
+    return parseFloat(value.toString().replace(/\./g, "").replace(",", "."));
+  };
 
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [filtroTiempo, setFiltroTiempo] = useState("dia");
@@ -363,13 +384,21 @@ const Inicio = () => {
     yAxis: { title: { text: "Ventas" } },
     color: "#1979C9",
   };
-  const comprasxgastos = parseInt(totalGastos) + parseInt(totalCompras);
-  console.log("compras y gastos", comprasxgastos);
-  const totalEnLimpio = totalIngresos - comprasxgastos;
-  console.log("total en limpio", totalEnLimpio);
-  const TotalConEntrega = parseInt(totalIngresos) - parseInt(totalEntregas);
-  console.log("total con entregas", TotalConEntrega);
-  
+  const comprasxgastos = formatNumber(
+    parseToNumber(totalGastos) + parseToNumber(totalCompras)
+  );
+  console.log("compras y gastos", formatNumber(comprasxgastos));
+
+  const totalEnLimpio = formatNumber(
+    parseToNumber(totalIngresos) - parseToNumber(comprasxgastos)
+  );
+  console.log("total en limpio", formatNumber(totalEnLimpio));
+
+  const TotalConEntrega = formatNumber(
+    parseToNumber(totalIngresos) - parseToNumber(totalEntregas)
+  );
+  console.log("total con entregas", formatNumber(TotalConEntrega));
+
   return (
     <MenuLayout>
       <Header style={{ color: "#fff", textAlign: "center", fontSize: "1.5em" }}>
@@ -384,29 +413,39 @@ const Inicio = () => {
             </Card>
           </Col>
           <Col span={4}>
-            <Card title="Ingresos Totales" bordered={false}>
-              {`$${totalIngresos}`}
-            </Card>
+            <Tooltip title="Total de la suma de Ventas">
+              <Card title="Ingresos totales" bordered={false}>
+                {`$${totalIngresos}`}
+              </Card>
+            </Tooltip>
           </Col>
           <Col span={4}>
-            <Card title="Gastos Totales" bordered={false}>
-              {`$${comprasxgastos}`}
-            </Card>
+            <Tooltip title="Total de la suma de Compras y la suma de gastos">
+              <Card title="Gastos Totales" bordered={false}>
+                {`$${comprasxgastos}`}
+              </Card>
+            </Tooltip>
           </Col>
           <Col span={4}>
-            <Card title="Total en Limpio" bordered={false}>
-              {`$${totalEnLimpio}`}
-            </Card>
+            <Tooltip title="Diferencia entre las ventas y el total de gastos">
+              <Card title="Total en Limpio" bordered={false}>
+                {`$${totalEnLimpio}`}
+              </Card>
+            </Tooltip>
           </Col>
           <Col span={4}>
-            <Card title="Entregas" bordered={false}>
-              {totalEntregas}
-            </Card>
+            <Tooltip title="Total de las entregas realizadas por clientes">
+              <Card title="Entregas" bordered={false}>
+                {`$${totalEntregas}`}
+              </Card>
+            </Tooltip>
           </Col>
           <Col span={4}>
-            <Card title="Total con Entrega" bordered={false}>
-              {TotalConEntrega}
-            </Card>
+            <Tooltip title="Diferencia entre entregas de clientes y ventas">
+              <Card title="Total con Entrega" bordered={false}>
+                {`$${TotalConEntrega}`}
+              </Card>
+            </Tooltip>
           </Col>
         </Row>
 

@@ -230,7 +230,6 @@ function Ventas() {
           cancelText: "No",
           onOk: async () => {
             await axios.post("http://localhost:3001/addVenta", ventaData);
-            setVenta({ articulos: [], cliente: null, nroVenta: "" });
             setArticuloValue("");
             setClienteValue("");
             setCantidad(0);
@@ -240,7 +239,9 @@ function Ventas() {
               description: "Venta registrada con exito",
               duration: 2,
             });
-            fetchData();
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000); 
           },
         });
       } catch (error) {

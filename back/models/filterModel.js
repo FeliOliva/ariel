@@ -15,43 +15,43 @@ const getVentasByDay = async (startDate, endDate, clienteId) => {
 };
 const getTotalVentas = async () => {
   const query = `
-    SELECT SUM(total) AS total_importe
+    SELECT SUM(total) AS total
     FROM venta
   `;
-  const result = await db.query(query);
-  return result;
+  const [rows] = await db.query(query);
+  return rows;
 };
 const getTotalGastos = async () => {
   const query = `
     SELECT SUM(monto) AS total
     FROM gasto
   `;
-  const result = await db.query(query);
-  return result;
+  const [rows] = await db.query(query);
+  return rows;
 };
 const getTotalCompras = async () => {
   const query = `
-    SELECT SUM(total) AS total_importe
+    SELECT SUM(total) AS total
     FROM compra
   `;
-  const result = await db.query(query);
-  return result;
+  const [rows] = await db.query(query);
+  return rows;
 };
 const getTotalPagos = async () => {
   const query = `
-    SELECT SUM(monto) AS totalPagos
-    FROM pagos
-  `;
-  const result = await db.query(query);
-  return result;
+  SELECT SUM(monto) AS total
+  FROM pagos
+`;
+  const [rows] = await db.query(query);
+  return rows;
 };
 const getTotalClientes = async () => {
   const query = `
     SELECT COUNT(*) AS total
     FROM cliente
   `;
-  const result = await db.query(query);
-  return result;
+  const [rows] = await db.query(query);
+  return rows;
 };
 
 

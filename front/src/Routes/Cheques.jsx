@@ -7,12 +7,17 @@ import {
   customHeaderStyles,
 } from "../style/dataTableStyles";
 import dayjs from "dayjs";
-import { Button } from "antd";
+import {
+  DeleteOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
+import { Button, notification, Modal, Tooltip } from "antd";
 
 const Cheques = () => {
   const [cheques, setCheques] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const { confirm } = Modal;
   useEffect(() => {
     fetchData();
   }, []);
@@ -28,31 +33,122 @@ const Cheques = () => {
     }
   };
 
+  const handleToggleState = async (id, currentState) => {
+    console.log(currentState);
+    try {
+      if (currentState === 1) {
+        confirm({
+          title: "¿Estas seguro de dar de baja este cheque?",
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/dropCheque/${id}`);
+            notification.success({
+              message: "Cheque desactivado",
+              description: "El Cheque se desactivo correctamente",
+              duration: 2,
+              placement: "topRight",
+            });
+            fetchData();
+          },
+        });
+      } else {
+        confirm({
+          title: "¿Estas seguro de activar este Cliente?",
+          icon: <WarningOutlined />,
+          okText: "Sí",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/upCheque/${id}`);
+            notification.success({
+              message: "Cliente activado",
+              description: "El cliente se activo correctamente",
+              duration: 2,
+              placement: "topRight",
+            });
+            fetchData();
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
   const columns = [
     {
       name: "Fecha de emision",
-      selector: (row) => dayjs(row.fecha_emision).format("YYYY/MM/DD"),
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={dayjs(row.fecha_emision).format("YYYY/MM/DD")}
+        >
+          <span>{dayjs(row.fecha_emision).format("YYYY/MM/DD")}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
       name: "Fecha de cobro",
-      selector: (row) => dayjs(row.fecha_cobro).format("YYYY/MM/DD"),
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={dayjs(row.fecha_cobro).format("YYYY/MM/DD")}
+        >
+          <span>{dayjs(row.fecha_cobro).format("YYYY/MM/DD")}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
       name: "Importe",
-      selector: (row) => row.importe,
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.importe}
+        >
+          <span>{row.importe}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
       name: "Banco",
-      selector: (row) => row.banco,
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.banco}
+        >
+          <span>{row.banco}</span>
+        </Tooltip>
+      ),
       sortable: true,
     },
     {
       name: "Número",
-      selector: (row) => row.nro_cheque,
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nro_cheque}
+        >
+          <span>{row.nro_cheque}</span>
+        </Tooltip>
+      ),
       sortable: true,
+    },
+    {
+      name: "Dar de baja",
+      selector: (row) => (
+        <Button
+          className="custom-button"
+          onClick={() => handleToggleState(row.id, row.estado)}
+        >
+          {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+        </Button>
+      ),
     },
   ];
 

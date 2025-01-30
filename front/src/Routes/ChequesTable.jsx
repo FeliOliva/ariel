@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 const ChequesTable = () => {
   const [cheques, setCheques] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [estadoFiltro, setEstadoFiltro] = useState(1); // Estado inicial: activos (1)
 
   useEffect(() => {
     fetchData();
@@ -25,7 +26,9 @@ const ChequesTable = () => {
       setLoading(false);
     }
   };
-
+  const filteredCheques = cheques.filter(
+    (cheque) => cheque.estado === estadoFiltro
+  );
   const columns = [
     {
       name: "Fecha de emisión",
@@ -58,7 +61,7 @@ const ChequesTable = () => {
     <div>
       <DataTable
         columns={columns}
-        data={cheques}
+        data={filteredCheques}
         progressPending={loading}
         // customStyles={{
         //   headCells: {
