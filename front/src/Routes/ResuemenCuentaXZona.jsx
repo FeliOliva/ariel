@@ -122,6 +122,20 @@ export default function ResumenCuentaXZona() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
+    // Sumar totales de ventas y pagos
+    const totalVentasGlobal = datos.reduce(
+      (sum, d) => sum + (d.totalVentas || 0),
+      0
+    );
+    const totalPagosGlobal = datos.reduce(
+      (sum, d) => sum + (typeof d.totalPagos === "number" ? d.totalPagos : 0),
+      0
+    );
+
+    // Calcular saldo global
+    const saldoGlobal = totalVentasGlobal - totalPagosGlobal;
+
+    // Construcción de la tabla
     const tableData = datos.map((d) => [
       d.nombre,
       `$${d.totalVentas.toLocaleString("es-ES", {
@@ -145,6 +159,25 @@ export default function ResumenCuentaXZona() {
       head: [["Cliente", "Total Ventas", "Total Pagos", "Saldo Restante"]],
       body: tableData,
     });
+
+    // Agregar resumen de totales al final
+    const finalY = doc.lastAutoTable.finalY + 10; // Posición después de la tabla
+    doc.setFontSize(12);
+    doc.text(
+      `Total Ventas: $${totalVentasGlobal.toLocaleString("es-ES")}`,
+      14,
+      finalY
+    );
+    doc.text(
+      `Total Pagos: $${totalPagosGlobal.toLocaleString("es-ES")}`,
+      14,
+      finalY + 7
+    );
+    doc.text(
+      `Diferencia (Saldo Global): $${saldoGlobal.toLocaleString("es-ES")}`,
+      14,
+      finalY + 14
+    );
 
     doc.save("resumen_ventas_pagos.pdf");
   };

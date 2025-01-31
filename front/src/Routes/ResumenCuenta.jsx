@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Card, Statistic, Row, Col, Button, message, DatePicker } from "antd";
+import {
+  Card,
+  Statistic,
+  Row,
+  Col,
+  Button,
+  message,
+  DatePicker,
+  Drawer,
+  InputNumber,
+  Modal,
+  notification,
+} from "antd";
 import axios from "axios";
 import { format } from "date-fns";
 import ClienteInput from "../components/ClienteInput";
@@ -11,21 +23,91 @@ import isValid from "date-fns/isValid";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import ArticulosInput from "../components/ArticulosInput";
+import DynamicListNC from "../components/DynamicListNC";
+import {
+  ExclamationCircleOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 
 const ResumenCuenta = () => {
   const [ventas, setVentas] = useState([]);
   const [pagos, setPagos] = useState([]);
+  const [notasCredito, setNotasCredito] = useState([]);
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerNCVisible, setDrawerNCVisible] = useState(false);
   const [nextNroPago, setNextNroPago] = useState("00001");
   const [rangoFechas, setRangoFechas] = useState([]);
   const [showTables, setShowTables] = useState(false);
+  const [selectedArticulo, setSelectedArticulo] = useState(null);
+  const [articuloValue, setArticuloValue] = useState("");
+  const [cantidad, setCantidad] = useState(0);
+  const [notaCredito, setNotaCredito] = useState({
+    articulos: [],
+  });
   const { RangePicker } = DatePicker;
   const [totales, setTotales] = useState({
     totalVentas: 0,
     totalPagos: 0,
     saldoPendiente: 0,
   });
+  const { confirm } = Modal;
+
+  const generateNotaCreditoPDF = () => {
+    if (!notasCredito || notasCredito.length === 0) {
+      console.error("No hay notas de crédito disponibles.");
+      return;
+    }
+    if (!selectedCliente) {
+      return message.warning("Por favor, seleccione un cliente.");
+    }
+
+    // Filtrar solo notas de crédito activas
+    const notasCreditoActivas = notasCredito.filter(
+      (nota) => nota.estado === 1
+    );
+
+    if (notasCreditoActivas.length === 0) {
+      return message.warning("No hay notas de crédito activas para imprimir.");
+    }
+
+    const doc = new jsPDF();
+    const nota = notasCreditoActivas[0]; // Tomar la primera nota activa
+
+    doc.setFontSize(14);
+    doc.text(`Cliente: ${selectedCliente.nombre}`, 14, 20);
+    doc.text(
+      `Fecha: ${new Date(nota.fecha).toLocaleDateString("es-ES")}`,
+      150,
+      20
+    );
+
+    doc.setFontSize(16);
+    doc.text("Nota de Crédito", 80, 35);
+
+    const tableData = [
+      [
+        nota.nroNC,
+        `$${parseFloat(nota.total).toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+      ],
+    ];
+
+    doc.autoTable({
+      startY: 45,
+      head: [["Nro NC", "Total"]],
+      body: tableData,
+      theme: "grid",
+      styles: { fontSize: 12 },
+      columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 50 } },
+    });
+
+    doc.save(`nota_credito_${nota.nroNC}.pdf`);
+  };
 
   const generatePDF = () => {
     if (!selectedCliente) {
@@ -79,16 +161,40 @@ const ResumenCuenta = () => {
       startY: pagosY + 5,
     });
 
+    // Tabla de Notas de Crédito Activas
+    const notasCreditoActivas = notasCredito.filter(
+      (nota) => nota.estado === 1
+    );
+    if (notasCreditoActivas.length > 0) {
+      const notasY = doc.lastAutoTable.finalY + 10;
+      doc.text("Notas de Crédito", 10, notasY);
+      const notasCreditoTable = notasCreditoActivas.map((nota) => [
+        format(new Date(nota.fecha), "dd/MM/yyyy"),
+        nota.nroNC,
+        `$${parseFloat(nota.total).toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+      ]);
+      doc.autoTable({
+        head: [["Fecha", "Nro. NC", "Total"]],
+        body: notasCreditoTable,
+        startY: notasY + 5,
+      });
+    }
+
     // Totales
     const totalesY = doc.lastAutoTable.finalY + 10;
     doc.text("Totales", 10, totalesY);
     doc.text(`Total Ventas: $${totales.totalVentas}`, 10, totalesY + 10);
     doc.text(`Total Pagos: $${totales.totalPagos}`, 10, totalesY + 20);
-    doc.text(`Saldo Pendiente: $${totales.saldoPendiente}`, 10, totalesY + 30);
+    doc.text(`Total Notas de Crédito: $${totales.totalNC}`, 10, totalesY + 30);
+    doc.text(`Saldo Pendiente: $${totales.saldoPendiente}`, 10, totalesY + 40);
 
     // Guardar PDF
     doc.save(`ResumenCuenta_${selectedCliente.nombre}.pdf`);
   };
+
   const navigate = useNavigate();
 
   const goToResumenCuentaXZona = () => {
@@ -99,19 +205,43 @@ const ResumenCuenta = () => {
     try {
       const params = { fecha_inicio: fechaInicio, fecha_fin: fechaFin };
 
-      const [ventasResponse, pagosResponse] = await Promise.all([
-        axios.get(`http://localhost:3001/ventasxclientexfecha/${clienteId}`, {
-          params,
-        }),
-        axios.get(`http://localhost:3001/getPagosByClienteId/${clienteId}`, {
-          params,
-        }),
-      ]);
+      const [ventasResponse, pagosResponse, totalNotasCreditoResponse] =
+        await Promise.all([
+          axios.get(`http://localhost:3001/ventasxclientexfecha/${clienteId}`, {
+            params,
+          }),
+          axios.get(`http://localhost:3001/getPagosByClienteId/${clienteId}`, {
+            params,
+          }),
+          axios.get(
+            `http://localhost:3001/notasCreditoByClienteId/${clienteId}`
+          ),
+        ]);
+
+      // Verifica que totalNotasCreditoResponse.data sea un array
+      const notasCreditoData = Array.isArray(totalNotasCreditoResponse.data)
+        ? totalNotasCreditoResponse.data
+        : [];
+      console.log("notas credito data", notasCreditoData);
+      // Filtrar notas activas (estado = 1)
+      const notasCreditoActivas = notasCreditoData.filter(
+        (nota) => nota.estado === 1
+      );
+      console.log("notas credito activas", notasCreditoActivas);
+
+      // Calcular total de notas de crédito activas
+      const totalNotasCreditoActivas = notasCreditoActivas.reduce(
+        (sum, nota) => sum + (parseFloat(nota.total) || 0),
+        0
+      );
+      console.log("total notas credito activas", totalNotasCreditoActivas);
 
       const ventasData = ventasResponse.data || [];
       const pagosData = pagosResponse.data || [];
+
       setVentas(ventasData);
       setPagos(pagosData);
+      setNotasCredito(notasCreditoData);
 
       // Calcular el próximo número de pago
       if (pagosData.length > 0) {
@@ -136,11 +266,13 @@ const ResumenCuenta = () => {
           0
         );
 
-        const saldoPendiente = totalVentas - totalPagos;
+        const saldoPendiente =
+          totalVentas - totalPagos - totalNotasCreditoActivas;
 
         setTotales({
           totalVentas: totalVentas,
           totalPagos: totalPagos,
+          totalNC: totalNotasCreditoActivas,
           saldoPendiente: saldoPendiente,
         });
       }
@@ -187,7 +319,176 @@ const ResumenCuenta = () => {
       });
     }
   };
+  const handleArticuloChange = (articulo) => {
+    setSelectedArticulo(articulo);
+    setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
+    console.log(selectedArticulo);
+    console.log(articulo);
+  };
 
+  const handleAddArticulo = () => {
+    if (selectedArticulo && cantidad > 0) {
+      //ESTO ERA PARA VALIDAR QUE NO ENTRE MAS DE UN ARTICULO
+      // const articuloExiste = venta.articulos.some(
+      //   (articulo) => articulo.id === selectedArticulo.id
+      // );
+
+      // if (articuloExiste) {
+      //   Modal.warning({
+      //     title: "Advertencia",
+      //     content: "Este artículo ya fue agregado en la venta.",
+      //     icon: <ExclamationCircleOutlined />,
+      //   });
+      //   return;
+      // }
+
+      const uniqueId = `${selectedArticulo.id}-${Date.now()}`; // Generación del ID único
+      setNotaCredito((prev) => ({
+        ...prev,
+        articulos: [
+          ...prev.articulos,
+          {
+            ...selectedArticulo,
+            quantity: cantidad,
+            price: selectedArticulo.precio_monotributista,
+            label:
+              selectedArticulo.nombre +
+              " - " +
+              selectedArticulo.linea_nombre +
+              " - " +
+              selectedArticulo.sublinea_nombre,
+            value: selectedArticulo.id,
+            uniqueId,
+            isGift: false,
+          },
+        ],
+      }));
+      console.log(notaCredito);
+      setSelectedArticulo(null);
+      setCantidad(0);
+      setArticuloValue("");
+    } else {
+      Modal.warning({
+        title: "Advertencia",
+        content: "Seleccione un articulo y una cantidad valida",
+        icon: <ExclamationCircleOutlined />,
+      });
+    }
+  };
+
+  const handleDeleteArticulo = (uniqueId) => {
+    setNotaCredito((prev) => ({
+      ...prev,
+      articulos: prev.articulos.filter(
+        (articulo) => articulo.uniqueId !== uniqueId
+      ),
+    }));
+  };
+
+  const handleEditPrecio = (uniqueId, newPrice) => {
+    const updatedArticulos = notaCredito.articulos.map((item) =>
+      item.uniqueId === uniqueId
+        ? { ...item, precio_monotributista: newPrice, price: newPrice }
+        : item
+    );
+    setNotaCredito((prevNC) => ({ ...prevNC, articulos: updatedArticulos }));
+    console.log("Artículos actualizados: ", updatedArticulos);
+  };
+
+  const handleAddNotaCredito = async () => {
+    console.log("nota credito", notaCredito);
+    console.log("cliente", selectedCliente.nombre);
+    console.log(notaCredito.articulos.length);
+    if (notaCredito.articulos.length > 0) {
+      console.log("hola");
+      try {
+        const payLoad = {
+          cliente_id: selectedCliente.id,
+          detalles: notaCredito.articulos.map((articulo) => ({
+            articulo_id: articulo.id, // Usamos el ID del artículo
+            cantidad: articulo.quantity,
+            precio: articulo.precio_monotributista
+              ? articulo.precio_monotributista
+              : articulo.price,
+          })),
+        };
+        console.log("nota cred data", payLoad);
+        confirm({
+          title: "Confirmar",
+          content: "¿Desea registrar la nota de credito?",
+          okText: "Si",
+          cancelText: "No",
+          onOk: async () => {
+            await axios.post("http://localhost:3001/addNotaCredito", payLoad);
+            notification.success({
+              message: "Exito",
+              description: "Nota de credito registrada con exito",
+              duration: 2,
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          },
+        });
+      } catch (error) {
+        console.error("Error al enviar la nota de credito:", error);
+        alert("Error al registrar la nota de credito");
+      }
+    } else {
+      Modal.warning({
+        title: "Advertencia",
+        content: "Por favor, complete todos los campos",
+        icon: <ExclamationCircleOutlined />,
+      });
+    }
+  };
+
+  const handleToggleState = async (id, currentState) => {
+    try {
+      if (currentState === 1) {
+        confirm({
+          title: "¿Esta seguro de cancelar esta nota de credito?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/dropNotaCredito/${id}`);
+            notification.success({
+              message: "La nota de credito se ha desactivado",
+              description: "La nota de credito se ha desactivado exitosamente",
+              duration: 1,
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          },
+        });
+      } else {
+        confirm({
+          title: "¿Esta seguro de activar esta nota de credito?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/upNotaCredito/${id}`);
+            notification.success({
+              message: "Nota de credito activada",
+              description: "El Nota de credito se activo exitosamente",
+              duration: 1,
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
   const formatNumber = (value) => {
     return new Intl.NumberFormat("es-AR", {
       minimumFractionDigits: 0,
@@ -278,6 +579,63 @@ const ResumenCuenta = () => {
     },
   ];
 
+  const columns3 = [
+    {
+      name: "Fecha",
+      selector: (row) => {
+        const fecha = new Date(row.fecha);
+        return isValid(fecha) ? (
+          <Tooltip
+            className={row.estado === 0 ? "strikethrough" : ""}
+            title={format(fecha, "dd/MM/yyyy")}
+          >
+            <span>{format(fecha, "dd/MM/yyyy")}</span>
+          </Tooltip>
+        ) : (
+          "Fecha no válida"
+        );
+      },
+      sortable: true,
+    },
+    {
+      name: "Nro. Nota de Credito",
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nroNC}
+        >
+          <span>
+            <span>{row.nroNC}</span>
+          </span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Total",
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={formatNumber(row.total)}
+        >
+          <span>{"$" + formatNumber(row.total)}</span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Acciones",
+      cell: (row) => (
+        <Button
+          className="custom-button"
+          onClick={() => handleToggleState(row.id, row.estado)}
+        >
+          {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <MenuLayout>
       <div style={{ padding: "20px" }}>
@@ -319,6 +677,25 @@ const ResumenCuenta = () => {
                 Agregar Pago
               </Button>
               <Button
+                onClick={() => setDrawerNCVisible(true)}
+                style={{
+                  margin: "20px 0",
+                  backgroundColor: "green",
+                  color: "white",
+                }}
+              >
+                Agregar Nota Credito
+              </Button>
+              <Button
+                onClick={generateNotaCreditoPDF}
+                type="primary"
+                style={{
+                  marginLeft: "10px",
+                }}
+              >
+                Generar nota credito
+              </Button>
+              <Button
                 onClick={generatePDF}
                 type="primary"
                 style={{ marginLeft: "10px" }}
@@ -332,6 +709,46 @@ const ResumenCuenta = () => {
             <div style={{ marginBottom: "20px" }}>
               <DataTable title="Pagos" columns={columns2} data={pagos} />
             </div>
+            <div style={{ marginBottom: "20px" }}>
+              <DataTable
+                title="Notas de credito"
+                columns={columns3}
+                data={notasCredito}
+              />
+            </div>
+            <Drawer
+              title="Agregar Nota de Credito"
+              open={drawerNCVisible}
+              onClose={() => setDrawerNCVisible(false)}
+              width={500}
+            >
+              <ArticulosInput
+                value={articuloValue}
+                onChangeArticulo={handleArticuloChange}
+                onInputChange={setArticuloValue} // Update input value
+              />
+              <InputNumber
+                min={0}
+                onChange={(value) => setCantidad(value)}
+                style={{ marginTop: "10px" }}
+                value={cantidad}
+              />
+              <Button
+                className="custom-button"
+                onClick={handleAddArticulo}
+                style={{ marginTop: 10 }}
+              >
+                Agregar Artículo
+              </Button>
+              <DynamicListNC
+                items={notaCredito.articulos}
+                onDelete={handleDeleteArticulo}
+                onEdit={handleEditPrecio}
+              />
+              <Button onClick={handleAddNotaCredito} type="primary">
+                Registrar Nota de Credito
+              </Button>
+            </Drawer>
             <AgregarPagoDrawer
               visible={drawerVisible}
               onClose={() => setDrawerVisible(false)}
@@ -354,7 +771,7 @@ const ResumenCuenta = () => {
               }}
             />
             <Row gutter={16}>
-              <Col span={8}>
+              <Col span={5}>
                 <Card style={{ backgroundColor: "#F8D7DA" }}>
                   <Statistic
                     title="Total Ventas"
@@ -363,7 +780,7 @@ const ResumenCuenta = () => {
                   />
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col span={5}>
                 <Card style={{ backgroundColor: "#D4EDDA " }}>
                   <Statistic
                     title="Total Pagos"
@@ -372,7 +789,16 @@ const ResumenCuenta = () => {
                   />
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col span={5}>
+                <Card>
+                  <Statistic
+                    title="Total Notas Credito"
+                    value={totales.totalNC}
+                    prefix="$"
+                  />
+                </Card>
+              </Col>
+              <Col span={5}>
                 <Card>
                   <Statistic
                     title="Saldo Pendiente"
