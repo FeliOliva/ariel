@@ -25,35 +25,62 @@ export default function ResumenCuentaXZona() {
     }
 
     const [fechaInicio, fechaFin] = rangoFechas;
-
     setLoading(true);
+
     try {
-      const [ventasResponse, pagosResponse] = await Promise.all([
-        axios.get(`http://localhost:3001/ventasZona/${zonaSeleccionada.id}`, {
-          params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
-        }),
-        axios.get(
-          `http://localhost:3001/getPagosByZona_id/${zonaSeleccionada.id}`,
-          {
+      const [ventasResponse, pagosResponse, notasCreditoResponse] =
+        await Promise.all([
+          axios.get(`http://localhost:3001/ventasZona/${zonaSeleccionada.id}`, {
             params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
-          }
-        ),
-      ]);
+          }),
+          axios.get(
+            `http://localhost:3001/getPagosByZona_id/${zonaSeleccionada.id}`,
+            {
+              params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+            }
+          ),
+          axios.get(
+            `http://localhost:3001/getNotasCreditoByZonaID/${zonaSeleccionada.id}`,
+            {
+              params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+            }
+          ),
+        ]);
 
       const ventas = ventasResponse.data;
       const pagos = pagosResponse.data;
+      const notasCredito = notasCreditoResponse.data;
 
-      // Fusionar datos de ventas y pagos
       const datos = ventas.map((venta) => {
         const pago = pagos.find((p) => p.cliente_id === venta.cliente_id);
+        const notaCredito = notasCredito.find(
+          (nc) => nc.cliente_id === venta.cliente_id
+        );
+
+        const totalNotasCredito = notaCredito
+          ? parseFloat(notaCredito.total)
+          : 0;
+        const totalPagos = pago ? parseFloat(pago.total_pagos) : 0;
+        const totalVentas = parseFloat(venta.total_ventas);
+
+        // Calcular el saldo restante (Ventas - Pagos - Notas de Crédito)
+        const saldoRestante = totalVentas - totalPagos - totalNotasCredito;
+
         return {
           cliente_id: venta.cliente_id,
           nombre: `${venta.cliente_farmacia} - ${venta.cliente_nombre} ${venta.cliente_apellido}`,
-          totalVentas: parseFloat(venta.total_ventas),
-          totalPagos: pago ? parseFloat(pago.total_pagos) : "No hay pagos",
-          saldo: pago
-            ? parseFloat(venta.total_ventas) - parseFloat(pago.total_pagos)
-            : parseFloat(venta.total_ventas),
+          totalVentas,
+          totalPagos,
+          totalNotasCredito: totalNotasCredito
+            ? `$${totalNotasCredito.toLocaleString("es-ES", {
+                minimumFractionDigits: 0,
+              })}`
+            : "Inexistente",
+          saldo: saldoRestante
+            ? `$${saldoRestante.toLocaleString("es-ES", {
+                minimumFractionDigits: 0,
+              })}`
+            : "Inexistente",
         };
       });
 
@@ -77,10 +104,7 @@ export default function ResumenCuentaXZona() {
       dataIndex: "totalVentas",
       key: "totalVentas",
       render: (text) =>
-        `$${text.toLocaleString("es-ES", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })}`,
+        `$${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
     },
     {
       title: "Total Pagos",
@@ -88,21 +112,21 @@ export default function ResumenCuentaXZona() {
       key: "totalPagos",
       render: (text) =>
         typeof text === "number"
-          ? `$${text.toLocaleString("es-ES", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })}`
+          ? `$${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`
           : text,
+    },
+    {
+      title: "Total Notas de Crédito",
+      dataIndex: "totalNotasCredito",
+      key: "totalNotasCredito",
+      render: (text) => text,
     },
     {
       title: "Saldo Restante",
       dataIndex: "saldo",
       key: "saldo",
       render: (text) =>
-        `$${text.toLocaleString("es-ES", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })}`,
+        `${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
     },
   ];
 
@@ -112,9 +136,6 @@ export default function ResumenCuentaXZona() {
     doc.setFontSize(18);
     doc.text(`Resumen de cuentas en la ${zonaSeleccionada.nombreZona}`, 14, 20);
 
-    const zonaInfo = zonaSeleccionada
-      ? zonaSeleccionada.nombreZona
-      : "Sin zona seleccionada";
     const rangoInfo =
       rangoFechas.length === 2
         ? `${rangoFechas[0]} a ${rangoFechas[1]}`
@@ -122,46 +143,55 @@ export default function ResumenCuentaXZona() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
-    // Sumar totales de ventas y pagos
+    // Calcular totales
     const totalVentasGlobal = datos.reduce(
       (sum, d) => sum + (d.totalVentas || 0),
       0
     );
     const totalPagosGlobal = datos.reduce(
-      (sum, d) => sum + (typeof d.totalPagos === "number" ? d.totalPagos : 0),
+      (sum, d) => sum + (d.totalPagos || 0),
       0
     );
-
-    // Calcular saldo global
-    const saldoGlobal = totalVentasGlobal - totalPagosGlobal;
+    const totalNotasCreditoGlobal = datos.reduce((sum, d) => {
+      return (
+        sum +
+        (typeof d.totalNotasCredito === "string"
+          ? 0
+          : parseFloat(d.totalNotasCredito.replace("$", "").replace(",", "")))
+      );
+    }, 0);
+    const diferencia = totalPagosGlobal + totalNotasCreditoGlobal;
+    const saldoGlobal = totalVentasGlobal - diferencia;
 
     // Construcción de la tabla
     const tableData = datos.map((d) => [
       d.nombre,
-      `$${d.totalVentas.toLocaleString("es-ES", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })}`,
+      `$${d.totalVentas.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
       typeof d.totalPagos === "number"
         ? `$${d.totalPagos.toLocaleString("es-ES", {
             minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
           })}`
         : d.totalPagos,
-      `$${d.saldo.toLocaleString("es-ES", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })}`,
+      d.totalNotasCredito,
+      d.saldo,
     ]);
 
     doc.autoTable({
       startY: 45,
-      head: [["Cliente", "Total Ventas", "Total Pagos", "Saldo Restante"]],
+      head: [
+        [
+          "Cliente",
+          "Total Ventas",
+          "Total Pagos",
+          "Total Notas de Crédito",
+          "Saldo Restante",
+        ],
+      ],
       body: tableData,
     });
 
     // Agregar resumen de totales al final
-    const finalY = doc.lastAutoTable.finalY + 10; // Posición después de la tabla
+    const finalY = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.text(
       `Total Ventas: $${totalVentasGlobal.toLocaleString("es-ES")}`,
@@ -174,12 +204,19 @@ export default function ResumenCuentaXZona() {
       finalY + 7
     );
     doc.text(
-      `Diferencia (Saldo Global): $${saldoGlobal.toLocaleString("es-ES")}`,
+      `Total Notas de Crédito: $${totalNotasCreditoGlobal.toLocaleString(
+        "es-ES"
+      )}`,
       14,
       finalY + 14
     );
+    doc.text(
+      `Diferencia (Saldo Global): $${saldoGlobal.toLocaleString("es-ES")}`,
+      14,
+      finalY + 21
+    );
 
-    doc.save("resumen_ventas_pagos.pdf");
+    doc.save("resumen_cuentas.pdf");
   };
 
   return (

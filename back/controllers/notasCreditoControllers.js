@@ -49,21 +49,13 @@ const upNotaCredito = async (req, res) => {
 const getNotasCreditoByZona = async (req, res) => {
     try {
         const { ID: zona_id } = req.params;
-        const { fecha_inicio, fecha_fin } = req.query;
 
         if (!zona_id) {
             return res.status(400).json({ error: "ID de zona no proporcionado" });
         }
-        if (!fecha_inicio || !fecha_fin) {
-            return res
-                .status(400)
-                .json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
-        }
 
         const notasCredito = await notasCreditoModel.getNotasCreditoByZona(
             zona_id,
-            fecha_inicio,
-            fecha_fin
         );
 
         if (!notasCredito || notasCredito.length === 0) {

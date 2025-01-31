@@ -29,7 +29,6 @@ LEFT JOIN
 WHERE 
     c.zona_id = ?
     AND nc.estado = 1  -- Solo notas de crédito activas
-    AND DATE(nc.fecha) BETWEEN DATE(?) AND DATE(?)
 GROUP BY 
     nc.id, c.id
 ORDER BY 

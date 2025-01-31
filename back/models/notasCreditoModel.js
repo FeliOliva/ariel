@@ -56,10 +56,10 @@ const upNotaCredito = async (ID) => {
         throw err;
     }
 }
-const getNotasCreditoByZona = async (zona_id, fecha_inicio, fecha_fin) => {
+const getNotasCreditoByZona = async (zona_id) => {
     try {
         const query = queriesNotasCredito.getNotasCreditoByZona;
-        const [rows] = await db.query(query, [zona_id, fecha_inicio, fecha_fin]);
+        const [rows] = await db.query(query, [zona_id]);
         return rows;
     } catch (err) {
         throw err;
