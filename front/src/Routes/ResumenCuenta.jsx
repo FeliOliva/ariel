@@ -427,7 +427,7 @@ const ResumenCuenta = () => {
             });
             setTimeout(() => {
               window.location.reload();
-            }, 2000);
+            }, 1500);
           },
         });
       } catch (error) {
