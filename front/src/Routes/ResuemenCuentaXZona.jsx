@@ -51,36 +51,30 @@ export default function ResumenCuentaXZona() {
       const pagos = pagosResponse.data;
       const notasCredito = notasCreditoResponse.data;
 
+      console.log("notas de credito", notasCredito);
       const datos = ventas.map((venta) => {
         const pago = pagos.find((p) => p.cliente_id === venta.cliente_id);
-        const notaCredito = notasCredito.find(
-          (nc) => nc.cliente_id === venta.cliente_id
-        );
+        const notasCreditoCliente = notasCredito
+          .filter((nc) => nc.cliente_id === venta.cliente_id) // Obtener todas las NC del cliente
+          .reduce((sum, nc) => sum + parseFloat(nc.total), 0); // Sumarlas
 
-        const totalNotasCredito = notaCredito
-          ? parseFloat(notaCredito.total)
-          : 0;
         const totalPagos = pago ? parseFloat(pago.total_pagos) : 0;
         const totalVentas = parseFloat(venta.total_ventas);
 
         // Calcular el saldo restante (Ventas - Pagos - Notas de Crédito)
-        const saldoRestante = totalVentas - totalPagos - totalNotasCredito;
+        const saldoRestante = totalVentas - totalPagos - notasCreditoCliente;
 
         return {
           cliente_id: venta.cliente_id,
           nombre: `${venta.cliente_farmacia} - ${venta.cliente_nombre} ${venta.cliente_apellido}`,
           totalVentas,
           totalPagos,
-          totalNotasCredito: totalNotasCredito
-            ? `$${totalNotasCredito.toLocaleString("es-ES", {
-                minimumFractionDigits: 0,
-              })}`
-            : "Inexistente",
-          saldo: saldoRestante
-            ? `$${saldoRestante.toLocaleString("es-ES", {
-                minimumFractionDigits: 0,
-              })}`
-            : "Inexistente",
+          totalNotasCredito: `$${notasCreditoCliente.toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+          })}`,
+          saldo: `$${saldoRestante.toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+          })}`,
         };
       });
 
@@ -143,37 +137,41 @@ export default function ResumenCuentaXZona() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
-    // Calcular totales
+    // Función para limpiar valores y convertirlos a enteros
+    const toInt = (valor) => {
+      if (typeof valor === "string") {
+        return parseInt(valor.replace(/[^0-9-]+/g, ""), 10) || 0;
+      }
+      return Number.isInteger(valor) ? valor : 0;
+    };
+
+    // Convertimos todo a enteros antes de calcular
     const totalVentasGlobal = datos.reduce(
-      (sum, d) => sum + (d.totalVentas || 0),
+      (sum, d) => sum + toInt(d.totalVentas),
       0
     );
     const totalPagosGlobal = datos.reduce(
-      (sum, d) => sum + (d.totalPagos || 0),
+      (sum, d) => sum + toInt(d.totalPagos),
       0
     );
-    const totalNotasCreditoGlobal = datos.reduce((sum, d) => {
-      return (
-        sum +
-        (typeof d.totalNotasCredito === "string"
-          ? 0
-          : parseFloat(d.totalNotasCredito.replace("$", "").replace(",", "")))
-      );
-    }, 0);
-    const diferencia = totalPagosGlobal + totalNotasCreditoGlobal;
-    const saldoGlobal = totalVentasGlobal - diferencia;
+    const totalNotasCreditoGlobal = datos.reduce(
+      (sum, d) => sum + toInt(d.totalNotasCredito),
+      0
+    );
+    const saldoGlobal =
+      totalVentasGlobal - totalPagosGlobal - totalNotasCreditoGlobal;
 
     // Construcción de la tabla
     const tableData = datos.map((d) => [
       d.nombre,
-      `$${d.totalVentas.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
-      typeof d.totalPagos === "number"
-        ? `$${d.totalPagos.toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-          })}`
-        : d.totalPagos,
-      d.totalNotasCredito,
-      d.saldo,
+      `$${toInt(d.totalVentas).toLocaleString("es-ES")}`,
+      `$${toInt(d.totalPagos).toLocaleString("es-ES")}`,
+      `$${toInt(d.totalNotasCredito).toLocaleString("es-ES")}`,
+      `$${(
+        toInt(d.totalVentas) -
+        toInt(d.totalPagos) -
+        toInt(d.totalNotasCredito)
+      ).toLocaleString("es-ES")}`,
     ]);
 
     doc.autoTable({
@@ -211,7 +209,7 @@ export default function ResumenCuentaXZona() {
       finalY + 14
     );
     doc.text(
-      `Diferencia (Saldo Global): $${saldoGlobal.toLocaleString("es-ES")}`,
+      `Saldo Global: $${saldoGlobal.toLocaleString("es-ES")}`,
       14,
       finalY + 21
     );
