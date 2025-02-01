@@ -102,3 +102,32 @@
   background-color: #f9f9f9; /* Opcional: fondo claro */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Opcional: sombra */
 }
+.detalle-container {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.detalle-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+
+.detalle-container th,
+.detalle-container td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.detalle-container th {
+  background: #e0e0e0;
+  font-weight: bold;
+}
+
+.detalle-container tr:hover {
+  background: #f1f1f1;
+}

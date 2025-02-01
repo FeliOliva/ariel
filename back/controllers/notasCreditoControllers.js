@@ -3,13 +3,51 @@ const notasCreditoModel = require("../models/notasCreditoModel");
 const getAllNotasCreditoByClienteId = async (req, res) => {
     try {
         const cliente_id = req.params.ID;
-        const notasCredito = await notasCreditoModel.getAllNotasCreditoByClienteId(cliente_id);
-        res.json(notasCredito);
+        const notasCreditoDetalles = await notasCreditoModel.getAllNotasCreditoByClienteId(cliente_id);
+
+        if (notasCreditoDetalles.length === 0) {
+            return res.status(404).json({ error: "No se encontraron notas de crédito para este cliente" });
+        }
+
+        // Transformar los datos en un solo objeto por cada nota de crédito
+        const notasCreditoMap = new Map();
+
+        notasCreditoDetalles.forEach((detalle) => {
+            const notaCreditoId = detalle.notaCredito_id;
+
+            if (!notasCreditoMap.has(notaCreditoId)) {
+                notasCreditoMap.set(notaCreditoId, {
+                    notaCredito_id: detalle.notaCredito_id,
+                    nroNC: detalle.nroNC,
+                    cliente_nombre: detalle.cliente_farmacia + " " + detalle.cliente_nombre + " " + detalle.cliente_apellido,
+                    fecha: detalle.notaCredito_fecha,
+                    estado: detalle.estado,
+                    total: detalle.totalNC,
+                    detalles: []
+                });
+            }
+
+            notasCreditoMap.get(notaCreditoId).detalles.push({
+                detalle_id: detalle.detalle_id,
+                articulo_id: detalle.articulo_id,
+                articulo_nombre: detalle.cod_articulo + " - " + detalle.articulo_nombre + " - " + detalle.nombre_linea + " - " + detalle.nombre_sublinea,
+                cantidad: detalle.cantidad,
+                fecha: detalle.detalle_fecha,
+                precio: detalle.precio,
+                subTotal: detalle.subTotal
+            });
+        });
+
+        // Convertir el Map a un array de objetos
+        const notasCreditoArray = Array.from(notasCreditoMap.values());
+
+        res.json(notasCreditoArray);
     } catch (error) {
         console.error("Error al obtener todas las notas de crédito:", error);
         res.status(500).json({ error: "Error al obtener todas las notas de crédito" });
     }
-}
+};
+
 const addNotaCredito = async (req, res) => {
     try {
         const { cliente_id, detalles } = req.body;

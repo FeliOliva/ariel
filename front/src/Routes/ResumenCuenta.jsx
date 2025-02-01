@@ -29,7 +29,9 @@ import {
   ExclamationCircleOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
+import "../style/style.css";
 
 const ResumenCuenta = () => {
   const [ventas, setVentas] = useState([]);
@@ -44,6 +46,7 @@ const ResumenCuenta = () => {
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [articuloValue, setArticuloValue] = useState("");
   const [cantidad, setCantidad] = useState(0);
+  const [expandedRow, setExpandedRow] = useState(null);
   const [notaCredito, setNotaCredito] = useState({
     articulos: [],
   });
@@ -74,39 +77,67 @@ const ResumenCuenta = () => {
     }
 
     const doc = new jsPDF();
-    const nota = notasCreditoActivas[0]; // Tomar la primera nota activa
+    doc.setFontSize(16);
+    doc.text("Resumen de Notas de Crédito", 80, 20);
 
+    // Agregar información del cliente
     doc.setFontSize(14);
-    doc.text(`Cliente: ${selectedCliente.nombre}`, 14, 20);
     doc.text(
-      `Fecha: ${new Date(nota.fecha).toLocaleDateString("es-ES")}`,
-      150,
-      20
+      `Cliente: ${selectedCliente.farmacia} ${selectedCliente.nombre} ${selectedCliente.apellido}`,
+      14,
+      30
     );
 
-    doc.setFontSize(16);
-    doc.text("Nota de Crédito", 80, 35);
+    let yPos = 40; // Posición inicial
 
-    const tableData = [
-      [
-        nota.nroNC,
-        `$${parseFloat(nota.total).toLocaleString("es-ES", {
+    notasCreditoActivas.forEach((nota, index) => {
+      if (yPos > 250) {
+        // Verifica si hay espacio suficiente en la página
+        doc.addPage();
+        yPos = 20; // Reinicia la posición en la nueva página
+      }
+
+      doc.setFontSize(14);
+      doc.text(`Nota de Crédito Nº ${nota.nroNC}`, 14, yPos);
+      doc.text(
+        `Fecha: ${new Date(nota.fecha).toLocaleDateString("es-ES")}`,
+        150,
+        yPos
+      );
+
+      yPos += 10;
+      doc.setFontSize(12);
+
+      // Tabla de detalles de la nota
+      const tableData = nota.detalles.map((detalle) => [
+        detalle.articulo_nombre,
+        detalle.cantidad,
+        `$${detalle.precio.toLocaleString("es-ES", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}`,
-      ],
-    ];
+        `$${detalle.subTotal.toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+      ]);
 
-    doc.autoTable({
-      startY: 45,
-      head: [["Nro NC", "Total"]],
-      body: tableData,
-      theme: "grid",
-      styles: { fontSize: 12 },
-      columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 50 } },
+      doc.autoTable({
+        startY: yPos,
+        head: [["Artículo", "Cantidad", "Precio", "Subtotal"]],
+        body: tableData,
+        theme: "grid",
+        styles: { fontSize: 10 },
+      });
+
+      yPos = doc.lastAutoTable.finalY + 10; // Nueva posición después de la tabla
+      doc.setFontSize(14);
+      doc.text(`Total: $${nota.total}`, 14, yPos);
+      yPos += 15;
     });
 
-    doc.save(`nota_credito_${nota.nroNC}.pdf`);
+    // Guardar el PDF con el nombre adecuado
+    doc.save(`notas_credito_${selectedCliente.nombre}.pdf`);
   };
 
   const generatePDF = () => {
@@ -195,6 +226,40 @@ const ResumenCuenta = () => {
     doc.save(`ResumenCuenta_${selectedCliente.nombre}.pdf`);
   };
 
+  const toggleDetails = (id) => {
+    setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  // Renderizar los detalles solo si la fila está expandida
+  const renderDetalles = (row) => {
+    if (expandedRow !== row.notaCredito_id) return null;
+
+    return (
+      <div className="detalle-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Artículo</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {row.detalles.map((detalle, index) => (
+              <tr key={index}>
+                <td>{detalle.articulo_nombre}</td>
+                <td>{detalle.cantidad}</td>
+                <td>{"$" + formatNumber(detalle.precio)}</td>
+                <td>{"$" + formatNumber(detalle.subTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const navigate = useNavigate();
 
   const goToResumenCuentaXZona = () => {
@@ -238,6 +303,7 @@ const ResumenCuenta = () => {
 
       const ventasData = ventasResponse.data || [];
       const pagosData = pagosResponse.data || [];
+      console.log("Datos de pagos recibidos:", pagosData);
 
       setVentas(ventasData);
       setPagos(pagosData);
@@ -598,15 +664,13 @@ const ResumenCuenta = () => {
       sortable: true,
     },
     {
-      name: "Nro. Nota de Credito",
+      name: "Nro. Nota de Crédito",
       selector: (row) => (
         <Tooltip
           className={row.estado === 0 ? "strikethrough" : ""}
           title={row.nroNC}
         >
-          <span>
-            <span>{row.nroNC}</span>
-          </span>
+          <span>{row.nroNC}</span>
         </Tooltip>
       ),
       sortable: true,
@@ -624,11 +688,21 @@ const ResumenCuenta = () => {
       sortable: true,
     },
     {
+      name: "Detalles",
+      cell: (row) => (
+        <Tooltip title="Ver detalles">
+          <Button onClick={() => toggleDetails(row.notaCredito_id)}>
+            <EyeOutlined />
+          </Button>
+        </Tooltip>
+      ),
+    },
+    {
       name: "Acciones",
       cell: (row) => (
         <Button
           className="custom-button"
-          onClick={() => handleToggleState(row.id, row.estado)}
+          onClick={() => handleToggleState(row.notaCredito_id, row.estado)}
         >
           {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
         </Button>
@@ -714,6 +788,11 @@ const ResumenCuenta = () => {
                 title="Notas de credito"
                 columns={columns3}
                 data={notasCredito}
+                expandableRows
+                expandableRowExpanded={(row) =>
+                  expandedRow === row.notaCredito_id
+                }
+                expandableRowsComponent={({ data }) => renderDetalles(data)}
               />
             </div>
             <Drawer

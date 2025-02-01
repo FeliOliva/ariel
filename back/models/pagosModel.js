@@ -13,8 +13,10 @@ const getAllPagos = async (fecha_inicio, fecha_fin) => {
 
 const getPagosByClienteId = async (cliente_id, fecha_inicio, fecha_fin) => {
     try {
+        const fechaInicioSQL = `${fecha_inicio} 00:00:00`;
+        const fechaFinSQL = `${fecha_fin} 23:59:59`;
         const query = queriesPagos.getPagosByClienteId;
-        const [rows] = await db.query(query, [cliente_id, fecha_inicio, fecha_fin]);
+        const [rows] = await db.query(query, [cliente_id, fechaInicioSQL, fechaFinSQL]);
         return rows;
     } catch (err) {
         throw err;

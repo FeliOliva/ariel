@@ -24,6 +24,8 @@ const getPagosByClienteId = async (req, res) => {
         const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
 
         console.log("ID desde el back:", cliente_id);
+        console.log("Fecha inicio:", fecha_inicio);
+        console.log("Fecha fin:", fecha_fin);
 
         // Validar los parámetros requeridos
         if (!cliente_id) {
