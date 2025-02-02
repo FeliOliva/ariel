@@ -119,7 +119,7 @@ const VentaDetalles = () => {
     // Línea divisoria
     pdf.line(10, 60, 200, 60);
 
-    // Tabla de detalles con alineación derecha para la cantidad
+    // Datos de la tabla
     const tableData = data.map((row) => ({
       cantidad: row.cantidad,
       nombre: row.nombre,
@@ -128,6 +128,7 @@ const VentaDetalles = () => {
       importe: `$${row.sub_total}`,
     }));
 
+    // Renderizar la tabla con margen inferior extra
     pdf.autoTable({
       startY: 65,
       head: [["Cant", "Descripción", "Código", "Precio Unitario", "Importe"]],
@@ -144,16 +145,26 @@ const VentaDetalles = () => {
         cellPadding: 2,
       },
       columnStyles: {
-        0: { cellWidth: 10 }, // Cantidad alineada a la derecha
+        0: { cellWidth: 10 }, // Cantidad
         1: { cellWidth: 90 }, // Descripción
         2: { cellWidth: 30 }, // Código
         3: { cellWidth: 35 }, // Precio Unitario
         4: { cellWidth: 25 }, // Importe
       },
       pageBreak: "auto",
-      margin: { top: 30, right: 15 },
+      margin: { top: 30, right: 15, bottom: 15 }, // Añadir margen inferior
     });
 
+    // Posición final después de la tabla
+    let finalY = pdf.lastAutoTable.finalY + 10;
+
+    // Verificar si los totales entran en la página actual
+    if (finalY > 270) {
+      pdf.addPage();
+      finalY = 20; // Reiniciar la posición en la nueva página
+    }
+
+    // Calcular descuentos
     const totalImporte = parseFloat(
       ventaInfo.total_importe.replace(".", "").replace(",", ".")
     );
@@ -163,11 +174,10 @@ const VentaDetalles = () => {
       "es-AR",
       { minimumFractionDigits: 0 }
     );
-    // Totales alineados a la izquierda
-    const finalY = pdf.lastAutoTable.finalY + 10;
+
+    // Agregar totales con espacio extra
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
-
     pdf.text(`Total: $${ventaInfo.total_importe}`, 10, finalY);
     pdf.text(
       `Descuento (${ventaInfo.descuento}%): $${descuentoMontoFormateado}`,

@@ -283,11 +283,21 @@ const ResumenCuenta = () => {
           ),
         ]);
 
-      // Verifica que totalNotasCreditoResponse.data sea un array
-      const notasCreditoData = Array.isArray(totalNotasCreditoResponse.data)
-        ? totalNotasCreditoResponse.data
-        : [];
+      // Verificar si la respuesta de notas de crédito es un array o contiene un error
+      let notasCreditoData = [];
+      if (
+        totalNotasCreditoResponse.data &&
+        Array.isArray(totalNotasCreditoResponse.data)
+      ) {
+        notasCreditoData = totalNotasCreditoResponse.data;
+      } else {
+        console.warn(
+          "No se encontraron notas de crédito, estableciendo array vacío."
+        );
+      }
+
       console.log("notas credito data", notasCreditoData);
+
       // Filtrar notas activas (estado = 1)
       const notasCreditoActivas = notasCreditoData.filter(
         (nota) => nota.estado === 1
