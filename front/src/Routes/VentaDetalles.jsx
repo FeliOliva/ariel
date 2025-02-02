@@ -142,10 +142,11 @@ const VentaDetalles = () => {
       styles: {
         fontSize: 8,
         cellPadding: 2,
+        overflow: "linebreak", // Permite que el texto se divida en varias líneas
       },
       columnStyles: {
         0: { cellWidth: 10 }, // Cantidad alineada a la derecha
-        1: { cellWidth: 70 }, // Descripción
+        1: { cellWidth: 90 }, // Descripción
         2: { cellWidth: 30 }, // Código
         3: { cellWidth: 35 }, // Precio Unitario
         4: { cellWidth: 35 }, // Importe
