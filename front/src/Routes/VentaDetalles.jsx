@@ -150,6 +150,8 @@ const VentaDetalles = () => {
         3: { cellWidth: 35 }, // Precio Unitario
         4: { cellWidth: 35 }, // Importe
       },
+      pageBreak: "auto",
+      margin: { top: 30 },
     });
 
     const totalImporte = parseFloat(
