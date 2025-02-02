@@ -27,7 +27,10 @@ import {
   ExclamationCircleOutlined,
   CloseOutlined,
   SearchOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
+import "../style/style.css";
 
 function Ventas() {
   const [data, setData] = useState([]);
@@ -127,17 +130,17 @@ function Ventas() {
       //   });
       //   return;
       // }
-      if (selectedArticulo.stock < cantidad) {
-        Modal.warning({
-          title: "Advertencia",
-          content:
-            "No hay suficiente stock de este articulo," +
-            "  el stock es de: " +
-            selectedArticulo.stock,
-          icon: <ExclamationCircleOutlined />,
-        });
-        return;
-      }
+      // if (selectedArticulo.stock < cantidad) {
+      //   Modal.warning({
+      //     title: "Advertencia",
+      //     content:
+      //       "No hay suficiente stock de este articulo," +
+      //       "  el stock es de: " +
+      //       selectedArticulo.stock,
+      //     icon: <ExclamationCircleOutlined />,
+      //   });
+      //   return;
+      // }
 
       const uniqueId = `${selectedArticulo.id}-${Date.now()}`; // Generación del ID único
       setVenta((prev) => ({
@@ -241,7 +244,7 @@ function Ventas() {
             });
             setTimeout(() => {
               window.location.reload();
-            }, 2000); 
+            }, 2000);
           },
         });
       } catch (error) {
@@ -384,12 +387,57 @@ function Ventas() {
     fetchVentasByClient("");
     fetchData(); // Limpiar el filtro y mostrar todos los datos
   };
+  const handleToggleState = async (id, currentState) => {
+    try {
+      if (currentState === 1) {
+        confirm({
+          title: "¿Esta seguro de desactivar esta venta?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/dropVenta/${id}`);
+            notification.success({
+              message: "Venta desactivada",
+              description: "La venta se desactivo exitosamente",
+              duration: 1,
+            });
+            fetchData();
+          },
+        });
+      } else {
+        confirm({
+          title: "¿Esta seguro de activar esta venta?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/upVenta/${id}`);
+            notification.success({
+              message: "Venta activado",
+              description: "La venta se activo exitosamente",
+              duration: 1,
+            });
+            fetchData();
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
 
   const columns = [
     {
       name: "Nro. Venta",
       selector: (row) => (
-        <Tooltip title={row.nroVenta}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nroVenta}
+        >
           <span>
             <span>{row.nroVenta}</span>
           </span>
@@ -400,7 +448,10 @@ function Ventas() {
     {
       name: "Fecha",
       selector: (row) => (
-        <Tooltip title={format(new Date(row.fecha_venta), "dd/MM/yyyy")}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={format(new Date(row.fecha_venta), "dd/MM/yyyy")}
+        >
           <span>{format(new Date(row.fecha_venta), "dd/MM/yyyy")}</span>
         </Tooltip>
       ),
@@ -409,7 +460,10 @@ function Ventas() {
     {
       name: "Farmacia",
       selector: (row) => (
-        <Tooltip title={row.farmacia}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.farmacia}
+        >
           <span>{row.farmacia}</span>
         </Tooltip>
       ),
@@ -418,7 +472,10 @@ function Ventas() {
     {
       name: "Cliente",
       selector: (row) => (
-        <Tooltip title={row.nombre_cliente + " " + row.apellido_cliente}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre_cliente + " " + row.apellido_cliente}
+        >
           <span>{row.nombre_cliente + " " + row.apellido_cliente}</span>
         </Tooltip>
       ),
@@ -427,7 +484,10 @@ function Ventas() {
     {
       name: "Zona",
       selector: (row) => (
-        <Tooltip title={row.nombre_zona}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre_zona}
+        >
           <span>{row.nombre_zona}</span>
         </Tooltip>
       ),
@@ -436,7 +496,10 @@ function Ventas() {
     {
       name: "Sub total",
       selector: (row) => (
-        <Tooltip title={row.total}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.total}
+        >
           <span>{row.total}</span>
         </Tooltip>
       ),
@@ -445,7 +508,10 @@ function Ventas() {
     {
       name: "Descuento",
       selector: (row) => (
-        <Tooltip title={row.descuento + "%"}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.descuento + "%"}
+        >
           <span>{row.descuento}%</span>
         </Tooltip>
       ),
@@ -454,11 +520,25 @@ function Ventas() {
     {
       name: "Total",
       selector: (row) => (
-        <Tooltip title={row.total_con_descuento}>
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.total_con_descuento}
+        >
           <span>{row.total_con_descuento}</span>
         </Tooltip>
       ),
       sortable: true,
+    },
+    {
+      name: "Acciones",
+      selector: (row) => (
+        <Button
+          className="custom-button"
+          onClick={() => handleToggleState(row.id, row.estado)}
+        >
+          {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+        </Button>
+      ),
     },
     {
       name: "Detalle",

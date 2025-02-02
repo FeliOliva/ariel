@@ -142,7 +142,6 @@ const VentaDetalles = () => {
       styles: {
         fontSize: 8,
         cellPadding: 2,
-        overflow: "linebreak", // Permite que el texto se divida en varias líneas
       },
       columnStyles: {
         0: { cellWidth: 10 }, // Cantidad alineada a la derecha
