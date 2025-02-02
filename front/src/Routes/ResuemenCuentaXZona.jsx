@@ -51,17 +51,14 @@ export default function ResumenCuentaXZona() {
       const pagos = pagosResponse.data;
       const notasCredito = notasCreditoResponse.data;
 
-      console.log("notas de credito", notasCredito);
       const datos = ventas.map((venta) => {
         const pago = pagos.find((p) => p.cliente_id === venta.cliente_id);
         const notasCreditoCliente = notasCredito
-          .filter((nc) => nc.cliente_id === venta.cliente_id) // Obtener todas las NC del cliente
-          .reduce((sum, nc) => sum + parseFloat(nc.total), 0); // Sumarlas
+          .filter((nc) => nc.cliente_id === venta.cliente_id)
+          .reduce((sum, nc) => sum + parseFloat(nc.total), 0);
 
         const totalPagos = pago ? parseFloat(pago.total_pagos) : 0;
         const totalVentas = parseFloat(venta.total_ventas);
-
-        // Calcular el saldo restante (Ventas - Pagos - Notas de Crédito)
         const saldoRestante = totalVentas - totalPagos - notasCreditoCliente;
 
         return {
@@ -69,12 +66,8 @@ export default function ResumenCuentaXZona() {
           nombre: `${venta.cliente_farmacia} - ${venta.cliente_nombre} ${venta.cliente_apellido}`,
           totalVentas,
           totalPagos,
-          totalNotasCredito: `$${notasCreditoCliente.toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-          })}`,
-          saldo: `$${saldoRestante.toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-          })}`,
+          totalNotasCredito: notasCreditoCliente,
+          saldo: saldoRestante,
         };
       });
 
@@ -86,6 +79,14 @@ export default function ResumenCuentaXZona() {
       setLoading(false);
     }
   };
+
+  const totalVentas = datos.reduce((sum, d) => sum + d.totalVentas, 0);
+  const totalPagos = datos.reduce((sum, d) => sum + d.totalPagos, 0);
+  const totalNotasCredito = datos.reduce(
+    (sum, d) => sum + d.totalNotasCredito,
+    0
+  );
+  const saldoGlobal = totalVentas - totalPagos - totalNotasCredito;
 
   const columns = [
     {
@@ -249,6 +250,14 @@ export default function ResumenCuentaXZona() {
           bordered
           style={{ backgroundColor: "#f9f9f9" }}
         />
+        <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
+          <p>Total Ventas: ${totalVentas.toLocaleString("es-ES")}</p>
+          <p>Total Pagos: ${totalPagos.toLocaleString("es-ES")}</p>
+          <p>
+            Total Notas de Crédito: ${totalNotasCredito.toLocaleString("es-ES")}
+          </p>
+          <p>Saldo Global: ${saldoGlobal.toLocaleString("es-ES")}</p>
+        </div>
       </div>
     </MenuLayout>
   );
