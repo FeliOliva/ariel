@@ -178,27 +178,35 @@ const getResumenZonas = async (fecha_inicio, fecha_fin) => {
   try {
     const query = `
       SELECT 
-          z.id AS zona_id,
-          z.nombre AS nombre_zona,
-          COALESCE(SUM(v.total_con_descuento), 0) AS total_ventas,
-          COALESCE(SUM(p.monto), 0) AS total_pagos,
-          COALESCE(SUM(dnc.subTotal), 0) AS total_notas_credito
-      FROM 
-          zona z
-      LEFT JOIN 
-          cliente c ON z.id = c.zona_id
-      LEFT JOIN 
-          venta v ON c.id = v.cliente_id AND DATE(v.fecha_venta) BETWEEN ? AND ?
-      LEFT JOIN 
-          pagos p ON c.id = p.cliente_id AND DATE(p.fecha_pago) BETWEEN ? AND ?
-      LEFT JOIN 
-          notasCredito nc ON c.id = nc.cliente_id AND nc.estado = 1
-      LEFT JOIN 
-          detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
-      GROUP BY 
-          z.id, z.nombre
-      ORDER BY 
-          z.id;
+    z.id AS zona_id,
+    z.nombre AS nombre_zona,
+    COALESCE(ventas.total_ventas, 0) AS total_ventas,
+    COALESCE(pagos.total_pagos, 0) AS total_pagos,
+    COALESCE(notas_credito.total_notas_credito, 0) AS total_notas_credito
+FROM zona z
+LEFT JOIN (
+    SELECT c.zona_id, SUM(v.total_con_descuento) AS total_ventas
+    FROM venta v
+    JOIN cliente c ON v.cliente_id = c.id
+    WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
+    GROUP BY c.zona_id
+) AS ventas ON z.id = ventas.zona_id
+LEFT JOIN (
+    SELECT c.zona_id, SUM(p.monto) AS total_pagos
+    FROM pagos p
+    JOIN cliente c ON p.cliente_id = c.id
+    WHERE DATE(p.fecha_pago) BETWEEN ? AND ?
+    GROUP BY c.zona_id
+) AS pagos ON z.id = pagos.zona_id
+LEFT JOIN (
+    SELECT c.zona_id, SUM(dnc.subTotal) AS total_notas_credito
+    FROM notasCredito nc
+    JOIN cliente c ON nc.cliente_id = c.id
+    LEFT JOIN detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
+    WHERE nc.estado = 1
+    GROUP BY c.zona_id
+) AS notas_credito ON z.id = notas_credito.zona_id
+ORDER BY z.id;
     `;
 
     const [rows] = await db.query(query, [fecha_inicio, fecha_fin, fecha_inicio, fecha_fin]);
