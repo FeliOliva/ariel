@@ -19,6 +19,7 @@ import Gastos from "./Routes/Gastos";
 import ArticulosDetalles from "./Routes/ArticulosDetalles ";
 import Cheques from "./Routes/Cheques";
 import ResumenCuentaXZona from "./Routes/ResuemenCuentaXZona";
+import ResumenZonas from "./Routes/ResumenZonas";
 function App() {
   return (
     <Routes>
@@ -41,6 +42,7 @@ function App() {
       <Route path="/Gastos" element={<Gastos />} />
       <Route path="/Cheques" element={<Cheques />} />
       <Route path="/ResumenCuentaXZona" element={<ResumenCuentaXZona />} />
+      <Route path="/ResumenZonas" element={<ResumenZonas />} />
     </Routes>
   );
 }

@@ -174,6 +174,39 @@ const getVentasByClientesxFecha = async (cliente_id, fecha_inicio, fecha_fin) =>
     throw err;
   }
 }
+const getResumenZonas = async (fecha_inicio, fecha_fin) => {
+  try {
+    const query = `
+      SELECT 
+          z.id AS zona_id,
+          z.nombre AS nombre_zona,
+          COALESCE(SUM(v.total_con_descuento), 0) AS total_ventas,
+          COALESCE(SUM(p.monto), 0) AS total_pagos,
+          COALESCE(SUM(dnc.subTotal), 0) AS total_notas_credito
+      FROM 
+          zona z
+      LEFT JOIN 
+          cliente c ON z.id = c.zona_id
+      LEFT JOIN 
+          venta v ON c.id = v.cliente_id AND DATE(v.fecha_venta) BETWEEN ? AND ?
+      LEFT JOIN 
+          pagos p ON c.id = p.cliente_id AND DATE(p.fecha_pago) BETWEEN ? AND ?
+      LEFT JOIN 
+          notasCredito nc ON c.id = nc.cliente_id AND nc.estado = 1
+      LEFT JOIN 
+          detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
+      GROUP BY 
+          z.id, z.nombre
+      ORDER BY 
+          z.id;
+    `;
+
+    const [rows] = await db.query(query, [fecha_inicio, fecha_fin, fecha_inicio, fecha_fin]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllVentas,
   addVenta,
@@ -190,5 +223,6 @@ module.exports = {
   getVentaByID,
   getTotal,
   updateVentaTotal,
-  getVentasByClientesxFecha
+  getVentasByClientesxFecha,
+  getResumenZonas
 };

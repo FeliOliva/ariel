@@ -266,6 +266,29 @@ const getVentasByClientesxFecha = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor al obtener ventas" });
   }
 }
+const getResumenZonas = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = req.query;
+    console.log("Fecha inicio:", fecha_inicio);
+    console.log("Fecha fin:", fecha_fin);
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+    }
+
+    const resumen = await ventasModel.getResumenZonas(fecha_inicio, fecha_fin);
+
+    if (!resumen || resumen.length === 0) {
+      return res.json([]); // Retornar un array vacío si no hay datos
+    }
+
+    res.json(resumen);
+  } catch (error) {
+    console.error("Error al obtener el resumen de zonas:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+
 
 module.exports = {
   getAllVentas,
@@ -277,5 +300,6 @@ module.exports = {
   getVentasByZona,
   getVentasByProducto,
   getVentaByID,
-  getVentasByClientesxFecha
+  getVentasByClientesxFecha,
+  getResumenZonas
 };

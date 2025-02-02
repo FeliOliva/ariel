@@ -265,13 +265,17 @@ const ResumenCuenta = () => {
   const goToResumenCuentaXZona = () => {
     navigate("/ResumenCuentaXZona");
   };
+  const goToResumenZona = () => {
+    navigate("/ResumenZonas");
+  };
 
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
       const params = { fecha_inicio: fechaInicio, fecha_fin: fechaFin };
 
+      // Ejecutar las solicitudes en paralelo con manejo de errores
       const [ventasResponse, pagosResponse, totalNotasCreditoResponse] =
-        await Promise.all([
+        await Promise.allSettled([
           axios.get(`http://localhost:3001/ventasxclientexfecha/${clienteId}`, {
             params,
           }),
@@ -283,37 +287,43 @@ const ResumenCuenta = () => {
           ),
         ]);
 
-      // Verificar si la respuesta de notas de crédito es un array o contiene un error
+      // Manejar respuesta de ventas y filtrar solo las activas (estado === 1)
+      const ventasData =
+        ventasResponse.status === "fulfilled"
+          ? ventasResponse.value.data.filter((venta) => venta.estado === 1) ||
+            []
+          : [];
+
+      // Manejar respuesta de pagos
+      const pagosData =
+        pagosResponse.status === "fulfilled"
+          ? pagosResponse.value.data || []
+          : [];
+
+      // Manejar respuesta de notas de crédito
       let notasCreditoData = [];
-      if (
-        totalNotasCreditoResponse.data &&
-        Array.isArray(totalNotasCreditoResponse.data)
-      ) {
-        notasCreditoData = totalNotasCreditoResponse.data;
+      if (totalNotasCreditoResponse.status === "fulfilled") {
+        if (Array.isArray(totalNotasCreditoResponse.value.data)) {
+          notasCreditoData = totalNotasCreditoResponse.value.data;
+        }
       } else {
-        console.warn(
-          "No se encontraron notas de crédito, estableciendo array vacío."
-        );
+        console.warn("No se encontraron notas de crédito para este cliente.");
       }
 
-      console.log("notas credito data", notasCreditoData);
+      console.log("Notas de crédito data:", notasCreditoData);
 
-      // Filtrar notas activas (estado = 1)
+      // Filtrar notas de crédito activas (estado === 1)
       const notasCreditoActivas = notasCreditoData.filter(
         (nota) => nota.estado === 1
       );
-      console.log("notas credito activas", notasCreditoActivas);
+      console.log("Notas de crédito activas:", notasCreditoActivas);
 
       // Calcular total de notas de crédito activas
       const totalNotasCreditoActivas = notasCreditoActivas.reduce(
         (sum, nota) => sum + (parseFloat(nota.total) || 0),
         0
       );
-      console.log("total notas credito activas", totalNotasCreditoActivas);
-
-      const ventasData = ventasResponse.data || [];
-      const pagosData = pagosResponse.data || [];
-      console.log("Datos de pagos recibidos:", pagosData);
+      console.log("Total notas de crédito activas:", totalNotasCreditoActivas);
 
       setVentas(ventasData);
       setPagos(pagosData);
@@ -346,10 +356,10 @@ const ResumenCuenta = () => {
           totalVentas - totalPagos - totalNotasCreditoActivas;
 
         setTotales({
-          totalVentas: totalVentas,
-          totalPagos: totalPagos,
+          totalVentas,
+          totalPagos,
           totalNC: totalNotasCreditoActivas,
-          saldoPendiente: saldoPendiente,
+          saldoPendiente,
         });
       }
     } catch (error) {
@@ -734,6 +744,9 @@ const ResumenCuenta = () => {
           </Button>
           <Button onClick={goToResumenCuentaXZona} type="primary">
             Resumen de cuenta por zona
+          </Button>
+          <Button onClick={goToResumenZona} type="primary">
+            Resumen de por todas las zonas
           </Button>
         </div>
         {showTables && (
