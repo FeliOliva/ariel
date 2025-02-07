@@ -91,6 +91,7 @@ function Compras() {
         `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
       );
       setArticulosFiltrados(response.data);
+      console.log("articulos", response.data);
     } catch (error) {
       console.error("Error fetching filtered articles:", error);
     }
@@ -297,6 +298,8 @@ function Compras() {
               placeholder="Seleccione un artículo"
               options={articulosFiltrados.map((articulo) => ({
                 label:
+                  articulo.codigo_producto +
+                  " - " +
                   articulo.nombre +
                   " - " +
                   articulo.mediciones +
