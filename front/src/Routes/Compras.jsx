@@ -21,6 +21,13 @@ import {
 } from "../style/dataTableStyles";
 import { format } from "date-fns";
 import { WarningOutlined } from "@ant-design/icons";
+import {
+  ExclamationCircleOutlined,
+  CloseOutlined,
+  SearchOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 
 function Compras() {
   const [data, setData] = useState([]);
@@ -193,6 +200,48 @@ function Compras() {
       },
     });
   };
+  const handleToggleState = async (id, currentState) => {
+    try {
+      if (currentState === 1) {
+        confirm({
+          title: "¿Esta seguro de desactivar esta venta?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/dropCompra/${id}`);
+            notification.success({
+              message: "Venta desactivada",
+              description: "La venta se desactivo exitosamente",
+              duration: 1,
+            });
+            fetchData();
+          },
+        });
+      } else {
+        confirm({
+          title: "¿Esta seguro de activar esta venta?",
+          icon: <ExclamationCircleOutlined />,
+          okText: "Si, confirmar",
+          cancelText: "Cancelar",
+          onOk: async () => {
+            await axios.put(`http://localhost:3001/upCompra/${id}`);
+            notification.success({
+              message: "Venta activado",
+              description: "La venta se activo exitosamente",
+              duration: 1,
+            });
+            fetchData();
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error ${currentState ? "deactivating" : "activating"} the article:`,
+        error
+      );
+    }
+  };
 
   const columns = [
     {
@@ -243,6 +292,17 @@ function Compras() {
         </Tooltip>
       ),
       sortable: true,
+    },
+    {
+      name: "Acciones",
+      selector: (row) => (
+        <Button
+          className="custom-button"
+          onClick={() => handleToggleState(row.id, row.estado)}
+        >
+          {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+        </Button>
+      ),
     },
     {
       name: "Detalle",

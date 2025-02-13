@@ -20,10 +20,8 @@ const addCompra = async (req, res) => {
     );
 
     for (const detalle of detalles) {
-      sub_total = Math.round(
-        detalle.cantidad * detalle.costo
-      );
-      Math.round(total += sub_total);
+      sub_total = Math.round(detalle.cantidad * detalle.costo);
+      Math.round((total += sub_total));
       await comprasModel.addDetalleCompra(
         compra_id,
         detalle.articulo_id,
@@ -68,7 +66,14 @@ const getCompraByID = async (req, res) => {
         detalles: detalleCompra.map((detalle) => ({
           articulo_id: detalle.articulo_id,
           detalle_compra_id: detalle.detalle_compra_id,
-          nombre: detalle.nombre_articulo + " " + detalle.medicion_articulo + " " + detalle.linea_articulo + " " + detalle.sublinea_articulo,
+          nombre:
+            detalle.nombre_articulo +
+            " " +
+            detalle.medicion_articulo +
+            " " +
+            detalle.linea_articulo +
+            " " +
+            detalle.sublinea_articulo,
           costo: detalle.costo,
           precio_monotributista: detalle.precio_monotributista,
           cantidad: detalle.cantidad,
@@ -93,19 +98,33 @@ const getDetalleCompraById = async (req, res) => {
   }
 };
 
-
 const updateDetalleCompra = async (req, res) => {
   try {
-    const { ID, new_costo, new_precio_monotributista, cantidad, compra_id, articulo_id } = req.body;
+    const {
+      ID,
+      new_costo,
+      new_precio_monotributista,
+      cantidad,
+      compra_id,
+      articulo_id,
+    } = req.body;
 
     const sub_total = new_costo * cantidad;
 
-
     // Actualizamos el detalle de la compra
-    await comprasModel.updateDetalleCompra(ID, new_costo, new_precio_monotributista, sub_total);
+    await comprasModel.updateDetalleCompra(
+      ID,
+      new_costo,
+      new_precio_monotributista,
+      sub_total
+    );
 
     // Actualizamos el costo del artículo en la tabla articulo
-    await comprasModel.updateCostoArticulo(articulo_id, new_costo, new_precio_monotributista);
+    await comprasModel.updateCostoArticulo(
+      articulo_id,
+      new_costo,
+      new_precio_monotributista
+    );
 
     // Recalculamos los totales de la compra
     await recalcularTotalesCompra(compra_id);
@@ -138,11 +157,33 @@ const recalcularTotalesCompra = async (compra_id) => {
     throw err;
   }
 };
+const dropCompra = async (req, res) => {
+  try {
+    const compra_id = req.params.ID;
+    await comprasModel.dropCompra(compra_id);
+    res.json({ message: "Compra eliminada" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar la compra" });
+  }
+};
+const upCompra = async (req, res) => {
+  try {
+    const compra_id = req.params.ID;
+    await comprasModel.upCompra(compra_id);
+    res.json({ message: "Compra actualizada" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar la compra" });
+  }
+};
 module.exports = {
   getAllCompras,
   addCompra,
   getComprasByProveedor,
   getCompraByID,
   updateDetalleCompra,
-  getDetalleCompraById
+  getDetalleCompraById,
+  dropCompra,
+  upCompra,
 };

@@ -16,7 +16,8 @@ const getVentasByDay = async (startDate, endDate, clienteId) => {
 const getTotalVentas = async () => {
   const query = `
     SELECT SUM(total) AS total
-    FROM venta
+    FROM venta 
+    WHERE venta.estado = 1
   `;
   const [rows] = await db.query(query);
   return rows;
@@ -25,6 +26,7 @@ const getTotalGastos = async () => {
   const query = `
     SELECT SUM(monto) AS total
     FROM gasto
+    WHERE gasto.estado = 1
   `;
   const [rows] = await db.query(query);
   return rows;
@@ -33,6 +35,7 @@ const getTotalCompras = async () => {
   const query = `
     SELECT SUM(total) AS total
     FROM compra
+    WHERE compra.estado = 1
   `;
   const [rows] = await db.query(query);
   return rows;
@@ -41,6 +44,7 @@ const getTotalPagos = async () => {
   const query = `
   SELECT SUM(monto) AS total
   FROM pagos
+  WHERE pagos.estado = 1
 `;
   const [rows] = await db.query(query);
   return rows;
@@ -49,11 +53,11 @@ const getTotalClientes = async () => {
   const query = `
     SELECT COUNT(*) AS total
     FROM cliente
+    WHERE cliente.estado = 1
   `;
   const [rows] = await db.query(query);
   return rows;
 };
-
 
 module.exports = {
   getVentasByDay,
@@ -61,5 +65,5 @@ module.exports = {
   getTotalGastos,
   getTotalCompras,
   getTotalPagos,
-  getTotalClientes
+  getTotalClientes,
 };

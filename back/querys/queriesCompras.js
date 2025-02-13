@@ -63,6 +63,7 @@ WHERE c.proveedor_id = ?;
   getDetalleCompra: "SELECT * FROM detalle_compra WHERE compra_id = ?;",
   getDetalleCompraById: `
     select id, costo, cantidad, articulo_id, precio_monotributista from detalle_compra where ID = ?;
-  `
-
+  `,
+  dropCompra: `UPDATE compra set estado = 0 WHERE id = ?;`,
+  upCompra: `UPDATE compra set estado = 1 WHERE id = ?;`,
 };
