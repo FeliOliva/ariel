@@ -119,12 +119,12 @@ const updateDetalleCompra = async (req, res) => {
       sub_total
     );
 
-    // Actualizamos el costo del artículo en la tabla articulo
-    await comprasModel.updateCostoArticulo(
-      articulo_id,
-      new_costo,
-      new_precio_monotributista
-    );
+    // // Actualizamos el costo del artículo en la tabla articulo
+    // await comprasModel.updateCostoArticulo(
+    //   articulo_id,
+    //   new_costo,
+    //   new_precio_monotributista
+    // );
 
     // Recalculamos los totales de la compra
     await recalcularTotalesCompra(compra_id);
