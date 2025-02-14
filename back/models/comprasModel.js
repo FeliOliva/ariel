@@ -82,13 +82,16 @@ const updateDetalleCompra = async (
   ID,
   new_costo,
   new_precio_monotributista,
+  cantidad,
   sub_total
 ) => {
   try {
+    console.log(new_costo, new_precio_monotributista, sub_total, cantidad, ID);
     const query = queriesCompras.updateDetalleCompra;
     await db.query(query, [
       new_costo,
       new_precio_monotributista,
+      cantidad,
       sub_total,
       ID,
     ]);

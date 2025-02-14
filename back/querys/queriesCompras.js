@@ -51,6 +51,7 @@ WHERE c.proveedor_id = ?;
       UPDATE detalle_compra
       SET costo = ?,
       precio_monotributista = ?,
+      cantidad = ?,
       sub_total = ?
       WHERE id = ?;
     `,

@@ -108,7 +108,6 @@ const updateDetalleCompra = async (req, res) => {
       compra_id,
       articulo_id,
     } = req.body;
-
     const sub_total = new_costo * cantidad;
 
     // Actualizamos el detalle de la compra
@@ -116,6 +115,7 @@ const updateDetalleCompra = async (req, res) => {
       ID,
       new_costo,
       new_precio_monotributista,
+      cantidad,
       sub_total
     );
 

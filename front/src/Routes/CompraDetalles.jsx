@@ -13,7 +13,7 @@ import {
 } from "antd";
 import {
   ArrowUpOutlined,
-  ArrowDownOutlined,
+  EditOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 
@@ -31,6 +31,7 @@ const CompraDetalles = () => {
   const [detalleCompra, setDetalleCompra] = useState({});
   const [newCosto, setNewCosto] = useState(0);
   const [newPrecioMonotributista, setNewPrecioMonotributista] = useState(0);
+  const [cantidad, setCantidad] = useState(0);
   const { confirm } = Modal;
 
   useEffect(() => {
@@ -82,6 +83,7 @@ const CompraDetalles = () => {
     console.log(response.data);
     setNewCosto(response.data.costo);
     setNewPrecioMonotributista(response.data.precio_monotributista);
+    setCantidad(response.data.cantidad);
     setDetalleCompra({
       id: response.data.id,
       costo: response.data.costo,
@@ -105,14 +107,14 @@ const CompraDetalles = () => {
         ID: detalleCompra.id,
         new_costo: newCosto,
         new_precio_monotributista: newPrecioMonotributista,
-        cantidad: detalleCompra.cantidad,
+        cantidad: cantidad,
         compra_id: compraInfo.compra_id,
         articulo_id: detalleCompra.articulo_id,
       };
       console.log(newData);
       confirm({
         title: "Confirmar",
-        content: "¿Estás seguro de que deseas aplicar el descuento?",
+        content: "¿Estás seguro de aplicar este cambio?",
         okText: "Si",
         cancelText: "No",
         onOk: async () => {
@@ -201,7 +203,7 @@ const CompraDetalles = () => {
           <Button
             className="custom-button"
             onClick={() => handleUpPrice(row.detalle_compra_id)}
-            icon={<ArrowUpOutlined />}
+            icon={<EditOutlined />}
           ></Button>
         </div>
       ),
@@ -283,6 +285,15 @@ const CompraDetalles = () => {
           <InputNumber
             value={newPrecioMonotributista}
             onChange={(value) => setNewPrecioMonotributista(value)}
+          />
+        </div>
+        <Tooltip>
+          <strong>Cantidad</strong>
+        </Tooltip>
+        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+          <InputNumber
+            value={cantidad}
+            onChange={(value) => setCantidad(value)}
           />
         </div>
         <Button onClick={handleAplyUpFilter}>Aplicar</Button>
