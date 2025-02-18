@@ -16,7 +16,7 @@ import Compras from "./Routes/Compras";
 import CompraDetalles from "./Routes/CompraDetalles";
 import ResumenCuenta from "./Routes/ResumenCuenta";
 import Gastos from "./Routes/Gastos";
-import ArticulosDetalles from "./Routes/ArticulosDetalles ";
+import ArticulosDetalles from "./Routes/ArticulosDetalles";
 import Cheques from "./Routes/Cheques";
 import ResumenCuentaXZona from "./Routes/ResuemenCuentaXZona";
 import ResumenZonas from "./Routes/ResumenZonas";

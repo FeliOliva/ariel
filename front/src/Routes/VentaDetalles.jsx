@@ -194,6 +194,82 @@ const VentaDetalles = () => {
     pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
   };
 
+  const handleGeneratePDF2 = () => {
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    // Encabezado
+    pdf.setFontSize(14);
+    pdf.text("FACTURA", 105, 20, { align: "center" });
+    pdf.setFontSize(12);
+    pdf.text("DOCUMENTO NO VÁLIDO COMO FACTURA", 105, 26, { align: "center" });
+
+    pdf.setFontSize(10);
+    pdf.text(`Farmacia: ${ventaInfo.farmacia}`, 10, 40);
+    pdf.text(`Cliente: ${ventaInfo.nombre_cliente}`, 10, 45);
+    pdf.text(`Dirección: ${ventaInfo.direccion}`, 10, 50);
+    pdf.text(`Localidad: ${ventaInfo.localidad}`, 10, 55);
+
+    const fecha = new Date(ventaInfo.fecha);
+    const dia = fecha.getDate().toString().padStart(2, "0");
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, "0");
+    const año = fecha.getFullYear();
+
+    pdf.text(`Fecha: ${dia}/${mes}/${año}`, 150, 40);
+    pdf.text(`Nro. Venta: ${ventaInfo.nroVenta}`, 150, 45);
+
+    // Línea divisoria
+    pdf.line(10, 60, 200, 60);
+
+    // Datos de la tabla
+    const tableData = data.map((row) => ({
+      cantidad: row.cantidad,
+      nombre: row.nombre,
+      cod_articulo: row.cod_articulo,
+      precio_unitario: `$${row.precio_monotributista}`,
+      importe: `$${row.sub_total}`,
+    }));
+
+    // Renderizar la tabla con margen inferior extra
+    pdf.autoTable({
+      startY: 65,
+      head: [["Cant", "Descripción", "Código", "Precio Unitario", "Importe"]],
+      body: tableData.map((row) => [
+        row.cantidad,
+        row.nombre,
+        row.cod_articulo,
+        row.precio_unitario,
+        row.importe,
+      ]),
+      theme: "grid",
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      columnStyles: {
+        0: { cellWidth: 10 }, // Cantidad
+        1: { cellWidth: 90 }, // Descripción
+        2: { cellWidth: 30 }, // Código
+        3: { cellWidth: 35 }, // Precio Unitario
+        4: { cellWidth: 25 }, // Importe
+      },
+      pageBreak: "auto",
+      margin: { top: 30, right: 15, bottom: 15 }, // Añadir margen inferior
+    });
+
+    // Posición final después de la tabla
+    let finalY = pdf.lastAutoTable.finalY + 10;
+
+    // Verificar si los totales entran en la página actual
+    if (finalY > 270) {
+      pdf.addPage();
+      finalY = 20; // Reiniciar la posición en la nueva página
+    }
+
+    pdf.text("Firma", 10, finalY);
+    // Guardar PDF
+    pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
+  };
+
   const handleEditPrice = async (detalleId) => {
     try {
       const response = await axios.get(
@@ -318,6 +394,13 @@ const VentaDetalles = () => {
         style={{ marginLeft: 10 }}
       >
         Generar Factura
+      </Button>
+      <Button
+        onClick={handleGeneratePDF2}
+        type="primary"
+        style={{ marginLeft: 10 }}
+      >
+        Generar Factura Reparto
       </Button>
       {loading ? (
         <p>Cargando...</p>

@@ -10,6 +10,8 @@ import {
   Drawer,
   InputNumber,
   Modal,
+  Dropdown,
+  Space,
   notification,
 } from "antd";
 import axios from "axios";
@@ -30,6 +32,7 @@ import {
   DeleteOutlined,
   CheckCircleOutlined,
   EyeOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import "../style/style.css";
 
@@ -60,7 +63,12 @@ const ResumenCuenta = () => {
 
   const generateNotaCreditoPDF = () => {
     if (!notasCredito || notasCredito.length === 0) {
-      console.error("No hay notas de crédito disponibles.");
+      console.log("no hay");
+      notification.warning({
+        message: "No existen notas de credito",
+        description: "Para el cliente seleccionado",
+        duration: 1,
+      });
       return;
     }
     if (!selectedCliente) {
@@ -71,10 +79,6 @@ const ResumenCuenta = () => {
     const notasCreditoActivas = notasCredito.filter(
       (nota) => nota.estado === 1
     );
-
-    if (notasCreditoActivas.length === 0) {
-      return message.warning("No hay notas de crédito activas para imprimir.");
-    }
 
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -730,6 +734,42 @@ const ResumenCuenta = () => {
     },
   ];
 
+  const items = [
+    {
+      label: (
+        <a target="_blank" onClick={goToResumenZona}>
+          Resumen por zona
+        </a>
+      ),
+      key: "0",
+    },
+    {
+      label: (
+        <a target="_blank" onClick={goToResumenCuentaXZona}>
+          Resumen por Zonas
+        </a>
+      ),
+      key: "1",
+    },
+  ];
+  const items2 = [
+    {
+      label: (
+        <a target="_blank" onClick={generateNotaCreditoPDF}>
+          Generar Nota de Credito
+        </a>
+      ),
+      key: "0",
+    },
+    {
+      label: (
+        <a target="_blank" onClick={generatePDF}>
+          Descargar Resumen
+        </a>
+      ),
+      key: "1",
+    },
+  ];
   return (
     <MenuLayout>
       <div style={{ padding: "20px" }}>
@@ -742,12 +782,29 @@ const ResumenCuenta = () => {
           <Button type="primary" onClick={handleSearch}>
             Buscar
           </Button>
-          <Button onClick={goToResumenCuentaXZona} type="primary">
-            Resumen de cuenta por zona
-          </Button>
-          <Button onClick={goToResumenZona} type="primary">
-            Resumen de por todas las zonas
-          </Button>
+          <Dropdown
+            menu={{
+              items,
+            }}
+          >
+            <a
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "6px 12px",
+                borderRadius: "5px",
+                backgroundColor: "green",
+                color: "white",
+                textDecoration: "none",
+              }}
+              onClick={(e) => e.preventDefault()}
+            >
+              <Space>
+                Resumenes
+                <DownOutlined />
+              </Space>
+            </a>
+          </Dropdown>
         </div>
         {showTables && (
           <>
@@ -755,6 +812,7 @@ const ResumenCuenta = () => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: "20px",
                 padding: "10px",
                 borderRadius: "5px",
@@ -763,6 +821,30 @@ const ResumenCuenta = () => {
               <h2>
                 Cliente: {selectedCliente?.nombre} {selectedCliente?.apellido}
               </h2>
+              <Dropdown
+                menu={{
+                  items: items2,
+                }}
+              >
+                <a
+                  style={{
+                    backgroundColor: "green",
+                    color: "white",
+                    fontSize: "15px",
+                    borderRadius: "5px",
+                    padding: "6px 10px",
+                    width: "fit-content",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <Space>
+                    Descargas
+                    <DownOutlined />
+                  </Space>
+                </a>
+              </Dropdown>
               <Button
                 onClick={() => setDrawerVisible(true)}
                 style={{
@@ -783,22 +865,7 @@ const ResumenCuenta = () => {
               >
                 Agregar Nota Credito
               </Button>
-              <Button
-                onClick={generateNotaCreditoPDF}
-                type="primary"
-                style={{
-                  marginLeft: "10px",
-                }}
-              >
-                Generar nota credito
-              </Button>
-              <Button
-                onClick={generatePDF}
-                type="primary"
-                style={{ marginLeft: "10px" }}
-              >
-                Descargar Resumen
-              </Button>
+              ;
             </div>
             <div style={{ marginBottom: "20px" }}>
               <DataTable title="Ventas" columns={columns} data={ventas} />

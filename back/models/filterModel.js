@@ -44,7 +44,6 @@ const getTotalPagos = async () => {
   const query = `
   SELECT SUM(monto) AS total
   FROM pagos
-  WHERE pagos.estado = 1
 `;
   const [rows] = await db.query(query);
   return rows;

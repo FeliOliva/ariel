@@ -8,6 +8,8 @@ import {
   InputNumber,
   DatePicker,
   message,
+  Modal,
+  notification,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
@@ -27,7 +29,7 @@ const AgregarPagoDrawer = ({
 }) => {
   const [form] = Form.useForm();
   const [isCheque, setIsCheque] = useState(false);
-
+  const { confirm } = Modal;
   const onFinish = async (values) => {
     try {
       const {
@@ -38,30 +40,44 @@ const AgregarPagoDrawer = ({
         metodo_pago,
         ...rest
       } = values;
+      confirm({
+        title: "Confirmar pago",
+        content: "¿Seguro que desea registrar este pago?",
+        okText: "Si",
+        cancelText: "No",
+        onOk: async () => {
+          if (metodo_pago === "cheque") {
+            // Enviar datos del cheque al backend
+            await axios.post("http://localhost:3001/addCheque", {
+              banco,
+              nro_cheque,
+              fecha_emision: fecha_emision.format("YYYY-MM-DD"),
+              fecha_cobro: fecha_cobro.format("YYYY-MM-DD"),
+              importe: rest.monto,
+            });
+          }
 
-      if (metodo_pago === "cheque") {
-        // Enviar datos del cheque al backend
-        await axios.post("http://localhost:3001/addCheque", {
-          banco,
-          nro_cheque,
-          fecha_emision: fecha_emision.format("YYYY-MM-DD"),
-          fecha_cobro: fecha_cobro.format("YYYY-MM-DD"),
-          importe: rest.monto,
-        });
-      }
+          // Enviar datos del pago al backend
+          await axios.post("http://localhost:3001/addPago", {
+            ...rest,
+            cliente_id: clienteId,
+            nro_pago: nextNroPago,
+            metodo_pago,
+          });
 
-      // Enviar datos del pago al backend
-      await axios.post("http://localhost:3001/addPago", {
-        ...rest,
-        cliente_id: clienteId,
-        nro_pago: nextNroPago,
-        metodo_pago,
+         notification.success({
+           message: "Pago registrado",
+           description: "El pago se ha registrado correctamente.",  
+           duration: 1,
+         })
+          form.resetFields();
+          onPagoAdded(); // Notifica al componente padre sobre el nuevo pago
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+          onClose(); // Cierra el drawer
+        },
       });
-
-      message.success("Pago registrado exitosamente");
-      form.resetFields();
-      onPagoAdded(); // Notifica al componente padre sobre el nuevo pago
-      onClose(); // Cierra el drawer
     } catch (error) {
       console.error("Error al registrar el pago:", error);
       message.error("Hubo un problema al registrar el pago");

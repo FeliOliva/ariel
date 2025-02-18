@@ -28,9 +28,10 @@ const addArticulo = async (req, res) => {
         .status(400)
         .json({ error: "El campo linea_id es obligatorio" });
     }
+    let nombreMayus = nombre.toUpperCase();
 
     await articuloModel.addArticulo(
-      nombre,
+      nombreMayus,
       mediciones,
       stock,
       codigo_producto,

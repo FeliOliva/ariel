@@ -10,36 +10,38 @@ const getAllClients = async (req, res) => {
 const addClient = async (req, res) => {
   try {
     const {
-      farmacia,
-      nombre,
-      apellido,
-      direccion,
-      email,
-      telefono,
-      cuil,
+      farmacia = "",  // Valores por defecto para evitar undefined
+      nombre = "",
+      apellido = "",
+      direccion = "",
+      email = "",
+      telefono = "",
+      cuil = "",
       zona_id,
       tipo_cliente,
-      localidad,
-      instagram,
+      localidad = "",
+      instagram = "",
     } = req.body;
-    const emailValue = email ?? "";
-    const telefonoValue = telefono ?? "";
-    const direccionValue = direccion ?? "";
-    const cuilValue = cuil ?? "";
-    const localidadValue = localidad ?? "";
+    const direccionValue = direccion ? direccion.toUpperCase() : "";
+    const cuilValue = cuil ? cuil.toUpperCase() : "";
+    const localidadValue = localidad ? localidad.toUpperCase() : "";
+    const instagramValue = instagram ? instagram.toUpperCase() : "";
+    const nombreMayus = nombre ? nombre.toUpperCase() : "";
+    const apellidoMayus = apellido ? apellido.toUpperCase() : "";
+    const farmaciaMayus = farmacia ? farmacia.toUpperCase() : "";
 
     const client = await clientModels.addClient(
-      farmacia,
-      nombre,
-      apellido,
+      farmaciaMayus,
+      nombreMayus,
+      apellidoMayus,
       direccionValue,
-      emailValue,
-      telefonoValue,
+      email,  // Email y teléfono no necesitan toUpperCase()
+      telefono,
       cuilValue,
       zona_id,
       tipo_cliente,
       localidadValue,
-      instagram
+      instagramValue
     );
     res
       .status(201)

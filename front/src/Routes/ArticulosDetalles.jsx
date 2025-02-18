@@ -17,7 +17,7 @@ const ArticulosDetalles = () => {
         const response = await axios.get(
           "http://localhost:3001/getArticulosOrdenados"
         );
-
+        console.log(response.data);
         // Filtrar los artículos activos (estado = 1)
         const filteredData = response.data.filter((item) => item.estado === 1);
 
@@ -79,7 +79,9 @@ const ArticulosDetalles = () => {
     const phone = "Teléfono: +54 9 3518 16-8151";
     const instagram = "Instagram: @distribuidoraRenacer";
 
-    // Function to add header with image and text
+    // Lista de IDs a excluir
+    const excludedLineIds = []; // IDs de línea a excluir
+
     const addHeader = (doc, isFirstPage = false) => {
       doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
       if (isFirstPage) {
@@ -92,14 +94,15 @@ const ArticulosDetalles = () => {
     };
 
     if (data.length > 0) {
-      addHeader(pdf, true); // Header on the first page
+      addHeader(pdf, true);
 
-      pdf.setFontSize(14);
+      // Filtrar los artículos excluyendo los IDs especificados
+      const filteredData = data.filter(
+        (item) => !excludedLineIds.includes(item.linea_id)
+      );
 
-      // Agrupar los datos por línea
-      const groupedData = groupByLine(data);
+      const groupedData = groupByLine(filteredData);
 
-      // Ordenar los artículos por nombre dentro de cada línea
       Object.keys(groupedData).forEach((line) => {
         groupedData[line].sort((a, b) =>
           a.articulo_nombre.localeCompare(b.articulo_nombre)
@@ -111,13 +114,12 @@ const ArticulosDetalles = () => {
       Object.keys(groupedData).forEach((line) => {
         const lineTitle = `LÍNEA ${line}`;
         const tableData = groupedData[line].map((row) => {
-          // Verifica si la medición es un guion y, en ese caso, lo omite
           const medicion =
             row.articulo_medicion === "-" ? "" : row.articulo_medicion;
 
           return {
             codigo: row.codigo_producto,
-            nombre: row.articulo_nombre + " " + medicion, // Usar medición solo si no es un guion
+            nombre: row.articulo_nombre + " " + medicion,
             sublinea: row.sublinea_nombre,
             precio:
               "$" +
