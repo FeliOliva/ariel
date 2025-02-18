@@ -738,7 +738,7 @@ const ResumenCuenta = () => {
     {
       label: (
         <a target="_blank" onClick={goToResumenZona}>
-          Resumen por zona
+          Resumen Total por zonas
         </a>
       ),
       key: "0",
@@ -746,7 +746,7 @@ const ResumenCuenta = () => {
     {
       label: (
         <a target="_blank" onClick={goToResumenCuentaXZona}>
-          Resumen por Zonas
+          Resumen de clientes por zona
         </a>
       ),
       key: "1",

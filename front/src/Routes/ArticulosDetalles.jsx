@@ -80,7 +80,7 @@ const ArticulosDetalles = () => {
     const instagram = "Instagram: @distribuidoraRenacer";
 
     // Lista de IDs a excluir
-    const excludedLineIds = []; // IDs de línea a excluir
+    const excludedLineIds = [69]; // IDs de línea a excluir
 
     const addHeader = (doc, isFirstPage = false) => {
       doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
