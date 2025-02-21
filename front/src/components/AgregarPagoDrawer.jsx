@@ -65,11 +65,11 @@ const AgregarPagoDrawer = ({
             metodo_pago,
           });
 
-         notification.success({
-           message: "Pago registrado",
-           description: "El pago se ha registrado correctamente.",  
-           duration: 1,
-         })
+          notification.success({
+            message: "Pago registrado",
+            description: "El pago se ha registrado correctamente.",
+            duration: 1,
+          });
           form.resetFields();
           onPagoAdded(); // Notifica al componente padre sobre el nuevo pago
           setTimeout(() => {

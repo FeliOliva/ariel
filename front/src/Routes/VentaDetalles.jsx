@@ -226,19 +226,17 @@ const VentaDetalles = () => {
       nombre: row.nombre,
       cod_articulo: row.cod_articulo,
       precio_unitario: `$${row.precio_monotributista}`,
-      importe: `$${row.sub_total}`,
     }));
 
     // Renderizar la tabla con margen inferior extra
     pdf.autoTable({
       startY: 65,
-      head: [["Cant", "Descripción", "Código", "Precio Unitario", "Importe"]],
+      head: [["Cant", "Descripción", "Código", "Precio Unitario"]],
       body: tableData.map((row) => [
         row.cantidad,
         row.nombre,
         row.cod_articulo,
         row.precio_unitario,
-        row.importe,
       ]),
       theme: "grid",
       styles: {
@@ -247,10 +245,9 @@ const VentaDetalles = () => {
       },
       columnStyles: {
         0: { cellWidth: 10 }, // Cantidad
-        1: { cellWidth: 90 }, // Descripción
+        1: { cellWidth: 110 }, // Descripción
         2: { cellWidth: 30 }, // Código
         3: { cellWidth: 35 }, // Precio Unitario
-        4: { cellWidth: 25 }, // Importe
       },
       pageBreak: "auto",
       margin: { top: 30, right: 15, bottom: 15 }, // Añadir margen inferior
