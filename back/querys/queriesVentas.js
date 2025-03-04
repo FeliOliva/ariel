@@ -158,12 +158,14 @@ WHERE dv.venta_id = ?;
         (SELECT SUM(total_con_descuento) 
          FROM venta 
          WHERE cliente_id = v.cliente_id
+         AND estado = 1  
          AND DATE(fecha_venta) BETWEEN DATE(?) AND DATE(?)), 0, 'de_DE'
     ) AS total_ventas_formateado
   FROM venta v
   JOIN cliente c ON v.cliente_id = c.id
   JOIN zona z ON v.zona_id = z.id
   WHERE v.cliente_id = ?
+    AND v.estado = 1
     AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?);
 `
 };

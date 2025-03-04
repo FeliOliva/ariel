@@ -230,6 +230,8 @@ const getVentasByClientesxFecha = async (req, res) => {
   try {
     const { ID: cliente_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query;
+    console.log(fecha_fin);
+    console.log(fecha_inicio);
 
     console.log("ID desde el back:", cliente_id);
     console.log("Fecha inicio:", fecha_inicio);

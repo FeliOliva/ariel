@@ -276,7 +276,7 @@ const ResumenCuenta = () => {
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
       const params = { fecha_inicio: fechaInicio, fecha_fin: fechaFin };
-
+      console.log(fechaInicio, fechaFin);
       // Ejecutar las solicitudes en paralelo con manejo de errores
       const [ventasResponse, pagosResponse, totalNotasCreditoResponse] =
         await Promise.allSettled([
@@ -314,21 +314,17 @@ const ResumenCuenta = () => {
         console.warn("No se encontraron notas de crédito para este cliente.");
       }
 
-      console.log("Notas de crédito data:", notasCreditoData);
-
       // Filtrar notas de crédito activas (estado === 1)
       const notasCreditoActivas = notasCreditoData.filter(
         (nota) => nota.estado === 1
       );
-      console.log("Notas de crédito activas:", notasCreditoActivas);
 
       // Calcular total de notas de crédito activas
       const totalNotasCreditoActivas = notasCreditoActivas.reduce(
         (sum, nota) => sum + (parseFloat(nota.total) || 0),
         0
       );
-      console.log("Total notas de crédito activas:", totalNotasCreditoActivas);
-
+      console.log("ventas", ventasData);
       setVentas(ventasData);
       setPagos(pagosData);
       setNotasCredito(notasCreditoData);
