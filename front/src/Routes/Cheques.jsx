@@ -11,12 +11,23 @@ import {
   DeleteOutlined,
   CheckCircleOutlined,
   WarningOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
-import { Button, notification, Modal, Tooltip } from "antd";
+import {
+  Button,
+  notification,
+  Modal,
+  Tooltip,
+  Drawer,
+  Input,
+  InputNumber,
+} from "antd";
 
 const Cheques = () => {
   const [cheques, setCheques] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentCheque, setCurrentCheque] = useState({});
+  const [open, setOpen] = useState(false);
   const { confirm } = Modal;
   useEffect(() => {
     fetchData();
@@ -26,6 +37,7 @@ const Cheques = () => {
     try {
       const response = await axios.get("http://localhost:3001/cheques");
       setCheques(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -78,6 +90,17 @@ const Cheques = () => {
       );
     }
   };
+  const handleOpenEditDrawer = async (id) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getChequeByID/${id}`
+      );
+      setCurrentCheque(response.data);
+      setOpen(true);
+    } catch (error) {
+      console.error("Error fetching the data:", error);
+    }
+  };
   const columns = [
     {
       name: "Fecha de emision",
@@ -116,6 +139,28 @@ const Cheques = () => {
       sortable: true,
     },
     {
+      name: "Cliente",
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nombre_cliente}
+        >
+          <span>{row.nombre_cliente}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      name: "Nro Pago",
+      selector: (row) => (
+        <Tooltip
+          className={row.estado === 0 ? "strikethrough" : ""}
+          title={row.nro_pago}
+        >
+          <span>{row.nro_pago}</span>
+        </Tooltip>
+      ),
+    },
+    {
       name: "Banco",
       selector: (row) => (
         <Tooltip
@@ -150,7 +195,47 @@ const Cheques = () => {
         </Button>
       ),
     },
+    {
+      name: "Editar",
+      cell: (row) => (
+        <Button
+          className="custom-button"
+          onClick={() => handleOpenEditDrawer(row.id)}
+          icon={<EditOutlined />}
+        ></Button>
+      ),
+    },
   ];
+  const handleSaveChanges = async () => {
+    try {
+      const payLoad = {
+        id: currentCheque.id,
+        banco: currentCheque.banco,
+        nro_cheque: currentCheque.nro_cheque,
+        fecha_emision: currentCheque.fecha_emision,
+        fecha_cobro: currentCheque.fecha_cobro,
+        importe: currentCheque.importe,
+      };
+      console.log("Payload", payLoad);
+      await axios.put(`http://localhost:3001/updateCheques/`, payLoad);
+      notification.success({
+        message: "Cheque actualizado",
+        description: "El cheque se actualizó correctamente",
+        duration: 2,
+        placement: "topRight",
+      });
+      fetchData();
+      setOpen(false);
+    } catch (error) {
+      console.error("Error actualizando el cheque:", error);
+      notification.error({
+        message: "Error",
+        description: "No se pudo actualizar el cheque",
+        duration: 2,
+        placement: "topRight",
+      });
+    }
+  };
 
   return (
     <MenuLayout>
@@ -171,6 +256,74 @@ const Cheques = () => {
           },
         }}
       />
+      <Drawer
+        open={open}
+        width={400}
+        title="Editar Cheque"
+        onClose={() => setOpen(false)}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Tooltip>Banco</Tooltip>
+          <Input
+            value={currentCheque?.banco}
+            onChange={(e) =>
+              setCurrentCheque((prev) => ({ ...prev, banco: e.target.value }))
+            }
+          />
+
+          <Tooltip>Número de Cheque</Tooltip>
+          <Input
+            value={currentCheque?.nro_cheque}
+            onChange={(e) =>
+              setCurrentCheque((prev) => ({
+                ...prev,
+                nro_cheque: e.target.value,
+              }))
+            }
+          />
+
+          <Tooltip>Fecha de Emisión</Tooltip>
+          <Input
+            type="date"
+            value={dayjs(currentCheque?.fecha_emision).format("YYYY-MM-DD")}
+            onChange={(e) =>
+              setCurrentCheque((prev) => ({
+                ...prev,
+                fecha_emision: e.target.value,
+              }))
+            }
+          />
+
+          <Tooltip>Fecha de Cobro</Tooltip>
+          <Input
+            type="date"
+            value={dayjs(currentCheque?.fecha_cobro).format("YYYY-MM-DD")}
+            onChange={(e) =>
+              setCurrentCheque((prev) => ({
+                ...prev,
+                fecha_cobro: e.target.value,
+              }))
+            }
+          />
+
+          <Tooltip>Importe</Tooltip>
+          <InputNumber
+            style={{ width: "100%" }}
+            value={currentCheque?.importe}
+            onChange={(value) =>
+              setCurrentCheque((prev) => ({ ...prev, importe: value }))
+            }
+          />
+
+          <Button
+            type="primary"
+            onClick={handleSaveChanges}
+            style={{ marginTop: 10 }}
+          >
+            Guardar Cambios
+          </Button>
+        </div>
+      </Drawer>
     </MenuLayout>
   );
 };

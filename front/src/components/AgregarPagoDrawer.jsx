@@ -54,6 +54,8 @@ const AgregarPagoDrawer = ({
               fecha_emision: fecha_emision.format("YYYY-MM-DD"),
               fecha_cobro: fecha_cobro.format("YYYY-MM-DD"),
               importe: rest.monto,
+              cliente_id: clienteId,
+              nro_pago: nextNroPago,
             });
           }
 
@@ -72,9 +74,9 @@ const AgregarPagoDrawer = ({
           });
           form.resetFields();
           onPagoAdded(); // Notifica al componente padre sobre el nuevo pago
-          setTimeout(() => {
-            window.location.reload();
-          }, 1200);
+          // setTimeout(() => {
+          //   window.location.reload();
+          // }, 1200);
           onClose(); // Cierra el drawer
         },
       });
