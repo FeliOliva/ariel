@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button } from "antd";
+import { Button, Drawer } from "antd";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import imageUrl from "../logoRenacer.png";
+import LineaInput from "../components/LineaInput";
 
 const ArticulosDetalles = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [lineaId, setLineaId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -220,7 +223,111 @@ const ArticulosDetalles = () => {
       sortable: true,
     },
   ];
+  const openDrawer = () => {
+    setOpen(true);
+  };
+  const getArticulosByLineaID = async () => {
+    if (!lineaId) {
+      console.warn("ID de línea inválido");
+      return;
+    }
+    const linea_id = lineaId.id;
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getArticulosByLineaID/${linea_id}`
+      );
+      console.log(response.data);
+      const data = response.data;
+      handleGeneratePDFlinea(data, lineaId, imageUrl);
+    } catch (error) {
+      console.error("Error fetching the data:", error);
+    }
+  };
+  const handleGeneratePDFlinea = (data, lineaId, imageUrl) => {
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.width;
+    const marginTop = 40;
+    const titleHeight = 10;
+    const rowHeight = 7;
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const phone = "Teléfono: +54 9 3518 16-8151";
+    const instagram = "Instagram: @distribuidoraRenacer";
 
+    const addHeader = (doc, isFirstPage = false) => {
+      doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
+      if (isFirstPage) {
+        doc.setFontSize(20);
+        doc.text("Distribuidora Renacer", logoWidth + 10, 20);
+        doc.setFontSize(12);
+        doc.text(phone, logoWidth + 10, 30);
+        doc.text(instagram, logoWidth + 10, 37);
+      }
+    };
+
+    if (!data || data.length === 0 || !lineaId) {
+      console.warn("No hay datos para generar el PDF");
+      return;
+    }
+
+    addHeader(pdf, true);
+
+    // Agregar el nombre de la línea
+    pdf.setFontSize(16);
+    pdf.setTextColor(0);
+    const lineTitle = `LÍNEA: ${lineaId.nombre}`;
+    const titleX = (pageWidth - pdf.getTextWidth(lineTitle)) / 2;
+    const titleY = 50;
+    pdf.text(lineTitle, titleX, titleY);
+
+    let currentY = marginTop + titleHeight + 5;
+
+    // Ordenar los artículos por nombre
+    const sortedData = [...data].sort((a, b) =>
+      a.articulo_nombre.localeCompare(b.articulo_nombre)
+    );
+
+    const tableData = sortedData.map((row) => {
+      const medicion =
+        row.articulo_medicion === "-" ? "" : row.articulo_medicion;
+      return [
+        row.codigo_producto,
+        row.articulo_nombre + " " + medicion,
+        row.sublinea_nombre,
+        "$" +
+          parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }),
+      ];
+    });
+
+    pdf.autoTable({
+      startY: currentY,
+      head: [["Código", "Artículo", "Sublínea", "Precio"]],
+      body: tableData,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: {
+        fillColor: [200, 200, 200],
+        textColor: 0,
+        fontStyle: "bold",
+      },
+      margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
+      tableWidth: pageWidth - 10,
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 25 },
+      },
+      didDrawPage: (data) => {
+        addHeader(pdf, false);
+      },
+    });
+
+    pdf.save(`Articulos_${lineaId.nombre}.pdf`);
+  };
   return (
     <MenuLayout>
       <Button
@@ -238,6 +345,30 @@ const ArticulosDetalles = () => {
         >
           Generar Lista de Artículos
         </Button>
+        <Button
+          onClick={openDrawer}
+          type="primary"
+          style={{ marginBottom: 10 }}
+        >
+          Imprimir por linea
+        </Button>
+        <Drawer
+          title="Imprimir por línea"
+          placement="right"
+          closable={true}
+          onClose={() => setOpen(false)}
+          open={open}
+          width={400}
+        >
+          <LineaInput onChangeLinea={setLineaId} />
+          <Button
+            onClick={getArticulosByLineaID}
+            type="primary"
+            style={{ marginTop: 10 }}
+          >
+            Imprimir
+          </Button>
+        </Drawer>
 
         {loading ? (
           <p>Cargando...</p>

@@ -87,7 +87,31 @@ module.exports = {
   WHERE 
       a.proveedor_id = ? 
       AND a.estado = 1;`,
-    getArticulosByLineaID: `SELECT * FROM articulo WHERE linea_id = ?;`,
+    getArticulosByLineaID: `SELECT 
+    a.nombre AS articulo_nombre,
+    a.mediciones AS articulo_medicion,
+    a.estado AS estado,
+    l.nombre AS linea_nombre,
+    sl.nombre AS sublinea_nombre,
+    a.id AS articulo_id,
+    a.stock,
+    a.codigo_producto,
+    a.costo,
+    a.linea_id,
+    a.precio_monotributista,
+    a.precio_oferta
+FROM 
+    articulo a
+LEFT JOIN 
+    linea l ON a.linea_id = l.id
+LEFT JOIN 
+    subLinea sl ON a.subLinea_id = sl.id
+WHERE 
+    l.estado = 1 AND sl.estado = 1 AND a.linea_id = ?
+ORDER BY 
+    l.nombre ASC, 
+    sl.nombre ASC,
+    a.nombre ASC; `,
     getArticulosBySubLineaID: `SELECT * FROM articulo WHERE subLinea_id = ?;`,
     increasePrices: `
         UPDATE articulo 

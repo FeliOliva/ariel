@@ -26,4 +26,5 @@ router.post("/updateLog", articulosControllers.updateLogPrecios);
 router.get("/logsPreciosById/:ID", articulosControllers.logsPreciosById);
 router.put("/deshacerCambios/:id", articulosControllers.deshacerCambios);
 router.get("/getArticulosOrdenados", articulosControllers.getArticulosOrdenados);
+
 module.exports = router;
