@@ -131,3 +131,19 @@
 .detalle-container tr:hover {
   background: #f1f1f1;
 }
+.button-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* Espaciado entre botones */
+  margin-bottom: 20px; /* Espaciado con la tabla */
+}
+
+.button-container button {
+  min-width: 200px; /* Ancho mínimo para uniformidad */
+  padding: 10px 15px; /* Espaciado interno */
+  font-size: 16px; /* Tamaño de texto */
+}
+
+.drawer-button {
+  margin-top: 15px; /* Espaciado extra para el botón dentro del Drawer */
+}

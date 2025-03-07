@@ -7,6 +7,7 @@ import DataTable from "react-data-table-component";
 import MenuLayout from "../components/MenuLayout";
 import imageUrl from "../logoRenacer.png";
 import LineaInput from "../components/LineaInput";
+import "../style/style.css";
 
 const ArticulosDetalles = () => {
   const [data, setData] = useState([]);
@@ -328,16 +329,94 @@ const ArticulosDetalles = () => {
 
     pdf.save(`Articulos_${lineaId.nombre}.pdf`);
   };
+  const handleImprimirMedicamentos = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getArticulosByLineaID/69`
+      );
+      console.log(response.data);
+      const data = response.data;
+      const linea = "Medicamentos"; // Ahora es solo un string
+      handleGeneratePDFMedicamentos(data, linea);
+    } catch (error) {
+      console.error("Error fetching the data:", error);
+    }
+  };
+
+  const handleGeneratePDFMedicamentos = (data, lineaId) => {
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.width;
+
+    if (!data || data.length === 0 || !lineaId) {
+      console.warn("No hay datos para generar el PDF");
+      return;
+    }
+
+    // Agregar el nombre de la línea centrado en la parte superior
+    pdf.setFontSize(16);
+    pdf.setTextColor(0);
+    const lineTitle = `LÍNEA: ${lineaId.toUpperCase()}`;
+    const titleX = (pageWidth - pdf.getTextWidth(lineTitle)) / 2;
+    pdf.text(lineTitle, titleX, 20);
+
+    let currentY = 30; // Espacio antes de la tabla
+
+    // Ordenar los artículos por nombre
+    const sortedData = [...data].sort((a, b) =>
+      a.articulo_nombre.localeCompare(b.articulo_nombre)
+    );
+
+    // Convertir los datos en formato de tabla
+    const tableData = sortedData.map((row) => {
+      const medicion =
+        row.articulo_medicion === "-" ? "" : row.articulo_medicion;
+      return [
+        row.codigo_producto,
+        row.articulo_nombre + " " + medicion,
+        row.sublinea_nombre,
+        "$" +
+          parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }),
+      ];
+    });
+
+    // Generar tabla sin header ni logo
+    pdf.autoTable({
+      startY: currentY,
+      head: [["Código", "Artículo", "Sublínea", "Precio"]],
+      body: tableData,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: {
+        fillColor: [200, 200, 200],
+        textColor: 0,
+        fontStyle: "bold",
+      },
+      margin: { top: 10, right: 5, bottom: 5, left: 5 },
+      tableWidth: pageWidth - 10,
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 25 },
+      },
+    });
+
+    pdf.save(`Articulos_${lineaId}.pdf`);
+  };
+
   return (
     <MenuLayout>
-      <Button
-        onClick={() => window.history.back()}
-        type="primary"
-        style={{ marginBottom: 10 }}
-      >
-        Volver
-      </Button>
-      <div>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Button
+          onClick={() => window.history.back()}
+          type="primary"
+          style={{ marginBottom: 10 }}
+        >
+          Volver
+        </Button>
         <Button
           onClick={handleGeneratePDF}
           type="primary"
@@ -352,39 +431,45 @@ const ArticulosDetalles = () => {
         >
           Imprimir por linea
         </Button>
-        <Drawer
-          title="Imprimir por línea"
-          placement="right"
-          closable={true}
-          onClose={() => setOpen(false)}
-          open={open}
-          width={400}
+        <Button
+          onClick={handleImprimirMedicamentos}
+          type="primary"
+          style={{ marginBottom: 10 }}
         >
-          <LineaInput onChangeLinea={setLineaId} />
-          <Button
-            onClick={getArticulosByLineaID}
-            type="primary"
-            style={{ marginTop: 10 }}
-          >
-            Imprimir
-          </Button>
-        </Drawer>
-
-        {loading ? (
-          <p>Cargando...</p>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={data}
-            pagination
-            customStyles={{
-              rows: { style: { minHeight: "60px" } },
-              headCells: { style: { fontSize: "20px", padding: "12px" } },
-              cells: { style: { fontSize: "18px", padding: "10px" } },
-            }}
-          />
-        )}
+          Imprimir Medicamentos
+        </Button>
       </div>
+      <Drawer
+        title="Imprimir por línea"
+        placement="right"
+        closable={true}
+        onClose={() => setOpen(false)}
+        open={open}
+        width={400}
+      >
+        <LineaInput onChangeLinea={setLineaId} />
+        <Button
+          onClick={getArticulosByLineaID}
+          type="primary"
+          style={{ marginTop: 10 }}
+        >
+          Imprimir
+        </Button>
+      </Drawer>
+      {loading ? (
+        <p>Cargando...</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          pagination
+          customStyles={{
+            rows: { style: { minHeight: "60px" } },
+            headCells: { style: { fontSize: "20px", padding: "12px" } },
+            cells: { style: { fontSize: "18px", padding: "10px" } },
+          }}
+        />
+      )}
     </MenuLayout>
   );
 };
