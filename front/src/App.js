@@ -20,6 +20,8 @@ import ArticulosDetalles from "./Routes/ArticulosDetalles";
 import Cheques from "./Routes/Cheques";
 import ResumenCuentaXZona from "./Routes/ResuemenCuentaXZona";
 import ResumenZonas from "./Routes/ResumenZonas";
+import Pedido from "./Routes/Pedido"
+import PedidoDetalles from "./Routes/PedidoDetalles";
 function App() {
   return (
     <Routes>
@@ -43,6 +45,8 @@ function App() {
       <Route path="/Cheques" element={<Cheques />} />
       <Route path="/ResumenCuentaXZona" element={<ResumenCuentaXZona />} />
       <Route path="/ResumenZonas" element={<ResumenZonas />} />
+      <Route path="/pedido" element={<Pedido />} />
+      <Route path="/pedido/:id" element={<PedidoDetalles />} />
     </Routes>
   );
 }

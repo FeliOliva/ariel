@@ -105,9 +105,9 @@ const Inicio = () => {
 
   const clientes = [
     { id: "all", nombre: "Todos los Clientes" },
-    { id: 1, nombre: "Cliente A" },
-    { id: 2, nombre: "Cliente B" },
-    { id: 3, nombre: "Cliente C" },
+    { id: 1, nombre: "Jessica Bareto" },
+    { id: 2, nombre: "Armando Pérez" },
+    { id: 3, nombre: "Carolina Gabalgio" },
   ];
 
   const dataVentas = [

@@ -8,6 +8,7 @@ import {
   HomeOutlined,
   SubnodeOutlined,
   ShoppingOutlined,
+  DropboxOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, theme } from "antd";
 
@@ -44,12 +45,15 @@ const MenuLayout = ({ children }) => {
         navigate("/ResumenCuenta");
         break;
       case "8":
-        navigate("/Linea");
+        navigate("/pedido");
         break;
       case "9":
-        navigate("/Gastos");
+        navigate("/Linea");
         break;
       case "10":
+        navigate("/Gastos");
+        break;
+      case "11":
         navigate("/Cheques");
         break;
       default:
@@ -73,12 +77,14 @@ const MenuLayout = ({ children }) => {
         return ["6"];
       case "/ResumenCuenta":
         return ["7"];
-      case "/Linea":
+      case "/pedido":
         return ["8"];
-      case "/Gastos":
+      case "/Linea":
         return ["9"];
-      case "/Cheques":
+      case "/Gastos":
         return ["10"];
+      case "/Cheques":
+        return ["11"];
       default:
         return ["1"];
     }
@@ -131,16 +137,21 @@ const MenuLayout = ({ children }) => {
             },
             {
               key: "8",
-              icon: <SisternodeOutlined />,
-              label: "Linea",
+              icon: <DropboxOutlined />,
+              label: "Pedidos",
             },
             {
               key: "9",
               icon: <SisternodeOutlined />,
-              label: "Gastos",
+              label: "Linea",
             },
             {
               key: "10",
+              icon: <SisternodeOutlined />,
+              label: "Gastos",
+            },
+            {
+              key: "11",
               icon: <SisternodeOutlined />,
               label: "Cheques",
             },
