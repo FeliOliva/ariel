@@ -141,17 +141,17 @@ function Ventas() {
       //   });
       //   return;
       // }
-      if (selectedArticulo.stock < cantidad) {
-        Modal.warning({
-          title: "Advertencia",
-          content:
-            "No hay suficiente stock de este articulo," +
-            "  el stock es de: " +
-            selectedArticulo.stock,
-          icon: <ExclamationCircleOutlined />,
-        });
-        return;
-      }
+      // if (selectedArticulo.stock < cantidad) {
+      //   Modal.warning({
+      //     title: "Advertencia",
+      //     content:
+      //       "No hay suficiente stock de este articulo," +
+      //       "  el stock es de: " +
+      //       selectedArticulo.stock,
+      //     icon: <ExclamationCircleOutlined />,
+      //   });
+      //   return;
+      // }
 
       const uniqueId = `${selectedArticulo.id}-${Date.now()}`; // Generación del ID único
       setVenta((prev) => {
