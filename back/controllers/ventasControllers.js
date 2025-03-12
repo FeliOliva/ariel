@@ -13,19 +13,19 @@ const addVenta = async (req, res) => {
   try {
     const { cliente_id, nroVenta, zona_id, descuento, detalles } =
       req.body;
-    //esto es para verificar el stock
+    // esto es para verificar el stock
     // Verificar el stock de cada artículo primero
-    // for (const detalle of detalles) {
-    //   const result = await ventasModel.checkStock(
-    //     detalle.articulo_id,
-    //     detalle.cantidad
-    //   );
-    //   if (!result.disponible) {
-    //     return res.status(203).json({
-    //       error_code: result.nombre,
-    //     });
-    //   }
-    // }///
+    for (const detalle of detalles) {
+      const result = await ventasModel.checkStock(
+        detalle.articulo_id,
+        detalle.cantidad
+      );
+      if (!result.disponible) {
+        return res.status(203).json({
+          error_code: result.nombre,
+        });
+      }
+    }///
 
     // Crear la venta
     const ventaId = await ventasModel.addVenta(
@@ -60,15 +60,15 @@ const addVenta = async (req, res) => {
         sub_total
       );
 
-      // // Descontar el stock del artículo
-      // await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
+      // Descontar el stock del artículo
+      await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
 
-      // // Registrar el cambio en el log de stock
-      // await ventasModel.updateLogVenta(
-      //   cliente_id,
-      //   detalle.articulo_id,
-      //   detalle.cantidad
-      // );
+      // Registrar el cambio en el log de stock
+      await ventasModel.updateLogVenta(
+        cliente_id,
+        detalle.articulo_id,
+        detalle.cantidad
+      );
     }
 
     const totalConDescuento = Math.round(
@@ -87,10 +87,10 @@ const dropVenta = async (req, res) => {
   try {
     const ID = req.params.ID;
     await ventasModel.dropVenta(ID);
-    res.status(200).json({ message: "Venta eliminada con éxito" });
+    res.status(200).json({ message: "Venta deshabilitada con éxito y stock actualizado" });
   } catch (error) {
-    console.error("Error al eliminar la venta:", error);
-    res.status(500).json({ error: "Error al eliminar la venta" });
+    console.error("Error al deshabilitar la venta:", error);
+    res.status(500).json({ error: "Error al deshabilitar la venta" });
   }
 };
 
@@ -98,10 +98,10 @@ const upVenta = async (req, res) => {
   try {
     const ID = req.params.ID;
     await ventasModel.upVenta(ID);
-    res.status(200).json({ message: "Venta activada con éxito" });
+    res.status(200).json({ message: "Venta habilitada con éxito y stock actualizado" });
   } catch (error) {
-    console.error("Error al activar la venta:", error);
-    res.status(500).json({ error: "Error al activar la venta" });
+    console.error("Error al habilitar la venta:", error);
+    res.status(500).json({ error: "Error al habilitar la venta" });
   }
 };
 

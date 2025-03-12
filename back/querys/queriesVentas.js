@@ -167,5 +167,7 @@ WHERE dv.venta_id = ?;
   WHERE v.cliente_id = ?
     AND v.estado = 1
     AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?);
-`
+`, getDetallesVenta: `SELECT articulo_id, cantidad FROM detalle_venta WHERE venta_id = ?;`,
+  devolverStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
+  restarStock: `UPDATE articulo SET stock = stock - ? WHERE id = ?;`,
 };

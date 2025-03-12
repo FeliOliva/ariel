@@ -85,8 +85,14 @@ const addDetalleVenta = async (
 
 const dropVenta = async (ID) => {
   try {
-    const query = queriesVentas.dropVenta;
-    await db.query(query, [ID]);
+    const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
+
+    for (const detalle of detalles) {
+      await db.query(queriesVentas.devolverStock, [detalle.cantidad, detalle.articulo_id]);
+    }
+
+    await db.query(queriesVentas.dropVenta, [ID]);
+
   } catch (err) {
     throw err;
   }
@@ -94,8 +100,14 @@ const dropVenta = async (ID) => {
 
 const upVenta = async (ID) => {
   try {
-    const query = queriesVentas.upVenta;
-    await db.query(query, [ID]);
+    const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
+
+    for (const detalle of detalles) {
+      await db.query(queriesVentas.restarStock, [detalle.cantidad, detalle.articulo_id]);
+    }
+
+    await db.query(queriesVentas.upVenta, [ID]);
+
   } catch (err) {
     throw err;
   }

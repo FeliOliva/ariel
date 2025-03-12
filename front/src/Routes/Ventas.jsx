@@ -52,6 +52,7 @@ function Ventas() {
   const { confirm } = Modal;
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
+
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/ventas");
@@ -82,8 +83,18 @@ function Ventas() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const articulosGuardados = localStorage.getItem("articulosVenta");
+    if (articulosGuardados) {
+      setVenta((prev) => ({
+        ...prev,
+        articulos: JSON.parse(articulosGuardados),
+      }));
+    }
+  }, []);
 
   useEffect(() => {
+    console.log(localStorage.getItem("articulosVenta"));
     fetchData();
   }, []);
 
@@ -130,39 +141,44 @@ function Ventas() {
       //   });
       //   return;
       // }
-      // if (selectedArticulo.stock < cantidad) {
-      //   Modal.warning({
-      //     title: "Advertencia",
-      //     content:
-      //       "No hay suficiente stock de este articulo," +
-      //       "  el stock es de: " +
-      //       selectedArticulo.stock,
-      //     icon: <ExclamationCircleOutlined />,
-      //   });
-      //   return;
-      // }
+      if (selectedArticulo.stock < cantidad) {
+        Modal.warning({
+          title: "Advertencia",
+          content:
+            "No hay suficiente stock de este articulo," +
+            "  el stock es de: " +
+            selectedArticulo.stock,
+          icon: <ExclamationCircleOutlined />,
+        });
+        return;
+      }
 
       const uniqueId = `${selectedArticulo.id}-${Date.now()}`; // Generación del ID único
-      setVenta((prev) => ({
-        ...prev,
-        articulos: [
-          ...prev.articulos,
-          {
-            ...selectedArticulo,
-            quantity: cantidad,
-            price: selectedArticulo.precio_monotributista,
-            label:
-              selectedArticulo.nombre +
-              " - " +
-              selectedArticulo.linea_nombre +
-              " - " +
-              selectedArticulo.sublinea_nombre,
-            value: selectedArticulo.id,
-            uniqueId,
-            isGift: false,
-          },
-        ],
-      }));
+      setVenta((prev) => {
+        const nuevaVenta = {
+          ...prev,
+          articulos: [
+            ...prev.articulos,
+            {
+              ...selectedArticulo,
+              quantity: cantidad,
+              price: selectedArticulo.precio_monotributista,
+              label: `${selectedArticulo.nombre} - ${selectedArticulo.linea_nombre} - ${selectedArticulo.sublinea_nombre}`,
+              value: selectedArticulo.id,
+              uniqueId,
+              isGift: false,
+            },
+          ],
+        };
+
+        // ✅ Guardar en `localStorage` dentro del mismo `setVenta()`
+        localStorage.setItem(
+          "articulosVenta",
+          JSON.stringify(nuevaVenta.articulos)
+        );
+
+        return nuevaVenta;
+      });
       console.log(venta);
       setSelectedArticulo(null);
       setCantidad(0);
@@ -233,6 +249,7 @@ function Ventas() {
           cancelText: "No",
           onOk: async () => {
             await axios.post("http://localhost:3001/addVenta", ventaData);
+            localStorage.removeItem("articulosVenta");
             setArticuloValue("");
             setClienteValue("");
             setCantidad(0);
@@ -402,7 +419,9 @@ function Ventas() {
               description: "La venta se desactivo exitosamente",
               duration: 1,
             });
-            fetchData();
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
           },
         });
       } else {
@@ -418,7 +437,9 @@ function Ventas() {
               description: "La venta se activo exitosamente",
               duration: 1,
             });
-            fetchData();
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
           },
         });
       }
