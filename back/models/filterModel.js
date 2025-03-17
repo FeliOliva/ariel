@@ -10,7 +10,7 @@ const getVentasByDay = async (startDate, endDate, clienteId) => {
     GROUP BY fecha_venta
   `;
   const values = [startDate, endDate, clienteId];
-  const result = await db.query(query, values);
+  const [result] = await db.query(query, values);
   return result;
 };
 const getTotalVentas = async () => {

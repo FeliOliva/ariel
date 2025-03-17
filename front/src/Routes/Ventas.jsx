@@ -52,6 +52,7 @@ function Ventas() {
   const { confirm } = Modal;
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -77,6 +78,10 @@ function Ventas() {
           nroVenta: "V00001", // Establece el valor inicial a V004 si no hay ventas previas
         }));
       }
+      const responseGuardadas = await axios.get(
+        "http://localhost:3001/lineas-guardadas"
+      );
+      setSelectedIds(responseGuardadas.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -128,30 +133,21 @@ function Ventas() {
 
   const handleAddArticulo = () => {
     if (selectedArticulo && cantidad > 0) {
-      //ESTO ERA PARA VALIDAR QUE NO ENTRE MAS DE UN ARTICULO
-      // const articuloExiste = venta.articulos.some(
-      //   (articulo) => articulo.id === selectedArticulo.id
-      // );
-
-      // if (articuloExiste) {
-      //   Modal.warning({
-      //     title: "Advertencia",
-      //     content: "Este artículo ya fue agregado en la venta.",
-      //     icon: <ExclamationCircleOutlined />,
-      //   });
-      //   return;
-      // }
-      // if (selectedArticulo.stock < cantidad) {
-      //   Modal.warning({
-      //     title: "Advertencia",
-      //     content:
-      //       "No hay suficiente stock de este articulo," +
-      //       "  el stock es de: " +
-      //       selectedArticulo.stock,
-      //     icon: <ExclamationCircleOutlined />,
-      //   });
-      //   return;
-      // }
+      console.log("lineas", selectedIds);
+      console.log("articulo", selectedArticulo);
+      if (selectedIds.includes(selectedArticulo.linea_id)) {
+        if (selectedArticulo.stock < cantidad) {
+          Modal.warning({
+            title: "Advertencia",
+            content:
+              "No hay suficiente stock de este articulo," +
+              "  el stock es de: " +
+              selectedArticulo.stock,
+            icon: <ExclamationCircleOutlined />,
+          });
+          return;
+        }
+      }
 
       const uniqueId = `${selectedArticulo.id}-${Date.now()}`; // Generación del ID único
       setVenta((prev) => {
@@ -161,6 +157,7 @@ function Ventas() {
             ...prev.articulos,
             {
               ...selectedArticulo,
+              linea_id: selectedArticulo.linea_id,
               quantity: cantidad,
               price: selectedArticulo.precio_monotributista,
               label: `${selectedArticulo.nombre} - ${selectedArticulo.linea_nombre} - ${selectedArticulo.sublinea_nombre}`,
@@ -179,7 +176,6 @@ function Ventas() {
 
         return nuevaVenta;
       });
-      console.log(venta);
       setSelectedArticulo(null);
       setCantidad(0);
       setArticuloValue("");
@@ -232,6 +228,7 @@ function Ventas() {
           zona_id: venta.cliente.zona_id,
           descuento: venta.descuento,
           detalles: venta.articulos.map((articulo) => ({
+            linea_id: articulo.linea_id,
             articulo_id: articulo.value, // Usamos el ID del artículo
             costo: articulo.costo ? articulo.costo : 0, // Asegúrate de que este campo esté presente
             cantidad: articulo.quantity,

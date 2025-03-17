@@ -4,21 +4,22 @@ import {
   Row,
   Col,
   Card,
-  Select,
   Button,
   DatePicker,
   Tooltip,
+  Empty,
+  message,
+  Spin,
 } from "antd";
 import { Column } from "@ant-design/charts";
 import MenuLayout from "../components/MenuLayout";
 import ChequesTable from "./ChequesTable";
 import moment from "moment";
 import axios from "axios";
-import { set } from "date-fns";
+import ClienteInput from "../components/ClienteInput";
 
 const { Header, Content } = Layout;
-const { Option } = Select;
-// const { RangePicker } = DatePicker;
+const { RangePicker } = DatePicker;
 
 const Inicio = () => {
   const [totalIngresos, setTotalIngresos] = useState(0);
@@ -26,59 +27,66 @@ const Inicio = () => {
   const [totalClientes, setTotalClientes] = useState(0);
   const [totalEntregas, setTotalEntregas] = useState(0);
   const [totalCompras, setTotalCompras] = useState(0);
+  const [clienteValue, setClienteValue] = useState("");
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [rangoFechas, setRangoFechas] = useState(null);
+  const [ventasFiltradas, setVentasFiltradas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  // Para forzar el re-renderizado del gráfico cuando cambia
+  const [chartKey, setChartKey] = useState(0);
 
   useEffect(() => {
     const fetchVentas = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalVentas");
         const formattedTotal = formatNumber(response.data[0].total);
-        console.log("ventas", formattedTotal);
         setTotalIngresos(formattedTotal);
       } catch (error) {
         console.error("Error al obtener las ventas:", error);
       }
     };
     fetchVentas();
-  });
+  }, []);
+
   useEffect(() => {
     const fetchEntregas = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalPagos");
         const formattedTotal = formatNumber(response.data[0].total);
-        console.log("entregas", formattedTotal);
         setTotalEntregas(formattedTotal);
       } catch (error) {
         console.error("Error al obtener las pagos:", error);
       }
     };
     fetchEntregas();
-  });
+  }, []);
+
   useEffect(() => {
     const fetchGastos = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalGastos");
         const formattedTotal = formatNumber(response.data[0].total);
-        console.log("gastos", formattedTotal);
         setTotalGastos(formattedTotal);
       } catch (error) {
         console.error("Error al obtener el total de gastos:", error);
       }
     };
     fetchGastos();
-  });
+  }, []);
+
   useEffect(() => {
     const fetchCompras = async () => {
       try {
         const response = await axios.get("http://localhost:3001/totalCompras");
         const formattedTotal = formatNumber(response.data[0].total);
-        console.log("compras", formattedTotal);
         setTotalCompras(formattedTotal);
       } catch (error) {
         console.error("Error al obtener las el total de compras:", error);
       }
     };
     fetchCompras();
-  });
+  }, []);
+
   useEffect(() => {
     const fetchClientes = async () => {
       try {
@@ -89,315 +97,168 @@ const Inicio = () => {
       }
     };
     fetchClientes();
-  });
+  }, []);
+
+  // Función para formatear números con separador de miles (usando puntos)
   const formatNumber = (num) => {
-    if (!num) return "0"; // Manejar valores nulos o indefinidos
-    return new Intl.NumberFormat("es-ES").format(num);
+    if (!num) return "0";
+    // Esto formatea el número con puntos como separadores de miles y coma para decimales (formato español)
+    return new Intl.NumberFormat("es-ES", {
+      maximumFractionDigits: 0,
+    }).format(num);
   };
+
   const parseToNumber = (value) => {
-    if (!value) return 0; // Si el valor es null, undefined o 0, retorna 0
+    if (!value) return 0;
     return parseFloat(value.toString().replace(/\./g, "").replace(",", "."));
   };
 
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [filtroTiempo, setFiltroTiempo] = useState("dia");
-  const [rangoFechas, setRangoFechas] = useState("");
-
-  const clientes = [
-    { id: "all", nombre: "Todos los Clientes" },
-    { id: 1, nombre: "Jessica Bareto" },
-    { id: 2, nombre: "Armando Pérez" },
-    { id: 3, nombre: "Carolina Gabalgio" },
-  ];
-
-  const dataVentas = [
-    // Ventas simuladas para Cliente A
-    {
-      clienteId: 1,
-      fecha: "2024-01-05",
-      ventas: 200,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-01-15",
-      ventas: 250,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-01-25",
-      ventas: 300,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-02-10",
-      ventas: 400,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-02-20",
-      ventas: 450,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-02-28",
-      ventas: 500,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-03-05",
-      ventas: 600,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-03-15",
-      ventas: 650,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 1,
-      fecha: "2024-03-25",
-      ventas: 700,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    // Ventas simuladas para Cliente B
-    {
-      clienteId: 2,
-      fecha: "2024-01-07",
-      ventas: 220,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-01-17",
-      ventas: 270,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-01-27",
-      ventas: 320,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-02-12",
-      ventas: 420,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-02-22",
-      ventas: 470,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-02-28",
-      ventas: 520,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-03-08",
-      ventas: 620,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-03-18",
-      ventas: 670,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 2,
-      fecha: "2024-03-28",
-      ventas: 720,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    // Ventas simuladas para Cliente C
-    {
-      clienteId: 3,
-      fecha: "2024-01-10",
-      ventas: 240,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-01-20",
-      ventas: 290,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-01-30",
-      ventas: 340,
-      mes: "Enero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-02-14",
-      ventas: 440,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-02-24",
-      ventas: 490,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-02-28",
-      ventas: 540,
-      mes: "Febrero",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-03-11",
-      ventas: 640,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-03-21",
-      ventas: 690,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    {
-      clienteId: 3,
-      fecha: "2024-03-31",
-      ventas: 740,
-      mes: "Marzo",
-      cuatrimestre: "Q1",
-    },
-    // Repetir este patrón para los meses restantes
-  ];
-
-  const handleClienteChange = (value) => {
-    setClienteSeleccionado(value);
-  };
-
-  const handleFiltroTiempoChange = (filtro) => {
-    setFiltroTiempo(filtro);
-  };
-
   const handleRangoFechasChange = (dates) => {
-    if (dates && dates.length === 2) {
-      // Formatea las fechas en el formato "DD/MM/YYYY"
-      const formattedDates = dates.map((date) => date.format("DD/MM/YYYY"));
-      setRangoFechas(formattedDates); // Guarda las fechas originales en el estado
-      console.log("Fechas seleccionadas:", formattedDates);
-    } else {
-      setRangoFechas([]); // Restablece el estado como un arreglo vacío
+    setRangoFechas(dates);
+  };
+
+  const handleClienteChange = async (cliente) => {
+    setClienteValue(cliente?.id || "");
+    setClienteSeleccionado(cliente);
+  };
+
+  const fetchVentasFiltradas = async () => {
+    if (!clienteSeleccionado || !rangoFechas || rangoFechas.length !== 2) {
+      message.warning("Por favor seleccione un cliente y un rango de fechas");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const startDate = rangoFechas[0].format("YYYY-MM-DD");
+      const endDate = rangoFechas[1].format("YYYY-MM-DD");
+
+      const response = await axios.post(
+        "http://localhost:3001/filterVentasByCliente",
+        {
+          startDate: startDate,
+          endDate: endDate,
+          clienteId: clienteSeleccionado.id,
+        }
+      );
+      console.log("response", response.data);
+
+      // Procesar los datos para el gráfico - Asegurarse que total_importe es un número
+      const processedData = response.data.map((item) => {
+        // Convertir cadena a número
+        const ventasValue = parseFloat(item.total_importe);
+        return {
+          fecha: moment(item.fecha_venta).format("DD/MM/YYYY"),
+          ventas: ventasValue,
+        };
+      });
+
+      // Combinar ventas de la misma fecha
+      const ventasPorFecha = {};
+      processedData.forEach((item) => {
+        if (ventasPorFecha[item.fecha]) {
+          ventasPorFecha[item.fecha] += item.ventas;
+        } else {
+          ventasPorFecha[item.fecha] = item.ventas;
+        }
+      });
+
+      // Convertir de nuevo a array
+      const ventasCombinadas = Object.keys(ventasPorFecha).map((fecha) => ({
+        fecha,
+        ventas: ventasPorFecha[fecha],
+      }));
+
+      setVentasFiltradas(ventasCombinadas);
+      // Forzar re-render del gráfico con un nuevo key
+      setChartKey((prevKey) => prevKey + 1);
+    } catch (error) {
+      console.error("Error al filtrar ventas por cliente:", error);
+      message.error("Error al obtener datos de ventas");
+      setVentasFiltradas([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filtrarYProcesarVentas = (
-    ventas = [],
-    clienteId = "all",
-    rangoFechas = []
-  ) => {
-    // 1. Filtrado por cliente
-    const filtradoPorCliente =
-      clienteId !== "all"
-        ? ventas.filter((venta) => venta.clienteId === clienteId)
-        : ventas;
-
-    // 2. Filtrado por rango de fechas
-    const fechasValidas =
-      Array.isArray(rangoFechas) && rangoFechas.length === 2;
-    const filtradoPorFechas = fechasValidas
-      ? filtradoPorCliente.filter((venta) => {
-          const fechaVenta = moment(venta.fecha, "YYYY-MM-DD");
-          const [fechaInicio, fechaFin] = rangoFechas.map((fecha) =>
-            moment(fecha, "DD/MM/YYYY")
-          );
-          return (
-            fechaVenta.isSameOrAfter(fechaInicio) &&
-            fechaVenta.isSameOrBefore(fechaFin)
-          );
-        })
-      : filtradoPorCliente;
-
-    // 3. Agrupación y suma de ventas por día
-    const ventasAgrupadas = filtradoPorFechas.reduce((acumulador, venta) => {
-      const fecha = moment(venta.fecha).format("YYYY-MM-DD");
-      if (!acumulador[fecha]) {
-        acumulador[fecha] = { fecha, ventas: 0 };
-      }
-      acumulador[fecha].ventas += venta.ventas;
-      return acumulador;
-    }, {});
-
-    // 4. Convertir a array y ordenar por fecha
-    return Object.values(ventasAgrupadas).sort((a, b) =>
-      moment(a.fecha).isBefore(moment(b.fecha)) ? -1 : 1
-    );
-  };
-
   const configVentas = {
-    data: filtrarYProcesarVentas(dataVentas, clienteSeleccionado, rangoFechas),
+    data: ventasFiltradas,
     xField: "fecha",
     yField: "ventas",
-    label: { style: { fill: "#FFFFFF", opacity: 0.6 } },
+    // Configuración para barras más delgadas
+    columnWidthRatio: 0.3, // Reduce el ancho de las barras (0-1)
+    columnStyle: {
+      // Estilo personalizado para las barras
+      radius: [4, 4, 0, 0], // Bordes redondeados en la parte superior
+    },
+    // Configuración para etiquetas con formato de moneda
+    label: {
+      position: "top",
+      content: (data) => {
+        // Formatear con símbolo de moneda y separadores de miles
+        return `$${formatNumber(data.ventas)}`;
+      },
+      style: {
+        fill: "#000000",
+        fontSize: 12,
+        fontWeight: "bold",
+      },
+    },
     xAxis: {
       title: { text: "Fecha" },
       label: {
         rotate: -45,
-        style: { fill: "#AAAAAA" },
-        formatter: (text) => text.replace(/\/\d{4}$/, ""),
+        style: { fill: "#555555" },
       },
     },
-    yAxis: { title: { text: "Ventas" } },
+    yAxis: {
+      title: { text: "Ventas ($)" },
+      label: {
+        formatter: (v) => `$${formatNumber(v)}`,
+      },
+    },
+    tooltip: {
+      customContent: (title, items) => {
+        if (!items || items.length === 0) return `<div></div>`;
+        const item = items[0];
+        return `
+          <div style="padding: 10px; font-family: Arial;">
+            <div style="margin-bottom: 5px; font-weight: bold;">${title}</div>
+            <div>
+              <span>Ventas: </span>
+              <span style="font-weight: bold;">$$${formatNumber(
+                item.value
+              )}</span>
+            </div>
+          </div>
+        `;
+      },
+    },
     color: "#1979C9",
+    interactions: [
+      {
+        type: "element-active",
+      },
+    ],
+    animation: {
+      appear: {
+        animation: "wave-in",
+        duration: 1000,
+      },
+    },
   };
+
   const comprasxgastos = formatNumber(
     parseToNumber(totalGastos) + parseToNumber(totalCompras)
   );
-  console.log("compras y gastos", formatNumber(comprasxgastos));
 
   const totalEnLimpio = formatNumber(
     parseToNumber(totalIngresos) - parseToNumber(comprasxgastos)
   );
-  console.log("total en limpio", formatNumber(totalEnLimpio));
 
   const TotalConEntrega = formatNumber(
     parseToNumber(totalIngresos) - parseToNumber(totalEntregas)
   );
-  console.log("total con entregas", formatNumber(TotalConEntrega));
 
   return (
     <MenuLayout>
@@ -453,48 +314,34 @@ const Inicio = () => {
           <Row gutter={[16, 16]}>
             <Col span={12}>
               <Card title="Seleccionar Cliente">
-                <Select
-                  placeholder="Seleccione un cliente"
-                  style={{ width: "100%" }}
-                  onChange={handleClienteChange}
-                >
-                  {clientes.map((cliente) => (
-                    <Option key={cliente.id} value={cliente.id}>
-                      {cliente.nombre}
-                    </Option>
-                  ))}
-                </Select>
-              </Card>
-            </Col>
-
-            <Col span={12}>
-              <Card title="Filtro de Tiempo">
-                <Button onClick={() => handleFiltroTiempoChange("dia")}>
-                  Día
-                </Button>
-                <Button
-                  onClick={() => handleFiltroTiempoChange("mes")}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Mes
-                </Button>
-                <Button
-                  onClick={() => handleFiltroTiempoChange("cuatrimestre")}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Cuatrimestre
-                </Button>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
-            <Col span={24}>
-              <Card title="Seleccionar Rango de Fechas">
-                <DatePicker.RangePicker
-                  onChange={(dates) => handleRangoFechasChange(dates)}
-                  // format="DD/MM/YYYY"
+                <ClienteInput
+                  value={clienteValue}
+                  onChangeCliente={handleClienteChange}
+                  onInputChange={setClienteValue}
                 />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="Seleccionar Rango de Fechas">
+                <Row gutter={[16, 16]} align="middle">
+                  <Col span={18}>
+                    <RangePicker
+                      onChange={handleRangoFechasChange}
+                      format="DD/MM/YYYY"
+                      style={{ width: "100%" }}
+                    />
+                  </Col>
+                  <Col span={6}>
+                    <Button
+                      type="primary"
+                      onClick={fetchVentasFiltradas}
+                      style={{ width: "100%" }}
+                      loading={loading}
+                    >
+                      Buscar
+                    </Button>
+                  </Col>
+                </Row>
               </Card>
             </Col>
           </Row>
@@ -502,15 +349,34 @@ const Inicio = () => {
           <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
             <Col span={24}>
               <Card
-                title={`Ventas por ${
-                  filtroTiempo === "dia"
-                    ? "Día"
-                    : filtroTiempo === "mes"
-                    ? "Mes"
-                    : "Cuatrimestre"
-                }`}
+                title={
+                  clienteSeleccionado
+                    ? `Ventas de ${
+                        clienteSeleccionado.nombre || "Cliente Seleccionado"
+                      }`
+                    : "Ventas por Cliente y Fecha"
+                }
               >
-                <Column {...configVentas} /> {/* Cambiado de Line a Column */}
+                {loading ? (
+                  <div style={{ padding: "50px", textAlign: "center" }}>
+                    <Spin size="large" />
+                    <p style={{ marginTop: "16px" }}>
+                      Cargando datos de ventas...
+                    </p>
+                  </div>
+                ) : ventasFiltradas.length > 0 ? (
+                  <div
+                    style={{ height: "400px", width: "100%" }}
+                    key={chartKey}
+                  >
+                    <Column {...configVentas} />
+                  </div>
+                ) : (
+                  <Empty
+                    description="Seleccione un cliente y un rango de fechas para visualizar las ventas"
+                    style={{ padding: "40px" }}
+                  />
+                )}
               </Card>
             </Col>
           </Row>

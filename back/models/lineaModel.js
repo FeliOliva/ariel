@@ -68,7 +68,51 @@ const getLineaByID = async (ID) => {
     throw err;
   }
 };
+const guardarLineas = async (lineas) => {
+  try {
+    if (!lineas || !Array.isArray(lineas) || lineas.length === 0) {
+      throw new Error("No se recibieron líneas válidas.");
+    }
 
+    // Desactivar SQL_SAFE_UPDATES y eliminar los registros
+    await db.query("SET SQL_SAFE_UPDATES = 0;");
+    await db.query("DELETE FROM lineas_stock;");
+    const query = `
+      INSERT INTO lineas_stock (linea_id) 
+      SELECT ? 
+      WHERE NOT EXISTS (
+          SELECT 1 FROM lineas_stock WHERE linea_id = ?
+      );
+    `;
+
+    for (const id of lineas) {
+      await db.query(query, [id, id]);
+    }
+
+  } catch (error) {
+    console.error("Error guardando líneas:", error);
+    throw error;
+  }
+};
+const obtenerLineasGuardadas = async () => {
+  try {
+    const query = "SELECT linea_id FROM lineas_stock";
+    const [rows] = await db.query(query);
+    return rows.map(row => row.linea_id); // Devuelve solo los IDs
+  } catch (error) {
+    console.error("Error obteniendo líneas guardadas:", error);
+    throw error;
+  }
+};
+const deleteLineasStock = async () => {
+  try {
+    await db.query("SET SQL_SAFE_UPDATES = 0;");
+    await db.query("DELETE FROM lineas_stock;");
+  } catch (error) {
+    console.error("Error guardando líneas:", error);
+    throw error;
+  }
+}
 module.exports = {
   getAllLineas,
   addLinea,
@@ -78,4 +122,7 @@ module.exports = {
   getSublineasByLinea,
   getLastLinea,
   getLineaByID,
+  guardarLineas,
+  obtenerLineasGuardadas,
+  deleteLineasStock
 };

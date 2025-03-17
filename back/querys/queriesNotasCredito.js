@@ -50,7 +50,7 @@ LEFT JOIN
     detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
 WHERE 
     c.zona_id = ?
-    AND nc.estado = 1  -- Solo notas de crédito activas
+    AND nc.estado = 1 
 GROUP BY 
     nc.id, c.id
 ORDER BY 

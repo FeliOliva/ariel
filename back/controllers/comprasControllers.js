@@ -18,6 +18,8 @@ const addCompra = async (req, res) => {
       nro_compra,
       total
     );
+    const lineas = (await comprasModel.getLineasStock()).map(l => l.linea_id);
+    console.log("lineas", lineas)
 
     for (const detalle of detalles) {
       sub_total = Math.round(detalle.cantidad * detalle.costo);
@@ -30,7 +32,9 @@ const addCompra = async (req, res) => {
         detalle.precio_monotributista,
         sub_total
       );
-      await comprasModel.updateStock(detalle.articulo_id, detalle.cantidad); // Actualiza el stock sumando la cantidad
+      if (lineas.includes(detalle.linea_id)) {
+        await comprasModel.updateStock(detalle.articulo_id, detalle.cantidad); // Actualiza el stock sumando la cantidad
+      }
       await comprasModel.updateTotalCompra(compra_id, total);
     }
 

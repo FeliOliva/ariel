@@ -13,5 +13,9 @@ router.get(
 );
 router.get("/getLastLinea", lineaControllers.getLastLinea);
 router.get("/getLineaByID/:ID", lineaControllers.getLineaByID);
+router.post("/guardar-lineas", lineaControllers.guardarLineas)
+router.get("/lineas-guardadas", lineaControllers.obtenerLineasGuardadas);
+router.put("/eliminarLineas", lineaControllers.deleteLineasStock)
+
 
 module.exports = router;

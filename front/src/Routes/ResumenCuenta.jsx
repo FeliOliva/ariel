@@ -325,6 +325,8 @@ const ResumenCuenta = () => {
         0
       );
       console.log("ventas", ventasData);
+      console.log("pagos", pagosData);
+      console.log("notas de credito", notasCreditoData);
       setVentas(ventasData);
       setPagos(pagosData);
       setNotasCredito(notasCreditoData);

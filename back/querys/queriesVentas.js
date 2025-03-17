@@ -75,6 +75,7 @@ JOIN
 WHERE 
     c.zona_id = ?
     AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?)
+    AND v.estado = 1
 GROUP BY 
     c.id, c.nombre, c.apellido, c.zona_id
 ORDER BY 

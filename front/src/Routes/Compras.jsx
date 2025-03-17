@@ -123,6 +123,7 @@ function Compras() {
           ...prev.articulos,
           {
             id: articuloSeleccionado.id,
+            linea_id: articuloSeleccionado.linea_id,
             nombre: articuloSeleccionado.nombre,
             cantidad: compra.cantidad, // Cantidad del artículo
             costo: parseFloat(articuloSeleccionado.costo), // Asigna el costo del artículo
@@ -170,6 +171,7 @@ function Compras() {
       ),
       detalles: compra.articulos.map((articulo) => ({
         articulo_id: articulo.id,
+        linea_id: articulo.linea_id,
         cantidad: articulo.cantidad,
         costo: articulo.costo,
         precio_monotributista: articulo.precio_monotributista,

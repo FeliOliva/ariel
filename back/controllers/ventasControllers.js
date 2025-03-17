@@ -13,20 +13,9 @@ const addVenta = async (req, res) => {
   try {
     const { cliente_id, nroVenta, zona_id, descuento, detalles } =
       req.body;
-    // esto es para verificar el stock
-    // Verificar el stock de cada artículo primero
-    // for (const detalle of detalles) {
-    //   const result = await ventasModel.checkStock(
-    //     detalle.articulo_id,
-    //     detalle.cantidad
-    //   );
-    //   if (!result.disponible) {
-    //     return res.status(203).json({
-    //       error_code: result.nombre,
-    //     });
-    //   }
-    // }///
 
+    const lineas = (await ventasModel.getLineasStock()).map(l => l.linea_id);
+    console.log("lineas", lineas)
     // Crear la venta
     const ventaId = await ventasModel.addVenta(
       cliente_id,
@@ -38,6 +27,11 @@ const addVenta = async (req, res) => {
     let sub_total = 0;
     // Agregar detalles de la venta y sumar subtotales
     for (const detalle of detalles) {
+      if (lineas.includes(detalle.linea_id)) {
+        // // Descontar el stock del artículo
+        await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
+        console.log("entroo")
+      }
       if (detalle.isGift === true) {
         sub_total = 0;
         console.log(sub_total);
@@ -59,9 +53,6 @@ const addVenta = async (req, res) => {
         detalle.precio_monotributista,
         sub_total
       );
-
-      // // Descontar el stock del artículo
-      // await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
 
       // Registrar el cambio en el log de stock
       await ventasModel.updateLogVenta(

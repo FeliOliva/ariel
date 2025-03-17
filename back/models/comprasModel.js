@@ -145,6 +145,15 @@ const upCompra = async (compra_id) => {
     throw err;
   }
 };
+const getLineasStock = async () => {
+  try {
+    const query = "select linea_id from lineas_stock"
+    const [lineas] = await db.query(query)
+    return lineas
+  } catch (err) {
+    throw err
+  }
+}
 module.exports = {
   getAllCompras,
   addCompra,
@@ -159,4 +168,5 @@ module.exports = {
   getDetalleCompraById,
   dropCompra,
   upCompra,
+  getLineasStock
 };

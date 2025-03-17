@@ -75,6 +75,38 @@ const getLineaByID = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+const guardarLineas = async (req, res) => {
+  try {
+    const { lineas } = req.body;
+    console.log("lineas", lineas)
+    if (!lineas || lineas.length === 0) {
+      return res.status(400).json({ error: "No se enviaron líneas válidas" });
+    }
+    await lineaModels.guardarLineas(lineas);
+    res.json({ message: "Líneas guardadas exitosamente" });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+};
+const obtenerLineasGuardadas = async (req, res) => {
+  try {
+    const lineasGuardadas = await lineaModels.obtenerLineasGuardadas();
+    res.json(lineasGuardadas);
+  } catch (error) {
+    console.error("Error obteniendo líneas guardadas:", error);
+    res.status(500).send("Error del servidor");
+  }
+};
+const deleteLineasStock = async (req, res) => {
+  try {
+    await lineaModels.deleteLineasStock()
+    res.json("Lineas Eliminadas")
+  } catch (error) {
+    console.error("Error eliminando las líneas guardadas:", error);
+    res.status(500).send("Error del servidor");
+  }
+}
+
 
 module.exports = {
   getAllLineas,
@@ -85,4 +117,7 @@ module.exports = {
   getSubLineasByLinea,
   getLastLinea,
   getLineaByID,
+  guardarLineas,
+  obtenerLineasGuardadas,
+  deleteLineasStock
 };

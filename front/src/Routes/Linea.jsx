@@ -17,6 +17,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import "../style/style.css";
 import CustomPagination from "../components/CustomPagination";
@@ -24,6 +25,7 @@ import {
   customHeaderStyles,
   customCellsStyles,
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
+import LineaSelect from "../components/LineaSelect";
 
 const Linea = () => {
   const [lineas, setLineas] = useState([]);
@@ -274,6 +276,14 @@ const Linea = () => {
       ),
     },
   ];
+  const handleClearLineas = async () => {
+    try {
+      await axios.put("http://localhost:3001/eliminarLineas");
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <MenuLayout>
       <h1>Listado de lineas</h1>
@@ -284,6 +294,21 @@ const Linea = () => {
       >
         Añadir Línea
       </Button>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "10px",
+        }}
+      >
+        <LineaSelect />
+        <Button
+          icon={<CloseOutlined />}
+          onClick={handleClearLineas}
+          style={{ width: "40px" }}
+        />
+      </div>
       <div>
         {loading ? (
           <p>Cargando...</p>
