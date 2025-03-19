@@ -88,18 +88,8 @@ function Ventas() {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    const articulosGuardados = localStorage.getItem("articulosVenta");
-    if (articulosGuardados) {
-      setVenta((prev) => ({
-        ...prev,
-        articulos: JSON.parse(articulosGuardados),
-      }));
-    }
-  }, []);
 
   useEffect(() => {
-    console.log(localStorage.getItem("articulosVenta"));
     fetchData();
   }, []);
 
@@ -133,8 +123,6 @@ function Ventas() {
 
   const handleAddArticulo = () => {
     if (selectedArticulo && cantidad > 0) {
-      console.log("lineas", selectedIds);
-      console.log("articulo", selectedArticulo);
       if (selectedIds.includes(selectedArticulo.linea_id)) {
         if (selectedArticulo.stock < cantidad) {
           Modal.warning({
@@ -167,13 +155,6 @@ function Ventas() {
             },
           ],
         };
-
-        // ✅ Guardar en `localStorage` dentro del mismo `setVenta()`
-        localStorage.setItem(
-          "articulosVenta",
-          JSON.stringify(nuevaVenta.articulos)
-        );
-
         return nuevaVenta;
       });
       setSelectedArticulo(null);
@@ -246,7 +227,6 @@ function Ventas() {
           cancelText: "No",
           onOk: async () => {
             await axios.post("http://localhost:3001/addVenta", ventaData);
-            localStorage.removeItem("articulosVenta");
             setArticuloValue("");
             setClienteValue("");
             setCantidad(0);
