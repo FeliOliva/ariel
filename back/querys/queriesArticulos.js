@@ -1,5 +1,5 @@
 module.exports = {
-    getAllArticulos: `SELECT 
+  getAllArticulos: `SELECT 
       a.id,
       a.nombre,
       a.stock,
@@ -27,11 +27,11 @@ module.exports = {
     ORDER BY 
         a.fecha_ingreso DESC;
   `,
-    addArticulo: `INSERT INTO articulo (nombre, mediciones, stock, codigo_producto, proveedor_id, precio_monotributista, costo, linea_id, subLinea_id, fecha_ingreso, precio_oferta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(),?);`,
-    dropArticulo: `UPDATE articulo SET estado = 0 WHERE id = ?;`,
-    upArticulo: `UPDATE articulo SET estado = 1 WHERE id = ?;`,
-    updateArticulo: `UPDATE articulo SET nombre = ?, stock = ?, codigo_producto = ?, proveedor_id = ?, precio_monotributista = ?, costo = ?, subLinea_id = ?, linea_id = ?, mediciones = ?, fecha_ingreso = NOW(), precio_oferta = ? WHERE id = ?;`,
-    getArticuloByID: `SELECT 
+  addArticulo: `INSERT INTO articulo (nombre, mediciones, stock, codigo_producto, proveedor_id, precio_monotributista, costo, linea_id, subLinea_id, fecha_ingreso, precio_oferta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(),?);`,
+  dropArticulo: `UPDATE articulo SET estado = 0 WHERE id = ?;`,
+  upArticulo: `UPDATE articulo SET estado = 1 WHERE id = ?;`,
+  updateArticulo: `UPDATE articulo SET nombre = ?, stock = ?, codigo_producto = ?, proveedor_id = ?, precio_monotributista = ?, costo = ?, subLinea_id = ?, linea_id = ?, mediciones = ?, fecha_ingreso = NOW(), precio_oferta = ? WHERE id = ?;`,
+  getArticuloByID: `SELECT 
       a.id,
       a.nombre,
       a.stock,
@@ -59,7 +59,7 @@ module.exports = {
   WHERE 
       a.id = ?;
   `,
-    getArticulosByProveedorID: `SELECT 
+  getArticulosByProveedorID: `SELECT 
       a.id,
       a.nombre,
       a.stock,
@@ -87,7 +87,7 @@ module.exports = {
   WHERE 
       a.proveedor_id = ? 
       AND a.estado = 1;`,
-    getArticulosByLineaID: `SELECT 
+  getArticulosByLineaID: `SELECT 
     a.nombre AS articulo_nombre,
     a.mediciones AS articulo_medicion,
     a.estado AS estado,
@@ -112,45 +112,45 @@ ORDER BY
     l.nombre ASC, 
     sl.nombre ASC,
     a.nombre ASC; `,
-    getArticulosBySubLineaID: `SELECT * FROM articulo WHERE subLinea_id = ?;`,
-    increasePrices: `
+  getArticulosBySubLineaID: `SELECT * FROM articulo WHERE subLinea_id = ?;`,
+  increasePrices: `
         UPDATE articulo 
         SET 
-          precio_monotributista = precio_monotributista * (1 + ? / 100)
+            precio_monotributista = ROUND(precio_monotributista * (1 + ? / 100), 0)
         WHERE linea_id = ?;
       `,
-    decreasePrices: `
+  decreasePrices: `
         UPDATE articulo 
         SET 
-          precio_monotributista = precio_monotributista * (1 - ? / 100)
+            precio_monotributista = ROUND(precio_monotributista * (1 - ? / 100), 0)
         WHERE linea_id = ?;
       `,
-    increasePrice: `
+  increasePrice: `
       UPDATE articulo
       SET 
         precio_monotributista = precio_monotributista * (1 + ? / 100),
         costo = costo * (1 + ? / 100)
       WHERE ID = ?;
     `,
-    updateLogPrecios: `
-      INSERT INTO precio_log (articulo_id, costo_nuevo, costo_antiguo, precio_monotributista_nuevo, precio_monotributista_antiguo, porcentaje) 
-      VALUES (?, ?, ?, ?, ?, ?);
+  updateLogPrecios: `
+      INSERT INTO precio_log (articulo_id, precio_monotributista_nuevo, precio_monotributista_antiguo, porcentaje) 
+      VALUES (?, ?, ?, ?);
     `,
-    logsPreciosById: `SELECT pl.*, a.nombre AS nombre_articulo
+  logsPreciosById: `SELECT pl.*, a.nombre AS nombre_articulo
 FROM precio_log pl
 JOIN articulo a ON pl.articulo_id = a.id
 WHERE pl.articulo_id = ?;
 `,
-    deshacerCambiosUpdate: `
+  deshacerCambiosUpdate: `
 UPDATE articulo 
 SET costo = ?, precio_monotributista = ? 
 WHERE id = ?;
 `,
-    deshacerCambiosDelete: `
+  deshacerCambiosDelete: `
 DELETE FROM precio_log 
 WHERE id = ?;
 `,
-    getArticulosOrdenados: `
+  getArticulosOrdenados: `
   SELECT 
     a.nombre AS articulo_nombre,
     a.mediciones AS articulo_medicion,

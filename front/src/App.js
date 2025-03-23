@@ -9,7 +9,6 @@ import Linea from "./Routes/Linea";
 import SubLinea from "./Routes/SubLinea";
 import Proveedor from "./Routes/Proveedor";
 import Zonas from "./Routes/Zonas";
-import Logs from "./Routes/Logs";
 import Ofertas from "./Routes/Ofertas";
 import OfertasDetalles from "./Routes/OfertasDetalles";
 import Compras from "./Routes/Compras";
@@ -29,7 +28,6 @@ function App() {
       <Route path="/clientes" element={<Clientes />} />
       <Route path="/Articulos" element={<Articulos />} />
       <Route path="/ArticulosDetalles" element={<ArticulosDetalles />} />
-      <Route path="/Logs/:id" element={<Logs />} />
       <Route path="/Ventas" element={<Venta />} />
       <Route path="/venta/:id" element={<VentaDetalles />} />{" "}
       <Route path="/linea" element={<Linea />} />

@@ -9,6 +9,8 @@ import {
   Tooltip,
   Modal,
   notification,
+  Switch,
+  Select,
 } from "antd";
 import {
   CloseOutlined,
@@ -36,6 +38,7 @@ function Articulos() {
   const [loading, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState([]); // Artículos filtrados por la búsqueda
   const [searchValue, setSearchValue] = useState(""); // Valor del input de búsqueda
+  const [searchType, setSearchType] = useState("linea"); // "linea" o "articulo"
   const [open, setOpen] = useState(false);
   const [currentArticulo, setCurrentArticulo] = useState(null);
   const [openEditProveedorDrawer, setOpenEditProveedorDrawer] = useState(false);
@@ -49,8 +52,10 @@ function Articulos() {
   const [openIncreaseDrawer, setOpenIncreaseDrawer] = useState(false);
   const [currentIncrease, setCurrentIncrease] = useState(null);
   const [subLineaExists, setSubLineaExists] = useState(true);
+  const [isIncrease, setIsIncrease] = useState(false);
   const navigate = useNavigate();
   const { confirm } = Modal;
+  const { Option } = Select;
 
   const fetchData = async () => {
     try {
@@ -206,13 +211,6 @@ function Articulos() {
             onClick={() => handleOpenEditDrawer(row.id)}
             icon={<EditOutlined />}
           ></Button>
-
-          <Link to={`/Logs/${row.id}`}>
-            <Button
-              icon={<FileTextOutlined />}
-              className="custom-button"
-            ></Button>
-          </Link>
 
           <Button
             icon={<PlusCircleOutlined />}
@@ -483,6 +481,7 @@ function Articulos() {
   };
 
   const handleFilterChange = async () => {
+    console.log("is Increase", isIncrease);
     console.log("current filter", currentFilter);
     if (currentFilter === null) {
       Modal.warning({
@@ -505,8 +504,21 @@ function Articulos() {
       });
       return;
     }
+    if (isIncrease === true) {
+      notification.warning({
+        message: "Estas por aumentar los precios",
+        description: "Estas aumentando los precios",
+        duration: 1,
+      });
+    } else {
+      notification.warning({
+        message: "Estas por bajar los precios",
+        description: "Estas bajando los precios",
+        duration: 1,
+      });
+    }
     confirm({
-      title: "¿Estas seguro de aplicar este aumento?",
+      title: "¿Estas seguro de aplicar este cambio?",
       icon: <ExclamationCircleOutlined />,
       okText: "Si, confirmar",
       cancelText: "Cancelar",
@@ -515,50 +527,20 @@ function Articulos() {
           if (!currentFilter.percentage || isNaN(currentFilter.percentage)) {
             throw new Error("El porcentaje es inválido o no está definido");
           }
-
-          // Obtener los artículos antes de actualizar los precios
-          const responseAntiguos = await axios.get(
-            `http://localhost:3001/getArticulosByLineaID/${currentFilter.linea_id}`
-          );
-          const articulosAntiguos = responseAntiguos.data;
-
-          // Actualizar los precios
-          await axios.put(
-            `http://localhost:3001/AumentarPrecioxLinea/${currentFilter.linea_id}`,
-            { percentage: currentFilter.percentage }
-          );
-
-          // Obtener los artículos después de actualizar los precios
-          const responseNuevos = await axios.get(
-            `http://localhost:3001/getArticulosByLineaID/${currentFilter.linea_id}`
-          );
-          const articulosNuevos = responseNuevos.data;
-
-          // Crear un mapa de artículos antiguos para referencia rápida
-          const articulosAntiguosMap = new Map(
-            articulosAntiguos.map((articulo) => [articulo.id, articulo])
-          );
-
-          // Insertar logs para cada artículo actualizado
-          for (const articuloNuevo of articulosNuevos) {
-            const articuloAntiguo = articulosAntiguosMap.get(articuloNuevo.id);
-            if (articuloAntiguo) {
-              await axios.post(`http://localhost:3001/updateLog`, {
-                articulo_id: articuloNuevo.id,
-                costo_nuevo: articuloNuevo.costo,
-                costo_antiguo: articuloAntiguo.costo,
-                precio_monotributista_nuevo:
-                  articuloNuevo.precio_monotributista,
-                precio_monotributista_antiguo:
-                  articuloAntiguo.precio_monotributista,
-                porcentaje: currentFilter.percentage,
-              });
-            }
+          if (isIncrease === true) {
+            await axios.put(
+              `http://localhost:3001/AumentarPrecioxLinea/${currentFilter.linea_id}`,
+              { percentage: currentFilter.percentage }
+            );
+          } else if (isIncrease === false) {
+            await axios.put(
+              `http://localhost:3001/BajarPrecioxLinea/${currentFilter.linea_id}`,
+              { percentage: currentFilter.percentage }
+            );
           }
           notification.success({
             message: "Filtro aplicado",
             description: "El filtro se aplicó exitosamente",
-            icon: <CheckCircleOutlined />,
             duration: 1,
           });
           setTimeout(() => {
@@ -589,13 +571,15 @@ function Articulos() {
   // Actualizar datos filtrados según la búsqueda
   useEffect(() => {
     filterData(searchValue);
-  }, [data, searchValue]);
+  }, [data, searchValue, searchType]);
 
   // Filtrar los datos según el valor de búsqueda
   const filterData = (search) => {
     if (search) {
       const filtered = data.filter((articulo) =>
-        articulo.linea_nombre.toLowerCase().includes(search.toLowerCase())
+        searchType === "linea"
+          ? articulo.linea_nombre.toLowerCase().includes(search.toLowerCase())
+          : articulo.nombre.toLowerCase().includes(search.toLowerCase())
       );
       setFilteredData(filtered);
     } else {
@@ -606,7 +590,10 @@ function Articulos() {
   // Manejar el cambio en el input de búsqueda
   const handleSearchChange = (e) => {
     setSearchValue(e.target.value);
-    console.log(e.target.value);
+  };
+  // Manejar el cambio en el select
+  const handleSearchTypeChange = (value) => {
+    setSearchType(value);
   };
   const handleClearSearch = () => {
     setSearchValue("");
@@ -642,18 +629,30 @@ function Articulos() {
           Imprimir lista de articulos
         </Button>
       </div>
-      {/* Input de búsqueda */}
-      <div className="search-container" style={{ marginBottom: 10 }}>
+      <div
+        className="search-container"
+        style={{ marginBottom: 10, display: "flex", gap: "8px" }}
+      >
+        <Select
+          value={searchType}
+          onChange={handleSearchTypeChange}
+          style={{ width: 180 }}
+        >
+          <Option value="linea">Buscar por Línea</Option>
+          <Option value="articulo">Buscar por Artículo</Option>
+        </Select>
         <Input
-          placeholder="Buscar artículos"
+          placeholder={`Buscar por ${
+            searchType === "linea" ? "Línea" : "Artículo"
+          }`}
           value={searchValue}
           onChange={handleSearchChange}
-          style={{ width: 300, marginRight: "8px" }} // Ajusta el ancho para dejar espacio al botón
+          style={{ width: 300 }}
         />
         <Button
           icon={<CloseOutlined />}
           onClick={handleClearSearch}
-          style={{ width: "40px" }} // Ajusta el tamaño del botón
+          style={{ width: "40px" }}
         />
       </div>
       <Drawer
@@ -662,6 +661,34 @@ function Articulos() {
         title="Filtrar"
         style={{ padding: 0 }}
       >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "start",
+          }}
+        >
+          <div style={{ marginBottom: 10 }}>
+            <Tooltip title="Cambiar de aumentar a bajar">
+              <span> Cambiar de aumentar a bajar </span>
+            </Tooltip>
+          </div>
+          <Switch
+            checked={isIncrease}
+            onChange={(checked) => setIsIncrease(checked)}
+            defaultChecked
+            checkedChildren={
+              <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                AUMENTO
+              </span>
+            }
+            unCheckedChildren={
+              <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                BAJADO
+              </span>
+            }
+          />
+        </div>
         <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
           <Tooltip>
             Aplicar aumento por <strong>Linea</strong>

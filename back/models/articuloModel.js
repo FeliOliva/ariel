@@ -158,8 +158,6 @@ const increasePrice = async (ID, percentage) => {
 
 const updateLogPrecios = async (
   articulo_id,
-  costo_nuevo,
-  costo_antiguo,
   precio_monotributista_nuevo,
   precio_monotributista_antiguo,
   porcentaje
@@ -168,8 +166,6 @@ const updateLogPrecios = async (
     const query = queriesArticulos.updateLogPrecios;
     await db.query(query, [
       articulo_id,
-      costo_nuevo,
-      costo_antiguo,
       precio_monotributista_nuevo,
       precio_monotributista_antiguo,
       porcentaje,

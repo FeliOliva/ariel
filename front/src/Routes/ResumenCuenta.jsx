@@ -358,10 +358,10 @@ const ResumenCuenta = () => {
           totalVentas - totalPagos - totalNotasCreditoActivas;
 
         setTotales({
-          totalVentas,
-          totalPagos,
-          totalNC: totalNotasCreditoActivas,
-          saldoPendiente,
+          totalVentas: Math.round(totalVentas),
+          totalPagos: Math.round(totalPagos),
+          totalNC: Math.round(totalNotasCreditoActivas),
+          saldoPendiente: Math.round(saldoPendiente),
         });
       }
     } catch (error) {

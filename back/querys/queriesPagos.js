@@ -30,5 +30,7 @@ GROUP BY
     c.id, c.nombre, c.apellido, c.zona_id
 ORDER BY 
     total_pagos DESC;
-`
-}
+`,
+  upPago: "update pagos set estado = 1 where id = ?",
+  dropPago: "update pagos set estado = 0 where id = ?",
+};

@@ -190,19 +190,17 @@ const updateLogPrecios = async (req, res) => {
   try {
     const {
       articulo_id,
-      costo_nuevo,
-      costo_antiguo,
       precio_monotributista_nuevo,
       precio_monotributista_antiguo,
       porcentaje,
     } = req.body;
+    console.log("desde updateLogPrecios");
+    console.log(req.body);
     if (!porcentaje || isNaN(porcentaje)) {
       return res.status(400).json({ error: "Invalid percentage value" });
     }
     await articuloModel.updateLogPrecios(
       articulo_id,
-      costo_nuevo,
-      costo_antiguo,
       precio_monotributista_nuevo,
       precio_monotributista_antiguo,
       porcentaje
@@ -247,7 +245,7 @@ const getArticulosOrdenados = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
 module.exports = {
   getAllArticulos,
@@ -265,5 +263,5 @@ module.exports = {
   logsPreciosById,
   deshacerCambios,
   getArticulosOrdenados,
-  decreasePrices
+  decreasePrices,
 };
