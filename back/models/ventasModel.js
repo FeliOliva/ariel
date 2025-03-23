@@ -88,11 +88,13 @@ const dropVenta = async (ID) => {
     const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
 
     for (const detalle of detalles) {
-      await db.query(queriesVentas.devolverStock, [detalle.cantidad, detalle.articulo_id]);
+      await db.query(queriesVentas.devolverStock, [
+        detalle.cantidad,
+        detalle.articulo_id,
+      ]);
     }
 
     await db.query(queriesVentas.dropVenta, [ID]);
-
   } catch (err) {
     throw err;
   }
@@ -103,11 +105,13 @@ const upVenta = async (ID) => {
     const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
 
     for (const detalle of detalles) {
-      await db.query(queriesVentas.restarStock, [detalle.cantidad, detalle.articulo_id]);
+      await db.query(queriesVentas.restarStock, [
+        detalle.cantidad,
+        detalle.articulo_id,
+      ]);
     }
 
     await db.query(queriesVentas.upVenta, [ID]);
-
   } catch (err) {
     throw err;
   }
@@ -162,7 +166,6 @@ const getVentaByID = async (venta_id) => {
   }
 };
 
-
 const getTotal = async (venta_id) => {
   try {
     const query = queriesVentas.getTotal;
@@ -176,16 +179,47 @@ const updateVentaTotal = async (total, total_con_descuento, ventaId) => {
   const query = queriesVentas.updateVentaTotal;
   await db.query(query, [total, total_con_descuento, ventaId]);
 };
-const getVentasByClientesxFecha = async (cliente_id, fecha_inicio, fecha_fin) => {
+
+const getResumenCliente = async (cliente_id, fecha_inicio, fecha_fin) => {
+  try {
+    const query = queriesVentas.getResumenCliente;
+    const [rows] = await db.query(query, [
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+    ]);
+    return rows;
+  } catch (err) {
+    console.error("Error en getResumenCliente:", err);
+    throw err;
+  }
+};
+const getVentasByClientesxFecha = async (
+  cliente_id,
+  fecha_inicio,
+  fecha_fin
+) => {
   try {
     const query = queriesVentas.getVentasByClientesxFecha;
-    const [rows] = await db.query(query, [fecha_inicio, fecha_fin, cliente_id, fecha_inicio, fecha_fin]);
+    const [rows] = await db.query(query, [
+      fecha_inicio,
+      fecha_fin,
+      cliente_id,
+      fecha_inicio,
+      fecha_fin,
+    ]);
     return rows;
   } catch (err) {
     console.error("Error en getVentasByClientes:", err);
     throw err;
   }
-}
+};
 const getResumenZonas = async (fecha_inicio, fecha_fin) => {
   try {
     const query = `
@@ -221,7 +255,12 @@ LEFT JOIN (
 ORDER BY z.id;
     `;
 
-    const [rows] = await db.query(query, [fecha_inicio, fecha_fin, fecha_inicio, fecha_fin]);
+    const [rows] = await db.query(query, [
+      fecha_inicio,
+      fecha_fin,
+      fecha_inicio,
+      fecha_fin,
+    ]);
     return rows;
   } catch (err) {
     throw err;
@@ -229,13 +268,13 @@ ORDER BY z.id;
 };
 const getLineasStock = async () => {
   try {
-    const query = "select linea_id from lineas_stock"
-    const [lineas] = await db.query(query)
-    return lineas
+    const query = "select linea_id from lineas_stock";
+    const [lineas] = await db.query(query);
+    return lineas;
   } catch (err) {
-    throw err
+    throw err;
   }
-}
+};
 module.exports = {
   getAllVentas,
   addVenta,
@@ -254,5 +293,6 @@ module.exports = {
   updateVentaTotal,
   getVentasByClientesxFecha,
   getResumenZonas,
-  getLineasStock
+  getLineasStock,
+  getResumenCliente,
 };

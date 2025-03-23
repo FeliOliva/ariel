@@ -140,6 +140,57 @@ WHERE dv.venta_id = ?;
   updatePagoCuentaCorriente: `UPDATE pagos_cuenta_corriente SET monto_total = ? WHERE cliente_id = ?`,
   getSaldoTotalCuentaCorriente: `SELECT SUM(saldo_total) as saldo_acumulado FROM cuenta_corriente WHERE cliente_id = ?`,
   updateVentaTotal: `UPDATE venta SET total = ?, total_con_descuento = ? WHERE id = ?`,
+  getResumenCliente: `SELECT 
+    'Venta' AS tipo,
+    v.id, 
+    v.estado, 
+    v.cliente_id, 
+    v.nroVenta AS numero, 
+    v.fecha_venta AS fecha, 
+    v.total_con_descuento, 
+    NULL AS monto, 
+    NULL AS metodo_pago
+FROM venta v
+WHERE v.cliente_id = ?
+AND v.estado = 1
+AND v.fecha_venta BETWEEN ? AND ?
+
+UNION ALL
+
+SELECT 
+    'Pago' AS tipo,
+    p.id, 
+    p.estado, 
+    p.cliente_id, 
+    p.nro_pago AS numero, 
+    p.fecha_pago AS fecha, 
+    NULL AS total_con_descuento, 
+    p.monto, 
+    p.metodo_pago
+FROM pagos p
+WHERE p.cliente_id = ?
+AND p.estado = 1
+AND p.fecha_pago BETWEEN ? AND ?
+
+UNION ALL
+
+SELECT 
+    'Nota de Crédito' AS tipo,
+    nc.id, 
+    nc.estado, 
+    nc.cliente_id, 
+    nc.nroNC AS numero, 
+    nc.fecha, 
+    NULL AS total_con_descuento, 
+    NULL AS monto, 
+    NULL AS metodo_pago
+FROM notasCredito nc
+WHERE nc.cliente_id = ? 
+AND nc.estado = 1
+AND nc.fecha BETWEEN ? AND ?
+
+ORDER BY fecha;
+`,
   getVentasByClientesxFecha: `
   SELECT 
     v.id, 
@@ -168,7 +219,8 @@ WHERE dv.venta_id = ?;
   WHERE v.cliente_id = ?
     AND v.estado = 1
     AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?);
-`, getDetallesVenta: `SELECT articulo_id, cantidad FROM detalle_venta WHERE venta_id = ?;`,
+`,
+  getDetallesVenta: `SELECT articulo_id, cantidad FROM detalle_venta WHERE venta_id = ?;`,
   devolverStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
   restarStock: `UPDATE articulo SET stock = stock - ? WHERE id = ?;`,
 };

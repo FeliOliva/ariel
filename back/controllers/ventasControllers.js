@@ -11,11 +11,10 @@ const getAllVentas = async (req, res) => {
 };
 const addVenta = async (req, res) => {
   try {
-    const { cliente_id, nroVenta, zona_id, descuento, detalles } =
-      req.body;
+    const { cliente_id, nroVenta, zona_id, descuento, detalles } = req.body;
 
-    const lineas = (await ventasModel.getLineasStock()).map(l => l.linea_id);
-    console.log("lineas", lineas)
+    const lineas = (await ventasModel.getLineasStock()).map((l) => l.linea_id);
+    console.log("lineas", lineas);
     // Crear la venta
     const ventaId = await ventasModel.addVenta(
       cliente_id,
@@ -30,7 +29,7 @@ const addVenta = async (req, res) => {
       if (lineas.includes(detalle.linea_id)) {
         // // Descontar el stock del artículo
         await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
-        console.log("entroo")
+        console.log("entroo");
       }
       if (detalle.isGift === true) {
         sub_total = 0;
@@ -78,7 +77,9 @@ const dropVenta = async (req, res) => {
   try {
     const ID = req.params.ID;
     await ventasModel.dropVenta(ID);
-    res.status(200).json({ message: "Venta deshabilitada con éxito y stock actualizado" });
+    res
+      .status(200)
+      .json({ message: "Venta deshabilitada con éxito y stock actualizado" });
   } catch (error) {
     console.error("Error al deshabilitar la venta:", error);
     res.status(500).json({ error: "Error al deshabilitar la venta" });
@@ -89,7 +90,9 @@ const upVenta = async (req, res) => {
   try {
     const ID = req.params.ID;
     await ventasModel.upVenta(ID);
-    res.status(200).json({ message: "Venta habilitada con éxito y stock actualizado" });
+    res
+      .status(200)
+      .json({ message: "Venta habilitada con éxito y stock actualizado" });
   } catch (error) {
     console.error("Error al habilitar la venta:", error);
     res.status(500).json({ error: "Error al habilitar la venta" });
@@ -113,7 +116,6 @@ const updateVentas = async (req, res) => {
   }
 };
 
-
 const getVentasByZona = async (req, res) => {
   try {
     const { ID: zona_id } = req.params;
@@ -126,9 +128,9 @@ const getVentasByZona = async (req, res) => {
     }
 
     if (!fecha_inicio || !fecha_fin) {
-      return res
-        .status(400)
-        .json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+      return res.status(400).json({
+        error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
+      });
     }
     // Llamar al modelo con los parámetros
     const ventas = await ventasModel.getVentasByZona(
@@ -217,16 +219,38 @@ const getVentaByID = async (req, res) => {
     res.status(500).json({ error: "Error al obtener la venta por ID" });
   }
 };
+const getResumenCliente = async (req, res) => {
+  try {
+    const { ID: cliente_id } = req.params;
+    const { fecha_inicio, fecha_fin } = req.query;
+    // Validar los parámetros requeridos
+    if (!cliente_id) {
+      return res.status(400).json({ error: "ID de cliente no proporcionado" });
+    }
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
+      });
+    }
+    const fecha_Inicio_Hora = fecha_inicio + " 00:00:00";
+    const fecha_Final = fecha_fin + " 23:59:59";
+    console.log("fecha final", fecha_Final);
+    const data = await ventasModel.getResumenCliente(
+      cliente_id,
+      fecha_Inicio_Hora,
+      fecha_Final
+    );
+    res.json(data);
+  } catch (error) {
+    console.error("Error al obtener el resumen del cliente:", error);
+    res.status(500).json({ error: "Error al obtener el resumen del cliente" });
+  }
+};
 const getVentasByClientesxFecha = async (req, res) => {
   try {
     const { ID: cliente_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query;
-    console.log(fecha_fin);
-    console.log(fecha_inicio);
-
-    console.log("ID desde el back:", cliente_id);
-    console.log("Fecha inicio:", fecha_inicio);
-    console.log("Fecha fin:", fecha_fin);
 
     // Validar los parámetros requeridos
     if (!cliente_id) {
@@ -234,9 +258,9 @@ const getVentasByClientesxFecha = async (req, res) => {
     }
 
     if (!fecha_inicio || !fecha_fin) {
-      return res
-        .status(400)
-        .json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+      return res.status(400).json({
+        error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
+      });
     }
 
     // Llamar al modelo con los parámetros
@@ -256,9 +280,11 @@ const getVentasByClientesxFecha = async (req, res) => {
     res.json(ventas);
   } catch (error) {
     console.error("Error al obtener ventas:", error);
-    res.status(500).json({ error: "Error interno del servidor al obtener ventas" });
+    res
+      .status(500)
+      .json({ error: "Error interno del servidor al obtener ventas" });
   }
-}
+};
 const getResumenZonas = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = req.query;
@@ -266,7 +292,9 @@ const getResumenZonas = async (req, res) => {
     console.log("Fecha fin:", fecha_fin);
 
     if (!fecha_inicio || !fecha_fin) {
-      return res.status(400).json({ error: "Los parámetros fecha_inicio y fecha_fin son requeridos." });
+      return res.status(400).json({
+        error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
+      });
     }
 
     const resumen = await ventasModel.getResumenZonas(fecha_inicio, fecha_fin);
@@ -282,7 +310,6 @@ const getResumenZonas = async (req, res) => {
   }
 };
 
-
 module.exports = {
   getAllVentas,
   addVenta,
@@ -294,5 +321,6 @@ module.exports = {
   getVentasByProducto,
   getVentaByID,
   getVentasByClientesxFecha,
-  getResumenZonas
+  getResumenZonas,
+  getResumenCliente,
 };
