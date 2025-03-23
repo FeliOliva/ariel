@@ -524,7 +524,7 @@ function Articulos() {
 
           // Actualizar los precios
           await axios.put(
-            `http://localhost:3001/increasePrices/${currentFilter.linea_id}`,
+            `http://localhost:3001/AumentarPrecioxLinea/${currentFilter.linea_id}`,
             { percentage: currentFilter.percentage }
           );
 
@@ -555,10 +555,6 @@ function Articulos() {
               });
             }
           }
-
-          setData(articulosNuevos);
-          setOpenFilterDrawer(false);
-          setCurrentFilter(null);
           notification.success({
             message: "Filtro aplicado",
             description: "El filtro se aplicó exitosamente",

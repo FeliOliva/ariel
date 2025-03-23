@@ -156,6 +156,22 @@ const increasePrices = async (req, res) => {
     res.status(500).json({ error: "Error updating prices" });
   }
 };
+const decreasePrices = async (req, res) => {
+  try {
+    const linea_id = req.params.linea_id;
+    const { percentage } = req.body;
+
+    if (!percentage || isNaN(percentage)) {
+      return res.status(400).json({ error: "Invalid percentage value" });
+    }
+
+    await articuloModel.decreasePrices(linea_id, percentage);
+    res.status(200).json({ message: "Prices updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error updating prices" });
+  }
+};
 const increasePrice = async (req, res) => {
   try {
     const ID = req.params.ID;
@@ -248,5 +264,6 @@ module.exports = {
   updateLogPrecios,
   logsPreciosById,
   deshacerCambios,
-  getArticulosOrdenados
+  getArticulosOrdenados,
+  decreasePrices
 };

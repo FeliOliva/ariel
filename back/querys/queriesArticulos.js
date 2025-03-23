@@ -119,6 +119,12 @@ ORDER BY
           precio_monotributista = precio_monotributista * (1 + ? / 100)
         WHERE linea_id = ?;
       `,
+    decreasePrices: `
+        UPDATE articulo 
+        SET 
+          precio_monotributista = precio_monotributista * (1 - ? / 100)
+        WHERE linea_id = ?;
+      `,
     increasePrice: `
       UPDATE articulo
       SET 

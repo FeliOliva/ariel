@@ -21,7 +21,8 @@ router.get(
   articulosControllers.getArticulosBySubLineaID
 );
 router.put("/increasePrice/:ID", articulosControllers.increasePrice);
-router.put("/increasePrices/:linea_id", articulosControllers.increasePrices);
+router.put("/AumentarPrecioxLinea/:linea_id", articulosControllers.increasePrices);
+router.put("/BajarPrecioxLinea/:linea_id", articulosControllers.decreasePrices);
 router.post("/updateLog", articulosControllers.updateLogPrecios);
 router.get("/logsPreciosById/:ID", articulosControllers.logsPreciosById);
 router.put("/deshacerCambios/:id", articulosControllers.deshacerCambios);

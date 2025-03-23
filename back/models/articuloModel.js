@@ -139,6 +139,14 @@ const increasePrices = async (linea_id, percentage) => {
     throw new Error("Error updating prices: " + error.message);
   }
 };
+const decreasePrices = async (linea_id, percentage) => {
+  try {
+    const query = queriesArticulos.decreasePrices;
+    await db.query(query, [percentage, linea_id]);
+  } catch (error) {
+    throw new Error("Error updating prices: " + error.message);
+  }
+};
 const increasePrice = async (ID, percentage) => {
   try {
     const query = queriesArticulos.increasePrice;
@@ -229,4 +237,5 @@ module.exports = {
   logsPreciosById,
   deshacerCambios,
   getArticulosOrdenados,
+  decreasePrices,
 };
