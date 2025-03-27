@@ -5,13 +5,14 @@ module.exports = {
     WHERE fecha_pago BETWEEN ? AND ?
   `,
   addPagos: `INSERT INTO pagos (nro_pago,cliente_id, monto, metodo_pago) VALUES (?, ?, ?, ?)`,
+  getPagoById: `SELECT * FROM pagos WHERE ID = ?`,
   getPagosByClienteId: `
     SELECT * 
     FROM pagos 
     WHERE cliente_id = ? 
       AND fecha_pago BETWEEN ? AND ?
   `,
-  updatePago: `UPDATE pagos SET monto = ?, metodo_pago = ?, fecha_pago = NOW() WHERE ID = ?`,
+  updatePago: `UPDATE pagos SET monto = ?, fecha_pago = ? WHERE ID = ?`,
   getPagosByZona_id: `SELECT 
     c.id AS cliente_id,
     c.nombre AS cliente_nombre,

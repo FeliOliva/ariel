@@ -72,15 +72,26 @@ const addPago = async (req, res) => {
   }
 };
 
+const getPagoById = async (req, res) => {
+  try {
+    const { ID } = req.params;
+    const pago = await pagosModel.getPagoById(ID);
+    res.json(pago);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 const updatePago = async (req, res) => {
   try {
-    const { monto, metodo_pago, ID } = req.body;
-    await pagosModel.updatePago(monto, metodo_pago, ID);
-    res.status(200).json({ message: "Pago actualizado con exito" });
+    let { monto, fecha_pago, ID } = req.body;
+    await pagosModel.updatePago(monto, fecha_pago, ID);
+    res.status(200).json({ message: "Pago actualizado con éxito" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 const getPagosByZona_id = async (req, res) => {
   try {
     const { ID: zona_id } = req.params;
@@ -149,4 +160,5 @@ module.exports = {
   getPagosByZona_id,
   upPago,
   dropPago,
+  getPagoById,
 };

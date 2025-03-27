@@ -19,6 +19,16 @@ const addNotaCredito = async (cliente_id) => {
         throw err;
     }
 }
+
+const getDetallesNotaCredito = async (ID) => {
+    try {
+        const query = queriesNotasCredito.getDetallesNotaCredito;
+        const [rows] = await db.query(query, [ID]);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+}
 const addDetallesNotaCredito = async (notaCreditoId, articulo_id, cantidad, precio) => {
     try {
         console.log("detalles");
@@ -66,4 +76,4 @@ const getNotasCreditoByZona = async (zona_id) => {
     }
 };
 
-module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, addDetallesNotaCredito, updateStock, dropNotaCredito, upNotaCredito, getNotasCreditoByZona };
+module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, addDetallesNotaCredito, updateStock, dropNotaCredito, upNotaCredito, getNotasCreditoByZona, getDetallesNotaCredito };

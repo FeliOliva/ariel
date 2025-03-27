@@ -235,7 +235,6 @@ const getResumenCliente = async (req, res) => {
     }
     const fecha_Inicio_Hora = fecha_inicio + " 00:00:00";
     const fecha_Final = fecha_fin + " 23:59:59";
-    console.log("fecha final", fecha_Final);
     const data = await ventasModel.getResumenCliente(
       cliente_id,
       fecha_Inicio_Hora,

@@ -28,6 +28,24 @@ JOIN sublinea sl ON a.sublinea_id = sl.id
 WHERE nc.cliente_id = ?;
 `,
     addNotaCredito: "INSERT INTO notasCredito (cliente_id) VALUES (?)",
+    getDetallesNotaCredito: `SELECT 
+    dnc.id, 
+    dnc.notaCredito_id, 
+    dnc.articulo_id, 
+    a.nombre AS articulo_nombre,
+    a.codigo_producto,
+    a.precio_monotributista,
+    a.linea_id,
+    l.nombre AS linea_nombre,
+    a.mediciones,
+    dnc.cantidad, 
+    dnc.fecha, 
+    dnc.precio, 
+    dnc.subTotal
+FROM detallenotaCredito dnc
+JOIN articulo a ON dnc.articulo_id = a.id
+JOIN linea l ON a.linea_id = l.id
+WHERE dnc.notaCredito_id = ?;`,
     addDetallesNotaCredito: "INSERT INTO detalleNotaCredito (notaCredito_id, articulo_id, cantidad, precio) VALUES (?, ?, ?, ?)",
     updateStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
     dropNotaCredito: "UPDATE notasCredito SET estado = 0 WHERE id = ?",

@@ -48,6 +48,17 @@ const getAllNotasCreditoByClienteId = async (req, res) => {
     }
 };
 
+const getDetallesNotaCredito = async (req, res) => {
+    try {
+        const ID = req.params.ID;
+        const detalles = await notasCreditoModel.getDetallesNotaCredito(ID);
+        res.json(detalles);
+    } catch (error) {
+        console.error("Error al obtener los detalles de la nota de credito:", error);
+        res.status(500).json({ error: "Error al obtener los detalles de la nota de credito" });
+    }
+}
+
 const addNotaCredito = async (req, res) => {
     try {
         const { cliente_id, detalles } = req.body;
@@ -107,4 +118,4 @@ const getNotasCreditoByZona = async (req, res) => {
     }
 };
 
-module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, dropNotaCredito, upNotaCredito, getNotasCreditoByZona };
+module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, dropNotaCredito, upNotaCredito, getNotasCreditoByZona, getDetallesNotaCredito };

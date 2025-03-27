@@ -147,12 +147,11 @@ WHERE dv.venta_id = ?;
     v.cliente_id, 
     v.nroVenta AS numero, 
     v.fecha_venta AS fecha, 
-    v.total_con_descuento, 
+    FORMAT(v.total_con_descuento, 0, 'de_DE') AS total_con_descuento, 
     NULL AS monto, 
     NULL AS metodo_pago
 FROM venta v
 WHERE v.cliente_id = ?
-AND v.estado = 1
 AND v.fecha_venta BETWEEN ? AND ?
 
 UNION ALL
@@ -165,11 +164,10 @@ SELECT
     p.nro_pago AS numero, 
     p.fecha_pago AS fecha, 
     NULL AS total_con_descuento, 
-    p.monto, 
+    FORMAT(p.monto, 0, 'de_DE') AS monto, 
     p.metodo_pago
 FROM pagos p
 WHERE p.cliente_id = ?
-AND p.estado = 1
 AND p.fecha_pago BETWEEN ? AND ?
 
 UNION ALL
@@ -181,13 +179,14 @@ SELECT
     nc.cliente_id, 
     nc.nroNC AS numero, 
     nc.fecha, 
-    NULL AS total_con_descuento, 
+    FORMAT(SUM(dnc.subtotal), 0, 'de_DE') AS total_con_descuento, 
     NULL AS monto, 
     NULL AS metodo_pago
 FROM notasCredito nc
+JOIN detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
 WHERE nc.cliente_id = ? 
-AND nc.estado = 1
 AND nc.fecha BETWEEN ? AND ?
+GROUP BY nc.id, nc.estado, nc.cliente_id, nc.nroNC, nc.fecha
 
 ORDER BY fecha;
 `,
