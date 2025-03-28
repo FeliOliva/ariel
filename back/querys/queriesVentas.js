@@ -35,8 +35,6 @@ ORDER BY
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, descuento) VALUES (?, ?, ?, ?);`,
   addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista,sub_total) VALUES (?, ?, ?, ?, ?, ?);`,
-  dropVenta: `UPDATE Venta SET estado = 0 WHERE ID = ?;`,
-  upVenta: `UPDATE Venta SET estado = 1 WHERE ID = ?;`,
   updateVentas: `UPDATE Ventas SET producto_id = ?, cantidad = ?, cliente_id = ?, zona_id = ? WHERE ID = ?;`,
   getVentasByClientes: `SELECT 
     v.id, 
@@ -221,5 +219,6 @@ ORDER BY fecha;
 `,
   getDetallesVenta: `SELECT articulo_id, cantidad FROM detalle_venta WHERE venta_id = ?;`,
   devolverStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
-  restarStock: `UPDATE articulo SET stock = stock - ? WHERE id = ?;`,
+  dropDetallesVenta: `DELETE FROM detalle_venta WHERE venta_id = ?;`,
+  dropVenta: `DELETE FROM venta WHERE id = ?;`,
 };

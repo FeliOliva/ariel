@@ -85,8 +85,10 @@ const addDetalleVenta = async (
 
 const dropVenta = async (ID) => {
   try {
+    // Obtener detalles de la venta antes de eliminarla
     const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
 
+    // Devolver stock a los artículos vendidos
     for (const detalle of detalles) {
       await db.query(queriesVentas.devolverStock, [
         detalle.cantidad,
@@ -94,24 +96,11 @@ const dropVenta = async (ID) => {
       ]);
     }
 
+    // Eliminar los detalles de la venta
+    await db.query(queriesVentas.dropDetallesVenta, [ID]);
+
+    // Eliminar la venta
     await db.query(queriesVentas.dropVenta, [ID]);
-  } catch (err) {
-    throw err;
-  }
-};
-
-const upVenta = async (ID) => {
-  try {
-    const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
-
-    for (const detalle of detalles) {
-      await db.query(queriesVentas.restarStock, [
-        detalle.cantidad,
-        detalle.articulo_id,
-      ]);
-    }
-
-    await db.query(queriesVentas.upVenta, [ID]);
   } catch (err) {
     throw err;
   }
@@ -283,7 +272,6 @@ module.exports = {
   updateLogVenta,
   addDetalleVenta,
   dropVenta,
-  upVenta,
   updateVentas,
   getVentasByClientes,
   getVentasByZona,

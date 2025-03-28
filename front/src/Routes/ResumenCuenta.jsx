@@ -253,55 +253,50 @@ const ResumenCuenta = () => {
           />
           <Button
             className="custom-button"
-            onClick={() => handleToggleState(row.id, row.estado, row.tipo)}
+            onClick={() => handleDelete(row.id, row.tipo)}
           >
-            {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+            {<DeleteOutlined />}
           </Button>
         </div>
       ),
     },
   ];
-  const handleToggleState = async (id, currentState, tipo) => {
+  const handleDelete = async (id, tipo) => {
     if (!selectedCliente || !rangoFechas || rangoFechas.length !== 2) {
       return message.warning(
         "Debe seleccionar un cliente y un rango de fechas."
       );
     }
-
-    const toggleActions = {
-      Venta: { drop: "dropVenta", up: "upVenta" },
-      Pago: { drop: "dropPago", up: "upPago" },
-      "Nota de Crédito": { drop: "dropNotaCredito", up: "upNotaCredito" },
-    };
-
-    const action = currentState === 1 ? "drop" : "up";
-    const endpoint = toggleActions[tipo][action];
+    let value;
+    if (tipo === "Pago") {
+      value = "dropPago";
+      
+    } else if (tipo === "Venta") {
+      value = "dropVenta";
+    } else {
+      value = "dropNotaCredito";
+    }
 
     confirm({
-      title: `¿Está seguro de ${
-        currentState ? "desactivar" : "activar"
-      } esta ${tipo}?`,
+      title: `¿Está seguro de eliminar esta ${tipo}?`,
       icon: <ExclamationCircleOutlined />,
-      okText: "Sí, confirmar",
+      okText: "Sí, eliminar",
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.put(`http://localhost:3001/${endpoint}/${id}`);
+          await axios.put(`http://localhost:3001/${value}/${id}`);
+
           notification.success({
-            message: `${tipo} ${currentState ? "desactivado" : "activado"}`,
-            description: `La ${tipo} se ${
-              currentState ? "desactivó" : "activó"
-            } exitosamente.`,
+            message: `${tipo} eliminada`,
+            description: `La ${tipo} se eliminó exitosamente.`,
             duration: 1,
           });
 
           // Recargar datos actualizados
           fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
         } catch (error) {
-          console.error(`Error al cambiar estado de la ${tipo}:`, error);
-          message.error(
-            `No se pudo ${currentState ? "desactivar" : "activar"} la ${tipo}.`
-          );
+          console.error(`Error al eliminar la ${tipo}:`, error);
+          message.error(`No se pudo eliminar la ${tipo}.`);
         }
       },
     });

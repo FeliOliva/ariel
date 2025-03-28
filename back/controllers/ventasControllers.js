@@ -86,19 +86,6 @@ const dropVenta = async (req, res) => {
   }
 };
 
-const upVenta = async (req, res) => {
-  try {
-    const ID = req.params.ID;
-    await ventasModel.upVenta(ID);
-    res
-      .status(200)
-      .json({ message: "Venta habilitada con éxito y stock actualizado" });
-  } catch (error) {
-    console.error("Error al habilitar la venta:", error);
-    res.status(500).json({ error: "Error al habilitar la venta" });
-  }
-};
-
 const updateVentas = async (req, res) => {
   try {
     const { producto_id, cantidad, cliente_id, zona_id, ID } = req.body;
@@ -313,7 +300,6 @@ module.exports = {
   getAllVentas,
   addVenta,
   dropVenta,
-  upVenta,
   updateVentas,
   getVentasByClientes,
   getVentasByZona,

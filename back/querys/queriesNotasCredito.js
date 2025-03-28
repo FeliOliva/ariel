@@ -1,5 +1,5 @@
 module.exports = {
-    getAllNotasCreditoByClienteId: `
+  getAllNotasCreditoByClienteId: `
     SELECT 
     nc.id AS notaCredito_id,
     nc.nroNC,
@@ -27,8 +27,8 @@ JOIN linea l ON a.linea_id = l.id
 JOIN sublinea sl ON a.sublinea_id = sl.id
 WHERE nc.cliente_id = ?;
 `,
-    addNotaCredito: "INSERT INTO notasCredito (cliente_id) VALUES (?)",
-    getDetallesNotaCredito: `SELECT 
+  addNotaCredito: "INSERT INTO notasCredito (cliente_id) VALUES (?)",
+  getDetallesNotaCredito: `SELECT 
     dnc.id, 
     dnc.notaCredito_id, 
     dnc.articulo_id, 
@@ -46,11 +46,13 @@ FROM detallenotaCredito dnc
 JOIN articulo a ON dnc.articulo_id = a.id
 JOIN linea l ON a.linea_id = l.id
 WHERE dnc.notaCredito_id = ?;`,
-    addDetallesNotaCredito: "INSERT INTO detalleNotaCredito (notaCredito_id, articulo_id, cantidad, precio) VALUES (?, ?, ?, ?)",
-    updateStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
-    dropNotaCredito: "UPDATE notasCredito SET estado = 0 WHERE id = ?",
-    upNotaCredito: "UPDATE notasCredito SET estado = 1 WHERE id = ?",
-    getNotasCreditoByZona: `SELECT 
+  addDetallesNotaCredito:
+    "INSERT INTO detalleNotaCredito (notaCredito_id, articulo_id, cantidad, precio) VALUES (?, ?, ?, ?)",
+  updateStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
+  dropNotaCredito: "DELETE FROM notasCredito WHERE id = ?",
+  dropDetallesNotaCredito:
+    "DELETE FROM detalleNotaCredito WHERE notaCredito_id = ?",
+  getNotasCreditoByZona: `SELECT 
     c.id AS cliente_id,
     c.nombre AS cliente_nombre,
     c.apellido AS cliente_apellido,
@@ -74,5 +76,4 @@ GROUP BY
 ORDER BY 
     total DESC;
     `,
-
-}
+};

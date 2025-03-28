@@ -66,14 +66,7 @@ const getPagosByZona_id = async (zona_id, fecha_inicio, fecha_fin) => {
     throw err;
   }
 };
-const upPago = async (id) => {
-  try {
-    const query = queriesPagos.upPago;
-    return await db.query(query, [id]);
-  } catch (err) {
-    throw err;
-  }
-};
+
 const dropPago = async (id) => {
   try {
     const query = queriesPagos.dropPago;
@@ -88,7 +81,6 @@ module.exports = {
   updatePago,
   getPagosByClienteId,
   getPagosByZona_id,
-  upPago,
   dropPago,
   getPagoById
 };

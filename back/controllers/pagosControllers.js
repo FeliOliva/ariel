@@ -132,16 +132,6 @@ const getPagosByZona_id = async (req, res) => {
       .json({ error: "Error interno del servidor al obtener pagos" });
   }
 };
-
-const upPago = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pagosModel.upPago(id);
-    res.status(200).json({ message: "Pago actualizado con exito" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 const dropPago = async (req, res) => {
   try {
     const { id } = req.params;
@@ -158,7 +148,6 @@ module.exports = {
   updatePago,
   getPagosByClienteId,
   getPagosByZona_id,
-  upPago,
   dropPago,
   getPagoById,
 };

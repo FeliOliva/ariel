@@ -85,16 +85,6 @@ const dropNotaCredito = async (req, res) => {
         res.status(500).json({ error: "Error al eliminar la nota de credito" });
     }
 }
-const upNotaCredito = async (req, res) => {
-    try {
-        const ID = req.params.ID;
-        await notasCreditoModel.upNotaCredito(ID);
-        res.status(200).json({ message: "Nota de credito actualizada con exito" });
-    } catch (error) {
-        console.error("Error al actualizar la nota de credito:", error);
-        res.status(500).json({ error: "Error al actualizar la nota de credito" });
-    }
-}
 const getNotasCreditoByZona = async (req, res) => {
     try {
         const { ID: zona_id } = req.params;
@@ -118,4 +108,4 @@ const getNotasCreditoByZona = async (req, res) => {
     }
 };
 
-module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, dropNotaCredito, upNotaCredito, getNotasCreditoByZona, getDetallesNotaCredito };
+module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, dropNotaCredito, getNotasCreditoByZona, getDetallesNotaCredito };

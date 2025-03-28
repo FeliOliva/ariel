@@ -8,7 +8,6 @@ router.get("/getPagoById/:ID", pagosControllers.getPagoById);
 router.post("/addPago", pagosControllers.addPago);
 router.put("/updatePago", pagosControllers.updatePago);
 router.get("/getPagosByZona_id/:ID", pagosControllers.getPagosByZona_id);
-router.put("/upPago/:id", pagosControllers.upPago);
 router.put("/dropPago/:id", pagosControllers.dropPago);
 
 module.exports = router;

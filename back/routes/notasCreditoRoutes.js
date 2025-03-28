@@ -6,7 +6,6 @@ router.get("/notasCreditoByClienteId/:ID", notasCreditoControllers.getAllNotasCr
 router.post("/addNotaCredito", notasCreditoControllers.addNotaCredito);
 router.get("/getDetallesNotaCredito/:ID", notasCreditoControllers.getDetallesNotaCredito);
 router.put("/dropNotaCredito/:ID", notasCreditoControllers.dropNotaCredito);
-router.put("/upNotaCredito/:ID", notasCreditoControllers.upNotaCredito);
 router.get("/getNotasCreditoByZonaID/:ID", notasCreditoControllers.getNotasCreditoByZona);
 
 module.exports = router;

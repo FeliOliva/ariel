@@ -32,6 +32,5 @@ GROUP BY
 ORDER BY 
     total_pagos DESC;
 `,
-  upPago: "update pagos set estado = 1 where id = ?",
-  dropPago: "update pagos set estado = 0 where id = ?",
+  dropPago: "delete from pagos where id = ?",
 };
