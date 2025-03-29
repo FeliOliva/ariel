@@ -381,50 +381,27 @@ function Ventas() {
     fetchVentasByClient("");
     fetchData(); // Limpiar el filtro y mostrar todos los datos
   };
-  const handleToggleState = async (id, currentState) => {
+  const handleDropVenta = async (id) => {
     try {
-      if (currentState === 1) {
-        confirm({
-          title: "¿Esta seguro de desactivar esta venta?",
-          icon: <ExclamationCircleOutlined />,
-          okText: "Si, confirmar",
-          cancelText: "Cancelar",
-          onOk: async () => {
-            await axios.put(`http://localhost:3001/dropVenta/${id}`);
-            notification.success({
-              message: "Venta desactivada",
-              description: "La venta se desactivo exitosamente",
-              duration: 1,
-            });
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          },
-        });
-      } else {
-        confirm({
-          title: "¿Esta seguro de activar esta venta?",
-          icon: <ExclamationCircleOutlined />,
-          okText: "Si, confirmar",
-          cancelText: "Cancelar",
-          onOk: async () => {
-            await axios.put(`http://localhost:3001/upVenta/${id}`);
-            notification.success({
-              message: "Venta activado",
-              description: "La venta se activo exitosamente",
-              duration: 1,
-            });
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          },
-        });
-      }
+      confirm({
+        title: "¿Esta seguro de eliminar esta venta?",
+        icon: <ExclamationCircleOutlined />,
+        okText: "Si, confirmar",
+        cancelText: "Cancelar",
+        onOk: async () => {
+          await axios.put(`http://localhost:3001/dropVenta/${id}`);
+          notification.success({
+            message: "Venta eliminada",
+            description: "La venta se elimino exitosamente",
+            duration: 1,
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        },
+      });
     } catch (error) {
-      console.error(
-        `Error ${currentState ? "deactivating" : "activating"} the article:`,
-        error
-      );
+      console.error("Error al eliminar la venta:", error);
     }
   };
 
@@ -532,9 +509,9 @@ function Ventas() {
       selector: (row) => (
         <Button
           className="custom-button"
-          onClick={() => handleToggleState(row.id, row.estado)}
+          onClick={() => handleDropVenta(row.id)}
         >
-          {row.estado ? <DeleteOutlined /> : <CheckCircleOutlined />}
+          <DeleteOutlined />
         </Button>
       ),
     },
