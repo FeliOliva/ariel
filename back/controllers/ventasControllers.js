@@ -88,12 +88,9 @@ const dropVenta = async (req, res) => {
 
 const updateVentas = async (req, res) => {
   try {
-    const { producto_id, cantidad, cliente_id, zona_id, ID } = req.body;
+    const { fecha_venta, ID } = req.body;
     await ventasModel.updateVentas(
-      producto_id,
-      cantidad,
-      cliente_id,
-      zona_id,
+      fecha_venta,
       ID
     );
     res.status(200).json({ message: "Venta actualizada" });

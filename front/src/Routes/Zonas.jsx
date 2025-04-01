@@ -187,7 +187,6 @@ const Zonas = () => {
       );
       setCurrentZona(response.data);
       setOpenEditDrawer(true);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     }

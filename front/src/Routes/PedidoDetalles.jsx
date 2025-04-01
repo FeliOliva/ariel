@@ -129,8 +129,6 @@ const PedidoDetalles = () => {
             }
           );
 
-          console.log("Respuesta del servidor:", response.data);
-
           // Actualiza los datos de la tabla sin recargar
           setData((prevData) =>
             prevData.map((item) =>

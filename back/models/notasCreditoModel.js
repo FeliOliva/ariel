@@ -74,6 +74,26 @@ const getNotasCreditoByZona = async (zona_id) => {
     throw err;
   }
 };
+const updateNotaCredito = async (fecha, ID) => {
+  try {
+    const query = queriesNotasCredito.updateNotaCredito;
+    console.log("fecha", fecha)
+    const [day, month, year] = fecha.split("/");
+    const formattedFechaNC = `${year}-${month}-${day} 00:00:00`;
+    await db.query(query, [formattedFechaNC, ID]);
+  } catch (err) {
+    throw err;
+  }
+}
+const getNotaCreditoById = async (ID) => {
+  try {
+    const query = queriesNotasCredito.getNotaCreditoById;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+}
 
 module.exports = {
   getAllNotasCreditoByClienteId,
@@ -83,4 +103,6 @@ module.exports = {
   dropNotaCredito,
   getNotasCreditoByZona,
   getDetallesNotaCredito,
+  updateNotaCredito,
+  getNotaCreditoById,
 };

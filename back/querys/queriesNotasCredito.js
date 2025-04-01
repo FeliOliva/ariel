@@ -76,4 +76,6 @@ GROUP BY
 ORDER BY 
     total DESC;
     `,
+  updateNotaCredito: `UPDATE notasCredito SET fecha = ? WHERE id = ?`,
+  getNotaCreditoById: `SELECT * FROM notasCredito WHERE id = ?`,
 };

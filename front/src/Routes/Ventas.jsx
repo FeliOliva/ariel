@@ -90,6 +90,16 @@ function Ventas() {
   };
 
   useEffect(() => {
+    const articulosGuardados = localStorage.getItem("articulosVenta");
+    if (articulosGuardados) {
+      setVenta((prev) => ({
+        ...prev,
+        articulos: JSON.parse(articulosGuardados),
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -109,8 +119,6 @@ function Ventas() {
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
-    console.log(selectedArticulo);
-    console.log(articulo);
   };
 
   const handleClienteChange = (cliente) => {
@@ -155,6 +163,10 @@ function Ventas() {
             },
           ],
         };
+        localStorage.setItem(
+          "articulosVenta",
+          JSON.stringify(nuevaVenta.articulos)
+        );
         return nuevaVenta;
       });
       setSelectedArticulo(null);
@@ -201,7 +213,6 @@ function Ventas() {
         });
         venta.descuento = 0;
       }
-      console.log(venta);
       try {
         const ventaData = {
           cliente_id: venta.cliente.id,
@@ -219,7 +230,6 @@ function Ventas() {
             isGift: articulo.isGift ? true : false,
           })),
         };
-        console.log("venta data", ventaData);
         confirm({
           title: "Confirmar",
           content: "¿Desea registrar la venta?",
@@ -231,6 +241,7 @@ function Ventas() {
             setClienteValue("");
             setCantidad(0);
             setOpen(false);
+            localStorage.removeItem("articulosVenta");
             notification.success({
               message: "Exito",
               description: "Venta registrada con exito",
@@ -254,89 +265,89 @@ function Ventas() {
     }
   };
 
-  const handleOfertaChange = (oferta) => {
-    setSelectedOferta(oferta);
-    setOfertaValue(oferta?.id || "");
-    console.log(ofertaValue);
-    console.log(selectedOferta);
-  };
-  const handleAddOferta = async () => {
-    if (selectedOferta) {
-      try {
-        // Realiza la solicitud al backend para obtener los productos de la oferta seleccionada
-        const response = await axios.get(
-          `http://localhost:3001/detalleOferta/${selectedOferta.id}`
-        );
-        const { productos } = response.data;
-        // Filtrar los productos que ya están en la lista de venta
-        const productosDuplicados = productos.filter((producto) =>
-          venta.articulos.some((articulo) => articulo.id === producto.id)
-        );
+  // const handleOfertaChange = (oferta) => {
+  //   setSelectedOferta(oferta);
+  //   setOfertaValue(oferta?.id || "");
+  //   console.log(ofertaValue);
+  //   console.log(selectedOferta);
+  // };
+  // const handleAddOferta = async () => {
+  //   if (selectedOferta) {
+  //     try {
+  //       // Realiza la solicitud al backend para obtener los productos de la oferta seleccionada
+  //       const response = await axios.get(
+  //         `http://localhost:3001/detalleOferta/${selectedOferta.id}`
+  //       );
+  //       const { productos } = response.data;
+  //       // Filtrar los productos que ya están en la lista de venta
+  //       const productosDuplicados = productos.filter((producto) =>
+  //         venta.articulos.some((articulo) => articulo.id === producto.id)
+  //       );
 
-        if (productosDuplicados.length > 0) {
-          const nombresDuplicados = productosDuplicados
-            .map((producto) => producto.nombre)
-            .join(", ");
-          Modal.warning({
-            title: "Advertencia",
-            content: `Los siguientes productos ya están en la venta: ${nombresDuplicados}`,
-            icon: <ExclamationCircleOutlined />,
-          });
-          return;
-        }
-        // Valida cada producto antes de agregarlos
-        const productosSinStock = productos.filter(
-          (producto) => producto.cantidad > producto.stock
-        );
+  //       if (productosDuplicados.length > 0) {
+  //         const nombresDuplicados = productosDuplicados
+  //           .map((producto) => producto.nombre)
+  //           .join(", ");
+  //         Modal.warning({
+  //           title: "Advertencia",
+  //           content: `Los siguientes productos ya están en la venta: ${nombresDuplicados}`,
+  //           icon: <ExclamationCircleOutlined />,
+  //         });
+  //         return;
+  //       }
+  //       // Valida cada producto antes de agregarlos
+  //       const productosSinStock = productos.filter(
+  //         (producto) => producto.cantidad > producto.stock
+  //       );
 
-        // Si algún producto tiene stock insuficiente, muestra advertencia y detén el proceso
-        if (productosSinStock.length > 0) {
-          const nombresSinStock = productosSinStock
-            .map(
-              (producto) =>
-                `${producto.nombre} (Stock: ${producto.stock}, Cantidad requerida: ${producto.cantidad})`
-            )
-            .join(", ");
-          Modal.warning({
-            title: "Advertencia",
-            content: `No hay suficiente stock para los siguientes artículos: ${nombresSinStock}`,
-            icon: <ExclamationCircleOutlined />,
-          });
-          return;
-        }
-        // Itera sobre los productos y agrega cada uno a la lista de artículos de la venta
-        productos.forEach((producto) => {
-          console.log("producto", producto);
-          setVenta((prev) => ({
-            ...prev,
-            articulos: [
-              ...prev.articulos,
-              {
-                id: producto.id,
-                label: `${producto.nombre} - ${producto.nombre_linea} - ${producto.nombre_sublinea}`,
-                value: producto.id,
-                quantity: producto.cantidad, // O la cantidad que desees usar por defecto
-                price: parseFloat(producto.precio),
-              },
-            ],
-          }));
-        });
+  //       // Si algún producto tiene stock insuficiente, muestra advertencia y detén el proceso
+  //       if (productosSinStock.length > 0) {
+  //         const nombresSinStock = productosSinStock
+  //           .map(
+  //             (producto) =>
+  //               `${producto.nombre} (Stock: ${producto.stock}, Cantidad requerida: ${producto.cantidad})`
+  //           )
+  //           .join(", ");
+  //         Modal.warning({
+  //           title: "Advertencia",
+  //           content: `No hay suficiente stock para los siguientes artículos: ${nombresSinStock}`,
+  //           icon: <ExclamationCircleOutlined />,
+  //         });
+  //         return;
+  //       }
+  //       // Itera sobre los productos y agrega cada uno a la lista de artículos de la venta
+  //       productos.forEach((producto) => {
+  //         console.log("producto", producto);
+  //         setVenta((prev) => ({
+  //           ...prev,
+  //           articulos: [
+  //             ...prev.articulos,
+  //             {
+  //               id: producto.id,
+  //               label: `${producto.nombre} - ${producto.nombre_linea} - ${producto.nombre_sublinea}`,
+  //               value: producto.id,
+  //               quantity: producto.cantidad, // O la cantidad que desees usar por defecto
+  //               price: parseFloat(producto.precio),
+  //             },
+  //           ],
+  //         }));
+  //       });
 
-        // Reiniciar el valor de la oferta seleccionada
-        setSelectedOferta(null);
-        setOfertaValue("");
-      } catch (error) {
-        console.error("Error fetching oferta details:", error);
-        alert("Error al agregar la oferta");
-      }
-    } else {
-      Modal.warning({
-        title: "Advertencia",
-        content: "Por favor, seleccione una oferta",
-        icon: <ExclamationCircleOutlined />,
-      });
-    }
-  };
+  //       // Reiniciar el valor de la oferta seleccionada
+  //       setSelectedOferta(null);
+  //       setOfertaValue("");
+  //     } catch (error) {
+  //       console.error("Error fetching oferta details:", error);
+  //       alert("Error al agregar la oferta");
+  //     }
+  //   } else {
+  //     Modal.warning({
+  //       title: "Advertencia",
+  //       content: "Por favor, seleccione una oferta",
+  //       icon: <ExclamationCircleOutlined />,
+  //     });
+  //   }
+  // };
   const handleGoToCheques = () => {
     navigate("/cheques");
   };
@@ -347,16 +358,13 @@ function Ventas() {
         : item
     );
     setVenta((prevVenta) => ({ ...prevVenta, articulos: updatedArticulos }));
-    console.log("Artículos actualizados: ", updatedArticulos);
   };
   const fetchVentasByClient = async (cliente) => {
-    console.log("id desde el front", cliente);
     try {
       const response = await axios.get(
         `http://localhost:3001/ventasCliente/${cliente}`
       );
       setData(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching ventas by client:", error);
     }
@@ -635,7 +643,7 @@ function Ventas() {
         >
           Agregar Artículo
         </Button>
-        <div style={{ display: "flex", margin: 10 }}>
+        {/* <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Seleccione una oferta</Tooltip>
         </div>
         <OfertasInput
@@ -649,7 +657,7 @@ function Ventas() {
           style={{ display: "flex", marginTop: 10 }}
         >
           Agregar oferta
-        </Button>
+        </Button> */}
 
         <DynamicList
           items={venta.articulos}

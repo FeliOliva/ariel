@@ -108,4 +108,29 @@ const getNotasCreditoByZona = async (req, res) => {
     }
 };
 
-module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, dropNotaCredito, getNotasCreditoByZona, getDetallesNotaCredito };
+const updateNotaCredito = async (req, res) => {
+    try {
+        const { fecha, ID } = req.body;
+        await notasCreditoModel.updateNotaCredito(fecha, ID);
+        res.status(200).json({ message: "Nota de crédito actualizada con éxito" });
+    } catch (error) {
+        console.error("Error al actualizar la nota de crédito:", error);
+        res.status(500).json({ error: "Error al actualizar la nota de crédito" });
+    }
+}
+
+const getNotaCreditoById = async (req, res) => {
+    try {
+        const ID = req.params.ID;
+        const notaCredito = await notasCreditoModel.getNotaCreditoById(ID);
+        if (!notaCredito) {
+            return res.status(404).json({ error: "Nota de crédito no encontrada" });
+        }
+        res.json(notaCredito);
+    } catch (error) {
+        console.error("Error al obtener la nota de crédito:", error);
+        res.status(500).json({ error: "Error al obtener la nota de crédito" });
+    }
+}
+
+module.exports = { getAllNotasCreditoByClienteId, addNotaCredito, dropNotaCredito, getNotasCreditoByZona, getDetallesNotaCredito, updateNotaCredito, getNotaCreditoById };

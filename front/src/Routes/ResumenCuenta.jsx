@@ -60,9 +60,12 @@ const ResumenCuenta = () => {
   const [nextNroPago, setNextNroPago] = useState("00001");
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [pagoData, setPagoData] = useState(null);
+  const [ventaData, setVentaData] = useState(null);
+  const [ncData, setNcData] = useState(null);
   const [open, setOpen] = useState(false);
   const [detalles, setDetalles] = useState([]);
   const [openNC, setOpenNC] = useState(false);
+  const [tipoEdicion, setTipoEdicion] = useState(null);
 
   const { confirm } = Modal;
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
@@ -72,26 +75,38 @@ const ResumenCuenta = () => {
         { params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin } }
       );
 
+      let saldoAcumulado = 0; // Saldo inicial
+
       const filteredData = response.data
         .map((item) => ({
           ...item,
-          uniqueId: `${item.tipo}-${item.id}`, // Genera un ID único
+          uniqueId: `${item.tipo}-${item.id}`,
         }))
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Ordenar de más reciente a más antigua
+        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenamos por fecha ascendente
+        .map((item) => {
+          // Convertimos el monto correctamente
+          let monto = 0;
+          if (item.total_con_descuento) {
+            monto =
+              parseInt(item.total_con_descuento.replace(/\./g, ""), 10) || 0;
+          } else if (item.monto) {
+            monto = parseInt(item.monto.replace(/\./g, ""), 10) || 0;
+          }
+
+          // Calculamos el saldo acumulado
+          if (item.tipo === "Venta") {
+            saldoAcumulado += monto; // Aumenta saldo con una venta
+          } else if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
+            saldoAcumulado -= monto; // Resta saldo con un pago o nota de crédito
+          }
+
+          return {
+            ...item,
+            saldoRestante: saldoAcumulado, // Asigna el saldo acumulado actual
+          };
+        });
 
       setData(filteredData);
-      console.log("data", filteredData);
-      console.log("cliente", selectedCliente);
-      // Buscar el número de pago más alto
-      const highestNroPago = filteredData
-        .filter((item) => item.tipo === "Pago" && item.numero) // Filtrar solo los pagos con número
-        .map((item) => parseInt(item.numero, 10)) // Convertir a número entero
-        .filter((num) => !isNaN(num)) // Filtrar valores NaN
-        .sort((a, b) => b - a)[0]; // Obtener el número más alto
-
-      // Calcular el siguiente número de pago
-      const nextNro = highestNroPago ? highestNroPago + 1 : 1;
-      setNextNroPago(nextNro.toString().padStart(5, "0")); // Formatear con ceros a la izquierda
     } catch (error) {
       console.error("Error al obtener los datos:", error);
       message.error("No se pudo cargar la información del cliente");
@@ -105,39 +120,55 @@ const ResumenCuenta = () => {
     if (!rangoFechas || rangoFechas.length !== 2) {
       return message.warning("Seleccione un rango de fechas.");
     }
-    console.log("cliente", selectedCliente);
-    console.log("rangoFechas", rangoFechas);
     setLoading(true);
     fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
   };
 
   const handleOpenEditDrawer = async (id, tipo) => {
     try {
-      if (tipo != "Pago") {
-        notification.warning({
-          message: "No se puede editar",
-          description: "Solo se pueden editar pagos",
-          duration: 2,
-        });
-        return;
-      }
-      const response = await axios.get(
-        `http://localhost:3001/getPagoById/${id}`
-      );
-      const data = response.data[0]; // Tomamos el primer objeto del array
+      setTipoEdicion(tipo);
 
-      setPagoData({
-        ...data,
-        monto: parseFloat(data.monto),
-        fecha_pago: data.fecha_pago ? dayjs(data.fecha_pago) : null,
-      });
+      if (tipo === "Pago") {
+        const response = await axios.get(
+          `http://localhost:3001/getPagoById/${id}`
+        );
+        const data = response.data[0];
+
+        setPagoData({
+          ...data,
+          monto: parseFloat(data.monto),
+          fecha_pago: data.fecha_pago ? dayjs(data.fecha_pago) : null,
+        });
+      } else if (tipo === "Venta") {
+        const response = await axios.get(
+          `http://localhost:3001/getVentaByID/${id}`
+        );
+        const data = response.data; // La respuesta ya es un objeto
+
+        setVentaData({
+          ...data,
+          fecha_venta: data.fecha ? dayjs(data.fecha) : null, // Convertimos correctamente la fecha
+          venta_id: data.venta_id, // Aseguramos que el ID se use correctamente
+        });
+      } else {
+        const response = await axios.get(
+          `http://localhost:3001/getNotaCreditoByID/${id}`
+        );
+        const data = response.data[0];
+
+        setNcData({
+          ...data,
+          fecha: data.fecha ? dayjs(data.fecha) : null,
+        });
+      }
 
       setOpen(true);
     } catch (error) {
-      console.error("Error al obtener los datos del pago:", error);
-      message.error("No se pudo cargar la información del pago");
+      console.error("Error al obtener los datos:", error);
+      message.error("No se pudo cargar la información");
     }
   };
+
   const handleDetallesNC = async (id, tipo) => {
     try {
       if (tipo !== "Nota de Crédito") {
@@ -151,7 +182,6 @@ const ResumenCuenta = () => {
       const response = await axios.get(
         `http://localhost:3001/getDetallesNotaCredito/${id}`
       );
-      console.log(response.data);
       setDetalles(response.data); // Guarda los detalles en el estado
       setOpenNC(true); // Abre el modal
     } catch (error) {
@@ -237,6 +267,15 @@ const ResumenCuenta = () => {
       sortable: true,
     },
     {
+      name: "Saldo Restante",
+      selector: (row) => (
+        <Tooltip title={`Saldo: ${row.saldoRestante}`}>
+          <span>${row.saldoRestante.toLocaleString()}</span>
+        </Tooltip>
+      ),
+      sortable: true,
+    },
+    {
       name: "Acciones",
       cell: (row) => (
         <div style={{ display: "flex", gap: "8px" }}>
@@ -270,7 +309,6 @@ const ResumenCuenta = () => {
     let value;
     if (tipo === "Pago") {
       value = "dropPago";
-      
     } else if (tipo === "Venta") {
       value = "dropVenta";
     } else {
@@ -332,13 +370,10 @@ const ResumenCuenta = () => {
 
   // Ejemplo de uso con la data
   const saldoRestante = calcularSaldoRestante(data);
-  console.log("Saldo Restante:", saldoRestante);
 
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
-    console.log(selectedArticulo);
-    console.log(articulo);
   };
 
   const handleAddArticulo = () => {
@@ -378,7 +413,6 @@ const ResumenCuenta = () => {
           },
         ],
       }));
-      console.log(notaCredito);
       setSelectedArticulo(null);
       setCantidad(0);
       setArticuloValue("");
@@ -407,7 +441,6 @@ const ResumenCuenta = () => {
         : item
     );
     setNotaCredito((prevNC) => ({ ...prevNC, articulos: updatedArticulos }));
-    console.log("Artículos actualizados: ", updatedArticulos);
   };
 
   const handleAddNotaCredito = async () => {
@@ -423,7 +456,6 @@ const ResumenCuenta = () => {
               : articulo.price,
           })),
         };
-        console.log("nota cred data", payLoad);
         confirm({
           title: "Confirmar",
           content: "¿Desea registrar la nota de credito?",
@@ -567,8 +599,10 @@ const ResumenCuenta = () => {
   const generateResumenCuentaPDF = () => {
     const doc = new jsPDF();
 
-    // Filtrar solo registros con estado === 1
-    const filteredData = data.filter((row) => row.estado === 1);
+    // Filtrar y ordenar los datos por fecha (ascendente)
+    const filteredData = data
+      .filter((row) => row.estado === 1)
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     // Título
     doc.setFontSize(16);
@@ -586,49 +620,52 @@ const ResumenCuenta = () => {
 
     let yPos = 60;
 
-    // Generar tabla con los datos filtrados
+    // Inicializar saldo acumulado
+    let saldoAcumulado = 0;
+
+    // Generar tabla con saldo restante por cada registro
     doc.autoTable({
       startY: yPos,
-      head: [["Fecha", "Tipo", "Total", "Número", "Método de Pago"]],
-      body: filteredData.map((row) => [
-        new Date(row.fecha).toLocaleDateString("es-AR"), // Formato de fecha DD/MM/YYYY
-        row.tipo,
-        `$${
-          row.total_con_descuento
-            ? row.total_con_descuento.toLocaleString("es-AR")
-            : row.monto.toLocaleString("es-AR")
-        }`,
-        row.numero,
-        row.metodo_pago ? row.metodo_pago : "N/A",
-      ]),
+      head: [
+        [
+          "Fecha",
+          "Tipo",
+          "Total",
+          "Número",
+          "Método de Pago",
+          "Saldo Restante",
+        ],
+      ],
+      body: filteredData.map((row) => {
+        // Determinar monto de la fila
+        const monto = row.total_con_descuento
+          ? row.total_con_descuento
+          : row.monto;
+
+        // Actualizar saldo acumulado
+        if (row.tipo === "Venta") saldoAcumulado += parseFloat(monto);
+        else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito")
+          saldoAcumulado -= parseFloat(monto);
+
+        return [
+          new Date(row.fecha).toLocaleDateString("es-AR"), // Formato de fecha DD/MM/YYYY
+          row.tipo,
+          `$${monto.toLocaleString("es-AR")}`,
+          row.numero,
+          row.metodo_pago ? row.metodo_pago : "N/A",
+          `$${saldoAcumulado.toLocaleString("es-AR")}`, // Mostrar saldo restante acumulado
+        ];
+      }),
       theme: "grid",
       styles: { fontSize: 10 },
     });
 
     yPos = doc.lastAutoTable.finalY + 10;
 
-    // Calcular nuevo saldo restante basado en los datos filtrados
-    const totalVentas = filteredData
-      .filter((item) => item.tipo === "Venta")
-      .reduce(
-        (sum, venta) => sum + parseFloat(venta.total_con_descuento || 0),
-        0
-      );
-
-    const totalPagos = filteredData
-      .filter((item) => item.tipo === "Pago")
-      .reduce((sum, pago) => sum + parseFloat(pago.monto || 0), 0);
-
-    const totalNC = filteredData
-      .filter((item) => item.tipo === "Nota de Crédito")
-      .reduce((sum, nc) => sum + parseFloat(nc.total_con_descuento || 0), 0);
-
-    const nuevoSaldoRestante = totalVentas - totalPagos - totalNC;
-
-    // Mostrar saldo restante al final
+    // Mostrar saldo final al final del PDF
     doc.setFontSize(14);
     doc.text(
-      `Saldo Restante: $${nuevoSaldoRestante.toLocaleString("es-AR")}`,
+      `Saldo Restante Final: $${saldoAcumulado.toLocaleString("es-AR")}`,
       14,
       yPos
     );
@@ -681,22 +718,39 @@ const ResumenCuenta = () => {
       key: "1",
     },
   ];
-  const handleUpdatePago = async () => {
+  const handleUpdate = async () => {
     try {
-      const formattedDate = dayjs(pagoData.fecha_pago).format("DD/MM/YYYY"); // Formateo correcto
-      const payload = {
-        monto: pagoData.monto,
-        fecha_pago: formattedDate,
-        ID: pagoData.id,
-      };
+      let payload = {};
+      let url = "";
 
-      await axios.put("http://localhost:3001/updatePago", payload);
+      if (tipoEdicion === "Pago") {
+        payload = {
+          monto: pagoData.monto,
+          fecha_pago: dayjs(pagoData.fecha_pago).format("DD/MM/YYYY"),
+          ID: pagoData.id,
+        };
+        url = "http://localhost:3001/updatePago";
+      } else if (tipoEdicion === "Venta") {
+        payload = {
+          fecha_venta: dayjs(ventaData.fecha_venta).format("DD/MM/YYYY"),
+          ID: ventaData.venta_id,
+        };
+        url = "http://localhost:3001/updateVenta";
+      } else if (tipoEdicion === "Nota de Crédito") {
+        payload = {
+          fecha: dayjs(ncData.fecha).format("DD/MM/YYYY"),
+          ID: ncData.id,
+        };
+        url = "http://localhost:3001/updateNotaCredito";
+      }
+
+      await axios.put(url, payload);
+      message.success(`${tipoEdicion} actualizado con éxito`);
       fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
-      message.success("Pago actualizado con éxito");
       setOpen(false);
     } catch (error) {
-      console.error("Error al actualizar el pago:", error);
-      message.error("No se pudo actualizar el pago");
+      console.error(`Error al actualizar ${tipoEdicion}:`, error);
+      message.error(`No se pudo actualizar ${tipoEdicion}`);
     }
   };
 
@@ -873,37 +927,88 @@ const ResumenCuenta = () => {
           />
         </Modal>
         <Drawer
-          title="Editar Pago"
+          title={`Editar ${tipoEdicion}`}
           open={open}
           onClose={() => setOpen(false)}
           width={500}
         >
-          <Tooltip title="Monto">
-            <InputNumber
-              min={0}
-              style={{ marginTop: "10px", width: "100%" }}
-              value={pagoData?.monto}
-              onChange={(value) => setPagoData({ ...pagoData, monto: value })}
-            />
-          </Tooltip>
+          {tipoEdicion === "Pago" && (
+            <>
+              <Tooltip title="Monto">
+                <InputNumber
+                  min={0}
+                  style={{ marginTop: "10px", width: "100%" }}
+                  value={pagoData?.monto}
+                  onChange={(value) =>
+                    setPagoData({ ...pagoData, monto: value })
+                  }
+                />
+              </Tooltip>
+              <Tooltip title="Fecha de pago">
+                <DatePicker
+                  style={{ marginTop: "10px", width: "100%" }}
+                  format="DD/MM/YYYY"
+                  value={
+                    pagoData?.fecha_pago ? dayjs(pagoData.fecha_pago) : null
+                  }
+                  onChange={(date) =>
+                    setPagoData({ ...pagoData, fecha_pago: date })
+                  }
+                />
+              </Tooltip>
+              <Button
+                type="primary"
+                style={{ marginTop: "20px" }}
+                onClick={handleUpdate}
+              >
+                Guardar Cambios
+              </Button>
+            </>
+          )}
 
-          <Tooltip title="Fecha de pago">
-            <DatePicker
-              style={{ marginTop: "10px", width: "100%" }}
-              format="DD/MM/YYYY"
-              value={pagoData?.fecha_pago ? dayjs(pagoData.fecha_pago) : null}
-              onChange={(date) =>
-                setPagoData({ ...pagoData, fecha_pago: date })
-              }
-            />
-          </Tooltip>
-          <Button
-            type="primary"
-            style={{ marginTop: "20px" }}
-            onClick={handleUpdatePago}
-          >
-            Guardar Cambios
-          </Button>
+          {tipoEdicion === "Venta" && (
+            <>
+              <Tooltip title="Fecha de venta">
+                <DatePicker
+                  style={{ marginTop: "10px", width: "100%" }}
+                  format="DD/MM/YYYY"
+                  value={
+                    ventaData?.fecha_venta ? dayjs(ventaData.fecha_venta) : null
+                  }
+                  onChange={(date) =>
+                    setVentaData({ ...ventaData, fecha_venta: date })
+                  }
+                />
+              </Tooltip>
+              <Button
+                type="primary"
+                style={{ marginTop: "20px" }}
+                onClick={handleUpdate}
+              >
+                Guardar Cambios
+              </Button>
+            </>
+          )}
+
+          {tipoEdicion === "Nota de Crédito" && (
+            <>
+              <Tooltip title="Fecha">
+                <DatePicker
+                  style={{ marginTop: "10px", width: "100%" }}
+                  format="DD/MM/YYYY"
+                  value={ncData?.fecha ? dayjs(ncData.fecha) : null}
+                  onChange={(date) => setNcData({ ...ncData, fecha: date })}
+                />
+              </Tooltip>
+              <Button
+                type="primary"
+                style={{ marginTop: "20px" }}
+                onClick={handleUpdate}
+              >
+                Guardar Cambios
+              </Button>
+            </>
+          )}
         </Drawer>
 
         <Drawer
@@ -946,7 +1051,6 @@ const ResumenCuenta = () => {
           clienteId={selectedCliente?.id}
           nextNroPago={nextNroPago}
           onPagoAdded={(nuevoPago) => {
-            console.log("Nuevo Pago:", nuevoPago);
             fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
             setDrawerVisible(false);
           }}

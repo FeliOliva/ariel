@@ -106,10 +106,12 @@ const dropVenta = async (ID) => {
   }
 };
 
-const updateVentas = async (producto_id, cantidad, cliente_id, zona_id, ID) => {
+const updateVentas = async (fecha_venta, ID) => {
   try {
     const query = queriesVentas.updateVentas;
-    await db.query(query, [producto_id, cantidad, cliente_id, zona_id, ID]);
+    const [day, month, year] = fecha_venta.split("/");
+    const formattedFechaVenta = `${year}-${month}-${day} 00:00:00`;
+    await db.query(query, [formattedFechaVenta, ID]);
   } catch (err) {
     throw err;
   }

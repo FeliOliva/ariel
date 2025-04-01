@@ -50,9 +50,7 @@ export default function ResumenCuentaXZona() {
       const ventas = ventasResponse.data;
       const pagos = pagosResponse.data;
       const notasCredito = notasCreditoResponse.data;
-      console.log("ventas", ventas);
-      console.log("pagos", pagos);
-      console.log("notasCredito", notasCredito);
+
 
       const datos = ventas.map((venta) => {
         const pago = pagos.find((p) => p.cliente_id === venta.cliente_id);

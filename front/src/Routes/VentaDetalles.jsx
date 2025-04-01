@@ -48,7 +48,6 @@ const VentaDetalles = () => {
         const response = await axios.get(
           `http://localhost:3001/getVentaByID/${id}`
         );
-        console.log(response.data);
         const {
           detalles,
           venta_id,
@@ -64,7 +63,6 @@ const VentaDetalles = () => {
           farmacia,
           localidad,
         } = response.data;
-        console.log("venta id", response.data.venta_id);
         if (Array.isArray(detalles)) {
           setData(detalles);
           setVentaInfo({
@@ -296,7 +294,6 @@ const VentaDetalles = () => {
             cantidad,
             venta_id: ventaInfo.venta_id,
           };
-          console.log("payload", payload);
           const response = await axios.put(
             "http://localhost:3001/updateDetalleVenta",
             payload

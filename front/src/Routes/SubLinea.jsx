@@ -96,7 +96,6 @@ const SubLinea = () => {
       nombre: currentSubLinea.nombre,
       ID: currentSubLinea.id,
     };
-    console.log(editedSubLinea);
     if (!editedSubLinea.nombre) {
       Modal.warning({
         title: "Advertencia",
