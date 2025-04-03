@@ -492,22 +492,12 @@ const ResumenCuenta = () => {
     if (!selectedCliente) {
       return message.warning("Por favor, seleccione un cliente.");
     }
-
+    console.log("cliente", selectedCliente.id);
     try {
       const response = await axios.get(
         `http://localhost:3001/notasCreditoByClienteId/${selectedCliente.id}`
       );
       const notasCredito = response.data;
-
-      if (!notasCredito || notasCredito.length === 0) {
-        notification.warning({
-          message: "No existen notas de crédito",
-          description: "Para el cliente seleccionado",
-          duration: 1,
-        });
-        return;
-      }
-
       // Filtrar solo notas de crédito activas
       const notasCreditoActivas = notasCredito.filter(
         (nota) => nota.estado === 1
@@ -591,9 +581,13 @@ const ResumenCuenta = () => {
       // Guardar el PDF con el nombre adecuado
       doc.save(`notas_credito_${selectedCliente.nombre}.pdf`);
     } catch (error) {
-      console.error("Error al obtener las notas de crédito:", error);
-      alert("Error al obtener las notas de crédito");
+      notification.warning({
+        message: "No existen notas de crédito",
+        description: "Para el cliente seleccionado",
+        duration: 1,
+      });
     }
+    return;
   };
 
   const generateResumenCuentaPDF = () => {

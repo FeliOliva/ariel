@@ -68,7 +68,7 @@ const PedidoDetalles = () => {
     // Datos de la tabla
     const tableData = data.map((detalle) => [
       detalle.cantidad,
-      `${detalle.nombre_articulo} - ${detalle.mediciones}`,
+      `${detalle.cod_producto} - ${detalle.nombre_articulo} - ${detalle.mediciones}`,
       detalle.nombre_linea,
     ]);
 
@@ -162,7 +162,8 @@ const PedidoDetalles = () => {
     },
     {
       name: "Nombre",
-      selector: (row) => `${row.nombre_articulo} - ${row.mediciones}`,
+      selector: (row) =>
+        `${row.cod_producto} - ${row.nombre_articulo} - ${row.mediciones}`,
       sortable: true,
       cell: (row) => (
         <div style={{ fontSize: "12px", padding: "5px", textAlign: "left" }}>
