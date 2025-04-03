@@ -597,6 +597,12 @@ const ResumenCuenta = () => {
     const filteredData = data
       .filter((row) => row.estado === 1)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    const parseNumber = (value) => {
+      return value ? parseInt(value.toString().replace(/\./g, ""), 10) : 0;
+    };
+    const formatNumber = (value) => {
+      return new Intl.NumberFormat("es-AR").format(value);
+    };
 
     // Título
     doc.setFontSize(16);
@@ -632,22 +638,21 @@ const ResumenCuenta = () => {
       ],
       body: filteredData.map((row) => {
         // Determinar monto de la fila
-        const monto = row.total_con_descuento
-          ? row.total_con_descuento
-          : row.monto;
+        const monto = parseNumber(
+          row.total_con_descuento ? row.total_con_descuento : row.monto
+        );
 
-        // Actualizar saldo acumulado
-        if (row.tipo === "Venta") saldoAcumulado += parseFloat(monto);
+        if (row.tipo === "Venta") saldoAcumulado += monto;
         else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito")
-          saldoAcumulado -= parseFloat(monto);
+          saldoAcumulado -= monto;
 
         return [
           new Date(row.fecha).toLocaleDateString("es-AR"), // Formato de fecha DD/MM/YYYY
           row.tipo,
-          `$${monto.toLocaleString("es-AR")}`,
+          `$${formatNumber(monto)}`,
           row.numero,
           row.metodo_pago ? row.metodo_pago : "N/A",
-          `$${saldoAcumulado.toLocaleString("es-AR")}`, // Mostrar saldo restante acumulado
+          `$${formatNumber(saldoAcumulado)}`,
         ];
       }),
       theme: "grid",
