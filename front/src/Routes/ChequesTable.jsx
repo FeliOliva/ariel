@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import dayjs from "dayjs";
+import CustomPagination from "../components/CustomPagination";
+import {
+  customHeaderStyles,
+  customCellsStyles,
+} from "../style/dataTableStyles";
 
 const ChequesTable = () => {
   const [cheques, setCheques] = useState([]);
@@ -15,7 +20,6 @@ const ChequesTable = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/cheques");
-      // Ordena los cheques por fecha de cobro (fecha más cercana a la más lejana)
       const sortedCheques = response.data.sort(
         (a, b) => new Date(a.fecha_cobro) - new Date(b.fecha_cobro)
       );
@@ -63,14 +67,16 @@ const ChequesTable = () => {
         columns={columns}
         data={filteredCheques}
         progressPending={loading}
-        // customStyles={{
-        //   headCells: {
-        //     style: customHeaderStyles,
-        //   },
-        //   cells: {
-        //     style: customCellsStyles,
-        //   },
-        // }}
+        pagination
+        paginationComponent={CustomPagination}
+        customStyles={{
+          headCells: {
+            style: customHeaderStyles,
+          },
+          cells: {
+            style: customCellsStyles,
+          },
+        }}
       />
     </div>
   );

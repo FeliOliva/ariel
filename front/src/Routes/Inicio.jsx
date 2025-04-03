@@ -32,6 +32,8 @@ const Inicio = () => {
   const [rangoFechas, setRangoFechas] = useState(null);
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [totalComprasFiltradas, setTotalComprasFiltradas] = useState(0);
+  const [loadingCompras, setLoadingCompras] = useState(false);
   // Para forzar el re-renderizado del gráfico cuando cambia
   const [chartKey, setChartKey] = useState(0);
 
@@ -120,6 +122,38 @@ const Inicio = () => {
   const handleClienteChange = async (cliente) => {
     setClienteValue(cliente?.id || "");
     setClienteSeleccionado(cliente);
+  };
+
+  const fetchComprasFiltradas = async () => {
+    if (!rangoFechas || rangoFechas.length !== 2) {
+      message.warning("Por favor seleccione un rango de fechas");
+      return;
+    }
+
+    setLoadingCompras(true);
+    try {
+      const startDate = rangoFechas[0]?.format("YYYY-MM-DD");
+      const endDate = rangoFechas[1]?.format("YYYY-MM-DD");
+
+      console.log("Enviando rango de fechas:", { startDate, endDate });
+
+      // Enviar los datos como parámetros en la URL
+      const response = await axios.get(
+        `http://localhost:3001/filterComprasByFecha?startDate=${startDate}&endDate=${endDate}`
+      );
+
+      console.log("Respuesta del servidor:", response.data);
+
+      setTotalComprasFiltradas(response.data.suma_total || 0);
+    } catch (error) {
+      console.error(
+        "Error en la petición:",
+        error.response?.data || error.message
+      );
+      message.error("Error al obtener los totales de compras");
+    } finally {
+      setLoadingCompras(false);
+    }
   };
 
   const fetchVentasFiltradas = async () => {
@@ -309,8 +343,47 @@ const Inicio = () => {
             </Tooltip>
           </Col>
         </Row>
+        <Col span={12}>
+          <Card title="Seleccionar Rango de Fechas">
+            <Row gutter={[16, 16]} align="middle">
+              <Col span={18}>
+                <RangePicker
+                  onChange={handleRangoFechasChange}
+                  format="DD/MM/YYYY"
+                  style={{ width: "100%" }}
+                />
+              </Col>
+              <Col span={6}>
+                <Button
+                  type="primary"
+                  onClick={fetchComprasFiltradas}
+                  style={{ width: "100%" }}
+                  loading={loading}
+                >
+                  Buscar
+                </Button>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
 
-        <Content style={{ padding: "20px" }}>
+        <Col span={12}>
+          <Card title="Total de Compras Filtradas">
+            <Row justify="center" align="middle">
+              <Col>
+                <h2 style={{ fontSize: "24px", fontWeight: "bold" }}>
+                  $
+                  {totalComprasFiltradas.toLocaleString("es-ES", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </h2>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+
+        {/* <Content style={{ padding: "20px" }}>
           <Row gutter={[16, 16]}>
             <Col span={12}>
               <Card title="Seleccionar Cliente">
@@ -380,7 +453,7 @@ const Inicio = () => {
               </Card>
             </Col>
           </Row>
-        </Content>
+        </Content> */}
 
         <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
           <Col span={24}>

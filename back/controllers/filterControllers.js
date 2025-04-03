@@ -4,24 +4,38 @@ const filterVentasByCliente = async (req, res) => {
   try {
     const { startDate, endDate, clienteId } = req.body;
 
-    // Asegúrate de que los datos requeridos están presentes
     if (!startDate || !endDate || !clienteId) {
       return res.status(400).json({ error: "Missing parameters" });
     }
 
-    // Llama al modelo para obtener los datos
     const ventas = await filterModel.getVentasByDay(
       startDate,
       endDate,
       clienteId
     );
 
-    res.json(ventas); // Devolvemos los resultados
+    res.json(ventas);
   } catch (error) {
     console.error("Error fetching ventas by cliente:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const filterComprasByFecha = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query; // Cambiado de req.body a req.query
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+
+    const compras = await filterModel.filterComprasByFecha(startDate, endDate);
+
+    res.json(compras);
+  } catch (error) {
+    console.error("Error fetching compras by fecha:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const totalVentas = async (req, res) => {
   try {
     const ventas = await filterModel.getTotalVentas();
@@ -77,5 +91,6 @@ module.exports = {
   totalGastos,
   totalCompras,
   totalPagos,
-  totalClientes
+  totalClientes,
+  filterComprasByFecha,
 };

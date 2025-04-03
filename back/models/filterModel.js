@@ -13,6 +13,25 @@ const getVentasByDay = async (startDate, endDate, clienteId) => {
   const [result] = await db.query(query, values);
   return result;
 };
+const filterComprasByFecha = async (startDate, endDate) => {
+  try {
+    const query = `
+     SELECT 
+    COUNT(*) AS cantidad_compras,
+    COALESCE(FORMAT(SUM(total), 2), '0.00') AS suma_total
+FROM compra
+WHERE DATE(fecha_compra) BETWEEN ? AND ?;
+    `;
+    const values = [startDate, endDate];
+
+    const [result] = await db.query(query, values);
+
+    return result.length > 0 ? result[0] : { cantidad_compras: 0, suma_total: 0 };
+  } catch (error) {
+    console.error("Error fetching compras by fecha:", error);
+    throw error;
+  }
+};
 const getTotalVentas = async () => {
   const query = `
     SELECT SUM(total) AS total
@@ -65,4 +84,5 @@ module.exports = {
   getTotalCompras,
   getTotalPagos,
   getTotalClientes,
+  filterComprasByFecha
 };
