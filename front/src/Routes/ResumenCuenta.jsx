@@ -82,7 +82,7 @@ const ResumenCuenta = () => {
           ...item,
           uniqueId: `${item.tipo}-${item.id}`,
         }))
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenamos por fecha ascendente
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) // Ordenamos por fecha ascendente
         .map((item) => {
           // Convertimos el monto correctamente
           let monto = 0;
@@ -112,6 +112,11 @@ const ResumenCuenta = () => {
       message.error("No se pudo cargar la información del cliente");
     }
   };
+  useEffect(() => {
+    const inicio = dayjs("2025-01-01").format("YYYY-MM-DD");
+    const fin = dayjs().format("YYYY-MM-DD");
+    setRangoFechas([inicio, fin]);
+  }, []);
 
   const handleSearch = () => {
     if (!selectedCliente) {
@@ -816,7 +821,19 @@ const ResumenCuenta = () => {
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
           <ClienteInput onChangeCliente={setSelectedCliente} />
           <RangePicker
-            onChange={(dates, dateStrings) => setRangoFechas(dateStrings)}
+            value={
+              rangoFechas.length === 2
+                ? [dayjs(rangoFechas[0]), dayjs(rangoFechas[1])]
+                : null
+            }
+            onChange={(dates, dateStrings) => {
+              if (!dates) {
+                setRangoFechas([]); // Limpiamos el estado si se borran las fechas
+              } else {
+                setRangoFechas(dateStrings);
+              }
+            }}
+            allowClear
           />
           <Button type="primary" onClick={handleSearch}>
             Buscar

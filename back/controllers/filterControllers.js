@@ -22,13 +22,11 @@ const filterVentasByCliente = async (req, res) => {
 };
 const filterComprasByFecha = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query; // Cambiado de req.body a req.query
+    const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
       return res.status(400).json({ error: "Missing parameters" });
     }
-
     const compras = await filterModel.filterComprasByFecha(startDate, endDate);
-
     res.json(compras);
   } catch (error) {
     console.error("Error fetching compras by fecha:", error);
@@ -38,7 +36,11 @@ const filterComprasByFecha = async (req, res) => {
 
 const totalVentas = async (req, res) => {
   try {
-    const ventas = await filterModel.getTotalVentas();
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    const ventas = await filterModel.getTotalVentas(startDate, endDate);
     res.json(ventas);
   } catch (error) {
     console.error("Error fetching total ventas:", error);
@@ -48,7 +50,11 @@ const totalVentas = async (req, res) => {
 
 const totalGastos = async (req, res) => {
   try {
-    const gastos = await filterModel.getTotalGastos();
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    const gastos = await filterModel.getTotalGastos(startDate, endDate);
     res.json(gastos);
   } catch (error) {
     console.error("Error fetching total gastos:", error);
@@ -68,7 +74,11 @@ const totalCompras = async (req, res) => {
 
 const totalPagos = async (req, res) => {
   try {
-    const pagos = await filterModel.getTotalPagos();
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    const pagos = await filterModel.getTotalPagos(startDate, endDate);
     res.json(pagos);
   } catch (error) {
     console.error("Error fetching total pagos:", error);
