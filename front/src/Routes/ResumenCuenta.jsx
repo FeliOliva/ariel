@@ -82,7 +82,7 @@ const ResumenCuenta = () => {
           ...item,
           uniqueId: `${item.tipo}-${item.id}`,
         }))
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) // Ordenamos por fecha ascendente
+        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenamos por fecha ascendente
         .map((item) => {
           // Convertimos el monto correctamente
           let monto = 0;
@@ -104,7 +104,8 @@ const ResumenCuenta = () => {
             ...item,
             saldoRestante: saldoAcumulado, // Asigna el saldo acumulado actual
           };
-        });
+        })
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
       setData(filteredData);
     } catch (error) {
@@ -624,49 +625,58 @@ const ResumenCuenta = () => {
     doc.text(`Rango de Fechas: ${rangoFechas[0]} - ${rangoFechas[1]}`, 14, 50);
 
     let yPos = 60;
-
-    // Inicializar saldo acumulado
     let saldoAcumulado = 0;
 
-    // Generar tabla con saldo restante por cada registro
-    doc.autoTable({
-      startY: yPos,
-      head: [
-        [
-          "Fecha",
-          "Tipo",
-          "Total",
-          "Número",
-          "Método de Pago",
-          "Saldo Restante",
+    if (filteredData.length > 0) {
+      // Generar tabla solo si hay datos
+      doc.autoTable({
+        startY: yPos,
+        head: [
+          [
+            "Fecha",
+            "Tipo",
+            "Total",
+            "Número",
+            "Método de Pago",
+            "Saldo Restante",
+          ],
         ],
-      ],
-      body: filteredData.map((row) => {
-        // Determinar monto de la fila
-        const monto = parseNumber(
-          row.total_con_descuento ? row.total_con_descuento : row.monto
-        );
+        body: filteredData.map((row) => {
+          const monto = parseNumber(
+            row.total_con_descuento ? row.total_con_descuento : row.monto
+          );
 
-        if (row.tipo === "Venta") saldoAcumulado += monto;
-        else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito")
-          saldoAcumulado -= monto;
+          if (row.tipo === "Venta") saldoAcumulado += monto;
+          else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito")
+            saldoAcumulado -= monto;
 
-        return [
-          new Date(row.fecha).toLocaleDateString("es-AR"), // Formato de fecha DD/MM/YYYY
-          row.tipo,
-          `$${formatNumber(monto)}`,
-          row.numero,
-          row.metodo_pago ? row.metodo_pago : "N/A",
-          `$${formatNumber(saldoAcumulado)}`,
-        ];
-      }),
-      theme: "grid",
-      styles: { fontSize: 10 },
-    });
+          return [
+            new Date(row.fecha).toLocaleDateString("es-AR"),
+            row.tipo,
+            `$${formatNumber(monto)}`,
+            row.numero,
+            row.metodo_pago ? row.metodo_pago : "N/A",
+            `$${formatNumber(saldoAcumulado)}`,
+          ];
+        }),
+        theme: "grid",
+        styles: { fontSize: 10 },
+      });
 
-    yPos = doc.lastAutoTable.finalY + 10;
+      yPos = doc.lastAutoTable.finalY + 10;
+    } else {
+      // Si no hay registros, avisamos
+      yPos += 10;
+      doc.setFontSize(12);
+      doc.text(
+        "No hay movimientos en el rango de fechas seleccionado.",
+        14,
+        yPos
+      );
+      yPos += 10;
+    }
 
-    // Mostrar saldo final al final del PDF
+    // Mostrar saldo final
     doc.setFontSize(14);
     doc.text(
       `Saldo Restante Final: $${saldoAcumulado.toLocaleString("es-AR")}`,

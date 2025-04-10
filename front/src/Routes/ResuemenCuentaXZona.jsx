@@ -51,7 +51,6 @@ export default function ResumenCuentaXZona() {
       const pagos = pagosResponse.data;
       const notasCredito = notasCreditoResponse.data;
 
-
       const datos = ventas.map((venta) => {
         const pago = pagos.find((p) => p.cliente_id === venta.cliente_id);
         const notasCreditoCliente = notasCredito
@@ -147,17 +146,10 @@ export default function ResumenCuentaXZona() {
       return Number.isInteger(valor) ? valor : 0;
     };
 
-    // Convertimos todo a enteros antes de calcular
-    const totalVentasGlobal = datos.reduce(
-      (sum, d) => sum + toInt(d.totalVentas),
-      0
-    );
-    const totalPagosGlobal = datos.reduce(
-      (sum, d) => sum + toInt(d.totalPagos),
-      0
-    );
+    const totalVentasGlobal = datos.reduce((sum, d) => sum + d.totalVentas, 0);
+    const totalPagosGlobal = datos.reduce((sum, d) => sum + d.totalPagos, 0);
     const totalNotasCreditoGlobal = datos.reduce(
-      (sum, d) => sum + toInt(d.totalNotasCredito),
+      (sum, d) => sum + d.totalNotasCredito,
       0
     );
     const saldoGlobal =
@@ -166,13 +158,11 @@ export default function ResumenCuentaXZona() {
     // Construcción de la tabla
     const tableData = datos.map((d) => [
       d.nombre,
-      `$${toInt(d.totalVentas).toLocaleString("es-ES")}`,
-      `$${toInt(d.totalPagos).toLocaleString("es-ES")}`,
-      `$${toInt(d.totalNotasCredito).toLocaleString("es-ES")}`,
-      `$${(
-        toInt(d.totalVentas) -
-        toInt(d.totalPagos) -
-        toInt(d.totalNotasCredito)
+      `$${Math.round(d.totalVentas).toLocaleString("es-ES")}`,
+      `$${Math.round(d.totalPagos).toLocaleString("es-ES")}`,
+      `$${Math.round(d.totalNotasCredito).toLocaleString("es-ES")}`,
+      `$${Math.round(
+        d.totalVentas - d.totalPagos - d.totalNotasCredito
       ).toLocaleString("es-ES")}`,
     ]);
 
@@ -191,27 +181,33 @@ export default function ResumenCuentaXZona() {
     });
 
     // Agregar resumen de totales al final
-    const finalY = doc.lastAutoTable.finalY + 10;
+    let finalY = doc.lastAutoTable.finalY + 10;
+
+    // Si estamos muy cerca del borde inferior, agregamos una nueva página
+    if (finalY + 30 > doc.internal.pageSize.height) {
+      doc.addPage();
+      finalY = 20; // Reiniciamos la altura para empezar desde arriba en la nueva página
+    }
     doc.setFontSize(12);
     doc.text(
-      `Total Ventas: $${totalVentasGlobal.toLocaleString("es-ES")}`,
+      `Total Ventas: $${Math.round(totalVentasGlobal).toLocaleString("es-ES")}`,
       14,
       finalY
     );
     doc.text(
-      `Total Pagos: $${totalPagosGlobal.toLocaleString("es-ES")}`,
+      `Total Pagos: $${Math.round(totalPagosGlobal).toLocaleString("es-ES")}`,
       14,
       finalY + 7
     );
     doc.text(
-      `Total Notas de Crédito: $${totalNotasCreditoGlobal.toLocaleString(
-        "es-ES"
-      )}`,
+      `Total Notas de Crédito: $${Math.round(
+        totalNotasCreditoGlobal
+      ).toLocaleString("es-ES")}`,
       14,
       finalY + 14
     );
     doc.text(
-      `Saldo Global: $${saldoGlobal.toLocaleString("es-ES")}`,
+      `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
       14,
       finalY + 21
     );
