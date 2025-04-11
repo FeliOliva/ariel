@@ -59,19 +59,19 @@ export default function ResumenZonas() {
       title: "Total Ventas",
       dataIndex: "total_ventas",
       key: "total_ventas",
-      render: (text) => `$${parseFloat(text).toLocaleString("es-ES")}`,
+      render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
     },
     {
       title: "Total Pagos",
       dataIndex: "total_pagos",
       key: "total_pagos",
-      render: (text) => `$${parseFloat(text).toLocaleString("es-ES")}`,
+      render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
     },
     {
       title: "Total Notas de Crédito",
       dataIndex: "total_notas_credito",
       key: "total_notas_credito",
-      render: (text) => `$${parseFloat(text).toLocaleString("es-ES")}`,
+      render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
     },
   ];
 
@@ -89,9 +89,9 @@ export default function ResumenZonas() {
 
     const tableData = datos.map((d) => [
       d.nombre_zona,
-      `$${parseFloat(d.total_ventas).toLocaleString("es-ES")}`,
-      `$${parseFloat(d.total_pagos).toLocaleString("es-ES")}`,
-      `$${parseFloat(d.total_notas_credito).toLocaleString("es-ES")}`,
+      `$${Math.round(d.total_ventas).toLocaleString("es-ES")}`,
+      `$${Math.round(d.total_pagos).toLocaleString("es-ES")}`,
+      `$${Math.round(d.total_notas_credito).toLocaleString("es-ES")}`,
     ]);
 
     doc.autoTable({
@@ -103,22 +103,24 @@ export default function ResumenZonas() {
     const finalY = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.text(
-      `Total Ventas: $${totalVentas.toLocaleString("es-ES")}`,
+      `Total Ventas: $${Math.round(totalVentas).toLocaleString("es-ES")}`,
       14,
       finalY
     );
     doc.text(
-      `Total Pagos: $${totalPagos.toLocaleString("es-ES")}`,
+      `Total Pagos: $${Math.round(totalPagos).toLocaleString("es-ES")}`,
       14,
       finalY + 7
     );
     doc.text(
-      `Total Notas de Crédito: $${totalNotasCredito.toLocaleString("es-ES")}`,
+      `Total Notas de Crédito: $${Math.round(totalNotasCredito).toLocaleString(
+        "es-ES"
+      )}`,
       14,
       finalY + 14
     );
     doc.text(
-      `Saldo Global: $${saldoGlobal.toLocaleString("es-ES")}`,
+      `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
       14,
       finalY + 21
     );
@@ -152,12 +154,17 @@ export default function ResumenZonas() {
           style={{ backgroundColor: "#f9f9f9" }}
         />
         <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
-          <p>Total Ventas: ${totalVentas.toLocaleString("es-ES")}</p>
-          <p>Total Pagos: ${totalPagos.toLocaleString("es-ES")}</p>
           <p>
-            Total Notas de Crédito: ${totalNotasCredito.toLocaleString("es-ES")}
+            Total Ventas: ${Math.round(totalVentas).toLocaleString("es-ES")}
           </p>
-          <p>Saldo Global: ${saldoGlobal.toLocaleString("es-ES")}</p>
+          <p>Total Pagos: ${Math.round(totalPagos).toLocaleString("es-ES")}</p>
+          <p>
+            Total Notas de Crédito: $
+            {Math.round(totalNotasCredito).toLocaleString("es-ES")}
+          </p>
+          <p>
+            Saldo Global: ${Math.round(saldoGlobal).toLocaleString("es-ES")}
+          </p>
         </div>
       </div>
     </MenuLayout>

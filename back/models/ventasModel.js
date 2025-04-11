@@ -214,7 +214,7 @@ const getVentasByClientesxFecha = async (
 const getResumenZonas = async (fecha_inicio, fecha_fin) => {
   try {
     const query = `
-      SELECT 
+     SELECT 
     z.id AS zona_id,
     z.nombre AS nombre_zona,
     COALESCE(ventas.total_ventas, 0) AS total_ventas,
@@ -225,14 +225,14 @@ LEFT JOIN (
     SELECT c.zona_id, SUM(v.total_con_descuento) AS total_ventas
     FROM venta v
     JOIN cliente c ON v.cliente_id = c.id
-    WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
+    WHERE v.estado = 1 AND DATE(v.fecha_venta) BETWEEN ? AND ?
     GROUP BY c.zona_id
 ) AS ventas ON z.id = ventas.zona_id
 LEFT JOIN (
     SELECT c.zona_id, SUM(p.monto) AS total_pagos
     FROM pagos p
     JOIN cliente c ON p.cliente_id = c.id
-    WHERE DATE(p.fecha_pago) BETWEEN ? AND ?
+    WHERE p.estado = 1 AND DATE(p.fecha_pago) BETWEEN ? AND ?
     GROUP BY c.zona_id
 ) AS pagos ON z.id = pagos.zona_id
 LEFT JOIN (

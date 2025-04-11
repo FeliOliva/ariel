@@ -107,21 +107,30 @@ export default function ResumenCuentaXZona() {
       key: "totalPagos",
       render: (text) =>
         typeof text === "number"
-          ? `$${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`
+          ? `$${Math.round(text).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+            })}`
           : text,
     },
     {
       title: "Total Notas de Crédito",
       dataIndex: "totalNotasCredito",
       key: "totalNotasCredito",
-      render: (text) => text,
+      render: (text) =>
+        typeof text === "number"
+          ? `$${Math.round(text).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+            })}`
+          : text,
     },
     {
       title: "Saldo Restante",
       dataIndex: "saldo",
       key: "saldo",
       render: (text) =>
-        `${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
+        typeof text === "number"
+          ? `$${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`
+          : text,
     },
   ];
 
@@ -248,12 +257,17 @@ export default function ResumenCuentaXZona() {
           style={{ backgroundColor: "#f9f9f9" }}
         />
         <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
-          <p>Total Ventas: ${totalVentas.toLocaleString("es-ES")}</p>
-          <p>Total Pagos: ${totalPagos.toLocaleString("es-ES")}</p>
           <p>
-            Total Notas de Crédito: ${totalNotasCredito.toLocaleString("es-ES")}
+            Total Ventas: ${Math.round(totalVentas).toLocaleString("es-ES")}
           </p>
-          <p>Saldo Global: ${saldoGlobal.toLocaleString("es-ES")}</p>
+          <p>Total Pagos: ${Math.round(totalPagos).toLocaleString("es-ES")}</p>
+          <p>
+            Total Notas de Crédito: $
+            {Math.round(totalNotasCredito).toLocaleString("es-ES")}
+          </p>
+          <p>
+            Saldo Global: ${Math.round(saldoGlobal).toLocaleString("es-ES")}
+          </p>
         </div>
       </div>
     </MenuLayout>
