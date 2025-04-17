@@ -66,6 +66,9 @@ const ResumenCuenta = () => {
   const [detalles, setDetalles] = useState([]);
   const [openNC, setOpenNC] = useState(false);
   const [tipoEdicion, setTipoEdicion] = useState(null);
+  const [notasCreditoSeleccionadas, setNotasCreditoSeleccionadas] = useState(
+    []
+  );
 
   const { confirm } = Modal;
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
@@ -75,12 +78,13 @@ const ResumenCuenta = () => {
         { params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin } }
       );
 
+      console.log(response.data);
       let saldoAcumulado = 0; // Saldo inicial
 
       const filteredData = response.data
         .map((item) => ({
           ...item,
-          uniqueId: `${item.tipo}-${item.id}`,
+          tipoPlano: typeof item.tipo === "string" ? item.tipo : "",
         }))
         .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenamos por fecha ascendente
         .map((item) => {
@@ -493,36 +497,44 @@ const ResumenCuenta = () => {
       });
     }
   };
-
   const generateNotaCreditoPDF = async () => {
     if (!selectedCliente) {
       return message.warning("Por favor, seleccione un cliente.");
     }
-    console.log("cliente", selectedCliente.id);
+
+    if (notasCreditoSeleccionadas.length !== 1) {
+      return message.warning(
+        "Por favor, seleccione una única nota de crédito."
+      );
+    }
+
+    const notaSeleccionadaId = notasCreditoSeleccionadas[0].id;
+    console.log("notas seleccionadas", notasCreditoSeleccionadas);
+
     try {
       const response = await axios.get(
         `http://localhost:3001/notasCreditoByClienteId/${selectedCliente.id}`
       );
+      console.log("notas credito", response.data);
       const notasCredito = response.data;
-      // Filtrar solo notas de crédito activas
-      const notasCreditoActivas = notasCredito.filter(
-        (nota) => nota.estado === 1
+      console.log("seleccionada", notaSeleccionadaId);
+      // Buscar solo la nota que coincida con el ID seleccionado
+      const nota = notasCredito.find(
+        (nc) => Number(nc.notaCredito_id) === Number(notaSeleccionadaId)
       );
 
-      if (notasCreditoActivas.length === 0) {
-        notification.warning({
-          message: "No hay notas de crédito activas",
-          description: "Para el cliente seleccionado",
+      if (!nota) {
+        return notification.warning({
+          message: "Nota no encontrada",
+          description: "No se encontró la nota de crédito seleccionada.",
           duration: 1,
         });
-        return;
       }
 
       const doc = new jsPDF();
       doc.setFontSize(16);
-      doc.text("Resumen de Notas de Crédito", 80, 20);
+      doc.text("Nota de Crédito", 90, 20);
 
-      // Agregar información del cliente
       doc.setFontSize(14);
       doc.text(
         `Cliente: ${selectedCliente.farmacia} ${selectedCliente.nombre} ${selectedCliente.apellido}`,
@@ -530,70 +542,59 @@ const ResumenCuenta = () => {
         30
       );
 
-      let yPos = 40; // Posición inicial
+      let yPos = 40;
 
-      notasCreditoActivas.forEach((nota) => {
-        if (yPos > 250) {
-          doc.addPage();
-          yPos = 20;
-        }
+      doc.setFontSize(14);
+      doc.text(`Nota de Crédito Nº ${nota.nroNC}`, 14, yPos);
+      doc.text(
+        `Fecha: ${new Date(nota.fecha).toLocaleDateString("es-ES")}`,
+        150,
+        yPos
+      );
 
-        doc.setFontSize(14);
-        doc.text(`Nota de Crédito Nº ${nota.nroNC}`, 14, yPos);
-        doc.text(
-          `Fecha: ${new Date(nota.fecha).toLocaleDateString("es-ES")}`,
-          150,
-          yPos
-        );
+      yPos += 10;
+      doc.setFontSize(12);
 
-        yPos += 10;
-        doc.setFontSize(12);
+      const tableData = nota.detalles.map((detalle) => [
+        detalle.articulo_nombre,
+        detalle.cantidad,
+        `$${detalle.precio.toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+        `$${detalle.subTotal.toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+      ]);
 
-        // Tabla de detalles de la nota
-        const tableData = nota.detalles.map((detalle) => [
-          detalle.articulo_nombre,
-          detalle.cantidad,
-          `$${detalle.precio.toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-          `$${detalle.subTotal.toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [["Artículo", "Cantidad", "Precio", "Subtotal"]],
-          body: tableData,
-          theme: "grid",
-          styles: { fontSize: 10 },
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(14);
-        doc.text(
-          `Total: $${nota.total.toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-          14,
-          yPos
-        );
-        yPos += 15;
+      doc.autoTable({
+        startY: yPos,
+        head: [["Artículo", "Cantidad", "Precio", "Subtotal"]],
+        body: tableData,
+        theme: "grid",
+        styles: { fontSize: 10 },
       });
 
-      // Guardar el PDF con el nombre adecuado
-      doc.save(`notas_credito_${selectedCliente.nombre}.pdf`);
+      yPos = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
+      doc.text(
+        `Total: $${nota.total.toLocaleString("es-ES", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+        14,
+        yPos
+      );
+
+      doc.save(`nota_credito_${nota.nroNC}.pdf`);
     } catch (error) {
       notification.warning({
-        message: "No existen notas de crédito",
-        description: "Para el cliente seleccionado",
+        message: "Error al obtener la nota",
+        description: "Verificá que el cliente tenga notas disponibles",
         duration: 1,
       });
     }
-    return;
   };
 
   const generateResumenCuentaPDF = () => {
@@ -924,7 +925,17 @@ const ResumenCuenta = () => {
                 headCells: { style: customHeaderStyles },
                 cells: { style: customCellsStyles },
               }}
-              keyField="uniqueId"
+              keyField="id"
+              selectableRows // 👉 activa los checkboxes
+              selectableRowDisabled={(row) =>
+                row.tipoPlano !== "Nota de Crédito"
+              }
+              onSelectedRowsChange={({ selectedRows }) => {
+                const notasSeleccionadas = selectedRows.filter(
+                  (row) => row.tipoPlano === "Nota de Crédito"
+                );
+                setNotasCreditoSeleccionadas(notasSeleccionadas);
+              }}
             />
 
             <h2
