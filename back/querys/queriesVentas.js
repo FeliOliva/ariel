@@ -7,9 +7,9 @@ module.exports = {
   c.farmacia,
   v.nroVenta,
   z.nombre AS nombre_zona,
-  REPLACE(FORMAT(v.descuento, 0), ',', '.') AS descuento,  -- Reemplaza la coma por el punto
-  REPLACE(FORMAT(v.total_con_descuento, 0), ',', '.') AS total_con_descuento,  -- Reemplaza la coma por el punto
-  REPLACE(FORMAT(v.total, 0), ',', '.') AS total,  -- Reemplaza la coma por el punto
+   v.descuento,  -- Sin FORMAT para mantener el valor numérico real
+  v.total_con_descuento,  -- Sin FORMAT
+  v.total,  -- Sin FORMAT
   v.fecha_venta,
   COALESCE(SUM(d.costo * d.cantidad), 0) AS total_costo
 FROM 
@@ -35,7 +35,7 @@ ORDER BY
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, descuento) VALUES (?, ?, ?, ?);`,
   addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista,sub_total) VALUES (?, ?, ?, ?, ?, ?);`,
-  updateVentas: `UPDATE Venta SET fecha_venta = ? WHERE ID = ?;`,
+  updateVentas: `UPDATE Venta SET fecha_venta = ?, total_con_descuento = ?, descuento = ? WHERE ID = ?;`,
   getVentasByClientes: `SELECT 
     v.id, 
     v.estado, 

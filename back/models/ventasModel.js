@@ -106,12 +106,26 @@ const dropVenta = async (ID) => {
   }
 };
 
-const updateVentas = async (fecha_venta, ID) => {
+const updateVentas = async (
+  fecha_venta,
+  descuento,
+  total_con_descuento,
+  ID
+) => {
   try {
     const query = queriesVentas.updateVentas;
-    const [day, month, year] = fecha_venta.split("/");
-    const formattedFechaVenta = `${year}-${month}-${day} 00:00:00`;
-    await db.query(query, [formattedFechaVenta, ID]);
+
+    const formattedFechaVenta = new Date(fecha_venta)
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+
+    await db.query(query, [
+      formattedFechaVenta,
+      total_con_descuento,
+      descuento,
+      ID,
+    ]);
   } catch (err) {
     throw err;
   }

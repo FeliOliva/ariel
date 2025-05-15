@@ -29,6 +29,7 @@ import {
   SearchOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import "../style/style.css";
 
@@ -53,6 +54,8 @@ function Ventas() {
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [editedVenta, setEditedVenta] = useState({});
+  const [openEditDrawer, setOpenEditDrawer] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -385,6 +388,52 @@ function Ventas() {
       // setHasSearched(true); // Activar después de hacer clic en Buscar
     }
   };
+  const handleUpdateVenta = async (id) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/getVentaByID/${id}`
+      );
+      console.log(response.data);
+      setOpenEditDrawer(true);
+      setEditedVenta(response.data);
+    } catch (error) {
+      console.error("Error al obtener la venta:", error);
+    }
+  };
+  const editVenta = async () => {
+    try {
+      console.log("venta editada", editedVenta);
+      // Limpiar los formatos numéricos antes de enviar
+      const cleanNumber = (num) => {
+        if (typeof num === "string") {
+          return parseFloat(num.replace(/\./g, "").replace(",", "."));
+        }
+        return num;
+      };
+
+      const payload = {
+        fecha_venta: editedVenta.fecha,
+        total: cleanNumber(editedVenta.total_importe),
+        descuento: cleanNumber(editedVenta.descuento),
+        ID: editedVenta.venta_id,
+      };
+      console.log("payload", payload);
+      await axios.put(`http://localhost:3001/updateVenta`, {
+        ...payload,
+      });
+      setOpenEditDrawer(false);
+      notification.success({
+        message: "Exito",
+        description: "Venta editada con exito",
+        duration: 2,
+      });
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      console.error("Error al editar la venta:", error);
+    }
+  };
   const handleClearSearch = () => {
     fetchVentasByClient("");
     fetchData(); // Limpiar el filtro y mostrar todos los datos
@@ -412,7 +461,24 @@ function Ventas() {
       console.error("Error al eliminar la venta:", error);
     }
   };
-
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return "0";
+    // Convertir a número por si viene como string
+    const number =
+      typeof num === "string" ? parseFloat(num.replace(",", ".")) : num;
+    // Formatear con separadores de miles y sin decimales
+    return new Intl.NumberFormat("es-AR", {
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+    }).format(number);
+  };
+  const formatDiscount = (value) => {
+    const num =
+      typeof value === "string"
+        ? parseFloat(value.replace(",", "."))
+        : Number(value);
+    return num % 1 === 0 ? `${num}%` : `${num.toFixed(2)}%`;
+  };
   const columns = [
     {
       name: "Nro. Venta",
@@ -481,9 +547,9 @@ function Ventas() {
       selector: (row) => (
         <Tooltip
           className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.total}
+          title={formatNumber(row.total)}
         >
-          <span>{row.total}</span>
+          <span>{formatNumber(row.total)}</span>
         </Tooltip>
       ),
       sortable: true,
@@ -493,9 +559,9 @@ function Ventas() {
       selector: (row) => (
         <Tooltip
           className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.descuento + "%"}
+          title={formatDiscount(row.descuento)}
         >
-          <span>{row.descuento}%</span>
+          <span>{formatDiscount(row.descuento)}</span>
         </Tooltip>
       ),
       sortable: true,
@@ -505,9 +571,9 @@ function Ventas() {
       selector: (row) => (
         <Tooltip
           className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.total_con_descuento}
+          title={formatNumber(row.total_con_descuento)}
         >
-          <span>{row.total_con_descuento}</span>
+          <span>{formatNumber(row.total_con_descuento)}</span>
         </Tooltip>
       ),
       sortable: true,
@@ -515,12 +581,20 @@ function Ventas() {
     {
       name: "Acciones",
       selector: (row) => (
-        <Button
-          className="custom-button"
-          onClick={() => handleDropVenta(row.id)}
-        >
-          <DeleteOutlined />
-        </Button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            className="custom-button"
+            onClick={() => handleDropVenta(row.id)}
+          >
+            <DeleteOutlined />
+          </Button>
+          <Button
+            className="custom-button"
+            onClick={() => handleUpdateVenta(row.id)}
+          >
+            <EditOutlined />
+          </Button>
+        </div>
       ),
     },
     {
@@ -583,6 +657,28 @@ function Ventas() {
           style={{ width: "40px" }} // Ajusta el tamaño del botón
         />
       </div>
+      <Drawer
+        open={openEditDrawer}
+        title="Editar Venta"
+        closable={true}
+        maskClosable={false}
+        onClose={() => setOpenEditDrawer(false)}
+        width={400}
+      >
+        <div style={{ display: "flex", marginTop: 10 }}>
+          <Tooltip>Descuento</Tooltip>
+        </div>
+        <InputNumber
+          value={editedVenta?.descuento}
+          onChange={(value) =>
+            setEditedVenta((prev) => ({
+              ...prev,
+              descuento: value,
+            }))
+          }
+        ></InputNumber>
+        <Button onClick={editVenta}>Guardar</Button>
+      </Drawer>
       <DataTable
         columns={columns}
         data={data}

@@ -12,9 +12,8 @@ const getAllVentas = async (req, res) => {
 const addVenta = async (req, res) => {
   try {
     const { cliente_id, nroVenta, zona_id, descuento, detalles } = req.body;
-
+    console.log("Datos recibidos para agregar la venta:", req.body);
     const lineas = (await ventasModel.getLineasStock()).map((l) => l.linea_id);
-    console.log("lineas", lineas);
     // Crear la venta
     const ventaId = await ventasModel.addVenta(
       cliente_id,
@@ -29,7 +28,6 @@ const addVenta = async (req, res) => {
       if (lineas.includes(detalle.linea_id)) {
         // // Descontar el stock del artículo
         await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
-        console.log("entroo");
       }
       if (detalle.isGift === true) {
         sub_total = 0;
@@ -61,9 +59,10 @@ const addVenta = async (req, res) => {
       );
     }
 
-    const totalConDescuento = Math.round(
-      totalVenta - totalVenta * (descuento / 100)
-    );
+    const totalConDescuento = (
+      totalVenta -
+      totalVenta * (descuento / 100)
+    ).toFixed(3);
     // Actualizar la venta con el total y el total con descuento
     await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
     res.status(201).json({ message: "Venta agregada con éxito" });
@@ -88,12 +87,19 @@ const dropVenta = async (req, res) => {
 
 const updateVentas = async (req, res) => {
   try {
-    const { fecha_venta, ID } = req.body;
+    const { fecha_venta, total, descuento, ID } = req.body;
+    console.log("Datos recibidos para actualizar la venta:", req.body);
+    const total_con_descuento = (total - total * (descuento / 100)).toFixed(3);
+    console.log("Total con descuento:", total_con_descuento);
+
     await ventasModel.updateVentas(
       fecha_venta,
+      descuento,
+      total_con_descuento,
       ID
     );
-    res.status(200).json({ message: "Venta actualizada" });
+
+    res.status(200).json({ message: "Venta actualizada correctamente" });
   } catch (error) {
     console.error("Error al actualizar la venta:", error);
     res.status(500).json({ error: "Error al actualizar la venta" });

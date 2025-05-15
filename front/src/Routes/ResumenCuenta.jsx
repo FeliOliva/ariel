@@ -154,10 +154,12 @@ const ResumenCuenta = () => {
           `http://localhost:3001/getVentaByID/${id}`
         );
         const data = response.data; // La respuesta ya es un objeto
-
+        console.log("data", data);
         setVentaData({
           ...data,
           fecha_venta: data.fecha ? dayjs(data.fecha) : null, // Convertimos correctamente la fecha
+          descuento: data.descuento,
+          total_importe: data.total_importe,
           venta_id: data.venta_id, // Aseguramos que el ID se use correctamente
         });
       } else {
@@ -737,7 +739,7 @@ const ResumenCuenta = () => {
     try {
       let payload = {};
       let url = "";
-
+      console.log("venta", ventaData);
       if (tipoEdicion === "Pago") {
         payload = {
           monto: pagoData.monto,
@@ -748,6 +750,8 @@ const ResumenCuenta = () => {
       } else if (tipoEdicion === "Venta") {
         payload = {
           fecha_venta: dayjs(ventaData.fecha_venta).format("DD/MM/YYYY"),
+          total: ventaData.total_importe,
+          descuento: ventaData.descuento,
           ID: ventaData.venta_id,
         };
         url = "http://localhost:3001/updateVenta";
