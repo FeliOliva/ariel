@@ -22,6 +22,7 @@ import {
   Input,
   InputNumber,
 } from "antd";
+import CustomPagination from "../components/CustomPagination";
 
 const Cheques = () => {
   const [cheques, setCheques] = useState([]);
@@ -255,6 +256,9 @@ const Cheques = () => {
             style: customCellsStyles,
           },
         }}
+        pagination={true}
+        paginationComponent={CustomPagination}
+        responsive={true}
       />
       <Drawer
         open={open}

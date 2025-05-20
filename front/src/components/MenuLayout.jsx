@@ -56,6 +56,9 @@ const MenuLayout = ({ children }) => {
       case "11":
         navigate("/Cheques");
         break;
+      case "12":
+        navigate("/estadisticas");
+        break;
       default:
     }
   };
@@ -85,6 +88,8 @@ const MenuLayout = ({ children }) => {
         return ["10"];
       case "/Cheques":
         return ["11"];
+      case "/estadisticas":
+        return ["12"];
       default:
         return ["1"];
     }
@@ -154,6 +159,11 @@ const MenuLayout = ({ children }) => {
               key: "11",
               icon: <SisternodeOutlined />,
               label: "Cheques",
+            },
+            {
+              key: "12",
+              icon: <SisternodeOutlined />,
+              label: "Estadisticas",
             },
           ]}
         />

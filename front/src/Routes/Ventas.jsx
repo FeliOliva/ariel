@@ -216,6 +216,51 @@ function Ventas() {
         });
         venta.descuento = 0;
       }
+      // Verificar el stock antes de proceder
+      const stockInsuficiente = [];
+
+      // Primero agrupamos los artículos por ID para calcular cantidades totales
+      const articulosPorId = {};
+      venta.articulos.forEach((articulo) => {
+        const id = articulo.id;
+        if (!articulosPorId[id]) {
+          articulosPorId[id] = {
+            ...articulo,
+            cantidadTotal: 0,
+          };
+        }
+        articulosPorId[id].cantidadTotal += articulo.quantity;
+      });
+
+      // Luego verificamos por cada artículo si hay suficiente stock
+      Object.values(articulosPorId).forEach((articulo) => {
+        if (
+          selectedIds.includes(articulo.linea_id) &&
+          articulo.cantidadTotal > articulo.stock
+        ) {
+          stockInsuficiente.push({
+            nombre: articulo.nombre,
+            cantidadTotal: articulo.cantidadTotal,
+            stock: articulo.stock,
+          });
+        }
+      });
+
+      if (stockInsuficiente.length > 0) {
+        const mensaje = stockInsuficiente
+          .map(
+            (item) =>
+              `${item.nombre}: Stock disponible ${item.stock}, Cantidad total solicitada ${item.cantidadTotal}`
+          )
+          .join("\n");
+
+        Modal.warning({
+          title: "Stock insuficiente",
+          content: `No hay suficiente stock para los siguientes artículos:\n${mensaje}`,
+          icon: <ExclamationCircleOutlined />,
+        });
+        return; // Detener la ejecución si no hay suficiente stock
+      }
       try {
         const ventaData = {
           cliente_id: venta.cliente.id,

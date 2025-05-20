@@ -19,8 +19,9 @@ import ArticulosDetalles from "./Routes/ArticulosDetalles";
 import Cheques from "./Routes/Cheques";
 import ResumenCuentaXZona from "./Routes/ResuemenCuentaXZona";
 import ResumenZonas from "./Routes/ResumenZonas";
-import Pedido from "./Routes/Pedido"
+import Pedido from "./Routes/Pedido";
 import PedidoDetalles from "./Routes/PedidoDetalles";
+import EstadisticasDashboard from "./Routes/EstadisticasDashboard";
 function App() {
   return (
     <Routes>
@@ -45,6 +46,7 @@ function App() {
       <Route path="/ResumenZonas" element={<ResumenZonas />} />
       <Route path="/pedido" element={<Pedido />} />
       <Route path="/pedido/:id" element={<PedidoDetalles />} />
+      <Route path="/estadisticas" element={<EstadisticasDashboard />} />
     </Routes>
   );
 }

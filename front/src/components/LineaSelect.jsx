@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Select, Checkbox, Button } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 
 export default function LineaSelect() {
   const [lineas, setLineas] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [selectedNames, setSelectedNames] = useState([]); // ✅ Nombres seleccionados
+  const [selectedNames, setSelectedNames] = useState([]);
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,13 +29,11 @@ export default function LineaSelect() {
             return linea ? linea.nombre : "";
           })
           .filter((name) => name); // Filtrar valores vacíos
-
         setSelectedNames(selectedNames);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -42,7 +42,6 @@ export default function LineaSelect() {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
-
     setSelectedNames((prev) => {
       const linea = lineas.find((l) => l.id === id);
       if (!linea) return prev;
@@ -52,10 +51,45 @@ export default function LineaSelect() {
     });
   };
 
+  // Manejar cambios en el Select (deseleccionar tags y buscar)
+  const handleSelectChange = (values) => {
+    // Si no hay valores o el último valor es vacío, actualizar el texto de búsqueda
+    if (values.length === 0 || values[values.length - 1] === "") {
+      setSearchText("");
+      return;
+    }
+
+    // Si el último valor no está en selectedNames, es posible que sea una búsqueda
+    const lastValue = values[values.length - 1];
+    if (!selectedNames.includes(lastValue)) {
+      setSearchText(lastValue);
+      // Remover el término de búsqueda de los valores seleccionados
+      values = values.filter((val) => selectedNames.includes(val));
+    } else {
+      setSearchText("");
+    }
+
+    // Manejar deselección
+    const removedNames = selectedNames.filter((name) => !values.includes(name));
+    removedNames.forEach((name) => {
+      const linea = lineas.find((l) => l.nombre === name);
+      if (linea) {
+        setSelectedIds((prev) => prev.filter((id) => id !== linea.id));
+      }
+    });
+
+    setSelectedNames(values);
+  };
+
+  // Manejar búsqueda en el input del Select
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
   // Guardar líneas en la base de datos
   const handleSave = async () => {
     try {
-      console.log("Líneas seleccionadas:", selectedNames); // ✅ Mostrar nombres en consola
+      console.log("Líneas seleccionadas:", selectedNames);
       await axios.post("http://localhost:3001/guardar-lineas", {
         lineas: selectedIds,
       });
@@ -64,6 +98,13 @@ export default function LineaSelect() {
       console.error("Error al guardar líneas:", error);
     }
   };
+
+  // Filtrar líneas según el texto de búsqueda
+  const filteredLineas = lineas
+    .filter((linea) => linea.estado === 1)
+    .filter((linea) =>
+      linea.nombre.toLowerCase().includes(searchText.toLowerCase())
+    );
 
   return (
     <div
@@ -79,31 +120,51 @@ export default function LineaSelect() {
       </h2>
       <Select
         mode="multiple"
-        placeholder="Selecciona líneas"
+        placeholder="Buscar y seleccionar líneas..."
         style={{ width: "100%" }}
-        value={selectedNames} // ✅ Muestra nombres en el Select
-        onChange={() => {}} // Evita errores en Ant Design
+        value={selectedNames}
+        onChange={handleSelectChange}
+        onSearch={handleSearch}
+        showSearch={true}
+        filterOption={false}
+        suffixIcon={<SearchOutlined />}
+        notFoundContent={
+          searchText ? "No se encontraron resultados" : "Escribe para buscar"
+        }
         dropdownRender={(menu) => (
-          <div style={{ padding: "8px" }}>
+          <div>
             {menu}
-            {lineas
-              .filter((linea) => linea.estado === 1)
-              .map((linea) => (
-                <div
-                  key={linea.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "6px 0",
-                  }}
-                >
-                  <Checkbox
-                    checked={selectedIds.includes(linea.id)}
-                    onChange={() => handleCheckboxChange(linea.id)}
-                  />
-                  <span style={{ marginLeft: "8px" }}>{linea.nombre}</span>
-                </div>
-              ))}
+            <div style={{ borderTop: "1px solid #e8e8e8" }}>
+              <div
+                style={{
+                  maxHeight: "200px",
+                  overflow: "auto",
+                  padding: "8px",
+                }}
+              >
+                {filteredLineas.map((linea) => (
+                  <div
+                    key={linea.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "6px 0",
+                    }}
+                  >
+                    <Checkbox
+                      checked={selectedIds.includes(linea.id)}
+                      onChange={() => handleCheckboxChange(linea.id)}
+                    />
+                    <span style={{ marginLeft: "8px" }}>{linea.nombre}</span>
+                  </div>
+                ))}
+                {filteredLineas.length === 0 && (
+                  <div style={{ padding: "8px 0", color: "#999" }}>
+                    No se encontraron resultados
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       />
