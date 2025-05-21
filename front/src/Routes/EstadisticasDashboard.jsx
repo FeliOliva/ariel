@@ -628,11 +628,6 @@ export default function EstadisticasDashboard() {
                           key: "nombre",
                         },
                         {
-                          title: "ID",
-                          dataIndex: "id",
-                          key: "id",
-                        },
-                        {
                           title: "Acción",
                           key: "action",
                           render: () => (
