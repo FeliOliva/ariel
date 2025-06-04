@@ -62,13 +62,12 @@ const getPagosByClienteId = async (req, res) => {
 
 const addPago = async (req, res) => {
   try {
-    const { nro_pago, cliente_id, monto, metodo_pago } = req.body;
-    console.log("datos recibido del backend", req.body);
-    await pagosModel.addPago(nro_pago, cliente_id, monto, metodo_pago);
-    res.status(201).json({ message: "Pago agregado con exito" });
+    const { cliente_id, monto, metodo_pago } = req.body;
+    await pagosModel.addPago(cliente_id, monto, metodo_pago);
+    res.status(201).json({ message: "Pago agregado con éxito" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
-    console.log(error);
   }
 };
 
@@ -80,7 +79,7 @@ const getPagoById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
 const updatePago = async (req, res) => {
   try {
@@ -141,6 +140,25 @@ const dropPago = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getNextNroPago = async (req, res) => {
+  try {
+    const { clienteId } = req.params;
+
+    const result = await pagosModel.getNextNroPago(clienteId);
+
+    res.status(200).json({
+      success: true,
+      nextNroPago: result.nextNroPago,
+    });
+  } catch (error) {
+    console.error("Error al obtener próximo número de pago:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getAllPagos,
@@ -150,4 +168,5 @@ module.exports = {
   getPagosByZona_id,
   dropPago,
   getPagoById,
+  getNextNroPago,
 };

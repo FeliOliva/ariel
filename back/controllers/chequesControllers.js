@@ -10,7 +10,14 @@ const getAllCheques = async (req, res) => {
 };
 const addCheque = async (req, res) => {
   try {
-    const { banco, nro_cheque, fecha_emision, fecha_cobro, importe, cliente_id, nro_pago } = req.body;
+    const {
+      banco,
+      nro_cheque,
+      fecha_emision,
+      fecha_cobro,
+      importe,
+      cliente_id,
+    } = req.body;
     const cheque = await chequesModel.addCheque({
       banco,
       nro_cheque,
@@ -18,7 +25,6 @@ const addCheque = async (req, res) => {
       fecha_cobro,
       importe,
       cliente_id,
-      nro_pago,
     });
     res.status(201).json({ message: "Cheque agregado con éxito", cheque });
   } catch (error) {
@@ -29,12 +35,19 @@ const updateCheque = async (req, res) => {
   try {
     const ID = req.params.ID;
     const { banco, nro_cheque, fecha_emision, fecha_cobro, importe } = req.body;
-    await chequesModel.updateCheque({ ID, banco, nro_cheque, fecha_emision, fecha_cobro, importe });
+    await chequesModel.updateCheque({
+      ID,
+      banco,
+      nro_cheque,
+      fecha_emision,
+      fecha_cobro,
+      importe,
+    });
     res.status(200).json({ message: "Cheque actualizado con éxito" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 const dropCheque = async (req, res) => {
   try {
     const ID = req.params.ID;
@@ -58,7 +71,7 @@ const updateCheques = async (req, res) => {
   try {
     const { id, banco, nro_cheque, fecha_emision, fecha_cobro, importe } =
       req.body;
-    console.log(req.body)
+    console.log(req.body);
     const updatedCheque = await chequesModel.updateCheque({
       id,
       banco,
@@ -89,7 +102,7 @@ const getChequeByCliente = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
 module.exports = {
   getAllCheques,

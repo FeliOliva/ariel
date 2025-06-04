@@ -48,6 +48,14 @@ const AgregarPagoDrawer = ({
         onOk: async () => {
           if (metodo_pago === "cheque") {
             // Enviar datos del cheque al backend
+            console.log("Datos del cheque:", {
+              banco,
+              nro_cheque,
+              fecha_emision: fecha_emision.format("YYYY-MM-DD"),
+              fecha_cobro: fecha_cobro.format("YYYY-MM-DD"),
+              importe: rest.monto,
+              cliente_id: clienteId,
+            });
             await axios.post("http://localhost:3001/addCheque", {
               banco,
               nro_cheque,
@@ -55,15 +63,18 @@ const AgregarPagoDrawer = ({
               fecha_cobro: fecha_cobro.format("YYYY-MM-DD"),
               importe: rest.monto,
               cliente_id: clienteId,
-              nro_pago: nextNroPago,
             });
           }
 
           // Enviar datos del pago al backend
+          console.log("Datos del pago:", {
+            ...rest,
+            cliente_id: clienteId,
+            metodo_pago,
+          });
           await axios.post("http://localhost:3001/addPago", {
             ...rest,
             cliente_id: clienteId,
-            nro_pago: nextNroPago,
             metodo_pago,
           });
 
@@ -96,7 +107,7 @@ const AgregarPagoDrawer = ({
         title="Agregar Pago"
         placement="right"
         onClose={onClose}
-        visible={visible}
+        open={visible}
         width={400}
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -112,13 +123,6 @@ const AgregarPagoDrawer = ({
               }
               parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
             />
-          </Form.Item>
-          <Form.Item
-            name="nro_pago"
-            label="Nro. Pago"
-            initialValue={nextNroPago}
-          >
-            <Input disabled />
           </Form.Item>
           <Form.Item
             name="metodo_pago"

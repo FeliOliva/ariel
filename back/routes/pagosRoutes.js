@@ -9,5 +9,6 @@ router.post("/addPago", pagosControllers.addPago);
 router.put("/updatePago", pagosControllers.updatePago);
 router.get("/getPagosByZona_id/:ID", pagosControllers.getPagosByZona_id);
 router.put("/dropPago/:id", pagosControllers.dropPago);
+router.get("/nextNroPago/:clienteId", pagosControllers.getNextNroPago);
 
 module.exports = router;

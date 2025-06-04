@@ -25,14 +25,24 @@ const getPagosByClienteId = async (cliente_id, fecha_inicio, fecha_fin) => {
     throw err;
   }
 };
+const getUltimoPago = async (cliente_id) => {
+  const query = `SELECT nro_pago FROM pagos WHERE cliente_id = ? ORDER BY nro_pago DESC LIMIT 1`;
+  const [rows] = await db.query(query, [cliente_id]); // 👈 fix
+  return rows[0]?.nro_pago || null;
+};
 
-const addPago = async (nro_pago, cliente_id, monto, metodo_pago) => {
-  try {
-    const query = queriesPagos.addPagos;
-    return await db.query(query, [nro_pago, cliente_id, monto, metodo_pago]);
-  } catch (err) {
-    throw err;
+const addPago = async (cliente_id, monto, metodo_pago) => {
+  const ultimoNroPago = await getUltimoPago(cliente_id);
+  let nuevoNro;
+  if (!ultimoNroPago) {
+    nuevoNro = "00001";
+  } else {
+    const siguiente = parseInt(ultimoNroPago, 10) + 1;
+    nuevoNro = siguiente.toString().padStart(5, "0");
   }
+
+  const query = `INSERT INTO pagos (nro_pago, cliente_id, monto, metodo_pago) VALUES (?, ?, ?, ?)`;
+  return await db.query(query, [nuevoNro, cliente_id, monto, metodo_pago]);
 };
 
 const getPagoById = async (ID) => {
@@ -43,7 +53,7 @@ const getPagoById = async (ID) => {
   } catch (err) {
     throw err;
   }
-}
+};
 
 const updatePago = async (monto, fecha_pago, ID) => {
   try {
@@ -75,6 +85,20 @@ const dropPago = async (id) => {
     throw err;
   }
 };
+
+const getNextNroPago = async (cliente_id) => {
+  try {
+    const query = `SELECT COALESCE(MAX(CAST(nro_pago AS UNSIGNED)), 0) + 1 AS nextNumber FROM pagos WHERE cliente_id = ? AND estado = 1`;
+    const [rows] = await db.query(query, [cliente_id]);
+    const nextNumber = rows[0]?.nextNumber || 1;
+    const formattedNumber = nextNumber.toString().padStart(5, "0");
+    return { nextNroPago: formattedNumber };
+  } catch (err) {
+    console.error("Error en getNextNroPago:", err);
+    throw err;
+  }
+};
+
 module.exports = {
   getAllPagos,
   addPago,
@@ -82,5 +106,6 @@ module.exports = {
   getPagosByClienteId,
   getPagosByZona_id,
   dropPago,
-  getPagoById
+  getPagoById,
+  getNextNroPago,
 };

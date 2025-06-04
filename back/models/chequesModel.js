@@ -17,7 +17,6 @@ const addCheque = async ({
   fecha_cobro,
   importe,
   cliente_id,
-  nro_pago,
 }) => {
   try {
     const querys = queriesCheques.addCheque;
@@ -28,7 +27,6 @@ const addCheque = async ({
       fecha_cobro,
       importe,
       cliente_id,
-      nro_pago,
     ]);
     const selectQuery = `
       SELECT * FROM cheque WHERE nro_cheque = ? AND banco = ? ORDER BY id DESC LIMIT 1;
@@ -72,8 +70,6 @@ const updateCheque = async ({
   }
 };
 
-
-
 const dropCheque = async (ID) => {
   try {
     const querys = queriesCheques.dropCheque;
@@ -109,7 +105,7 @@ const getChequeByCliente = async (cliente) => {
   } catch (err) {
     throw err;
   }
-}
+};
 
 module.exports = {
   getAllCheques,

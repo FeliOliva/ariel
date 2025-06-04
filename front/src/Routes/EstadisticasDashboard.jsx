@@ -34,7 +34,7 @@ import MenuLayout from "../components/MenuLayout";
 import { InfoCircleOutlined } from "@ant-design/icons";
 
 const { TabPane } = Tabs;
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 // Colores para gráficos
 const COLORS = [
@@ -53,6 +53,7 @@ const COLORS = [
 // Componente para mostrar listas con scroll
 const ListaConScroll = ({
   title,
+  description,
   data,
   loading,
   error,
@@ -61,6 +62,13 @@ const ListaConScroll = ({
   extra,
 }) => (
   <Card title={title} extra={extra}>
+    {description && (
+      <div className="mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+        <Text type="secondary" className="text-sm">
+          {description}
+        </Text>
+      </div>
+    )}
     {loading ? (
       <div className="flex justify-center items-center" style={{ height }}>
         <Spin size="large" />
@@ -163,6 +171,7 @@ export default function EstadisticasDashboard() {
       const response = await axios.get(
         `http://localhost:3001/estadisticas/articulosSinVentas`
       );
+      console.log("Artículos sin ventas:", response.data);
       setArticulosSinVentas(response.data);
     } catch (err) {
       setError((prev) => ({ ...prev, articulosSinVentas: err.message }));
@@ -344,53 +353,58 @@ export default function EstadisticasDashboard() {
 
         <Tabs defaultActiveKey="1" className="mb-8">
           <TabPane tab="General" key="1">
-            <Row gutter={[16, 16]} className="mb-6">
-              <Col span={8}>
-                <Card
-                  title={
-                    <div className="flex items-center gap-2">
-                      <span>Filtrar por Línea</span>
-                      <Tooltip title={filterTooltips.linea}>
-                        <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                      </Tooltip>
-                    </div>
-                  }
-                  className="h-full"
-                >
-                  <LineaInput onChangeLinea={handleChangeLinea} />
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card
-                  title={
-                    <div className="flex items-center gap-2">
-                      <span>Filtrar por Proveedor</span>
-                      <Tooltip title={filterTooltips.proveedor}>
-                        <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                      </Tooltip>
-                    </div>
-                  }
-                  className="h-full"
-                >
-                  <ProveedoresInput onChangeProveedor={handleChangeProveedor} />
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card
-                  title={
-                    <div className="flex items-center gap-2">
-                      <span>Filtrar por Sublínea</span>
-                      <Tooltip title={filterTooltips.sublinea}>
-                        <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                      </Tooltip>
-                    </div>
-                  }
-                  className="h-full"
-                >
-                  <SubLineasInput onChangeSubLineas={handleChangeSubLinea} />
-                </Card>
-              </Col>
-            </Row>
+            {/* Sección de filtros con explicación */}
+            <Card className="mb-6" title="🔍 Filtros de Análisis">
+              <Row gutter={[16, 16]}>
+                <Col span={8}>
+                  <Card
+                    title={
+                      <div className="flex items-center gap-2">
+                        <span>Filtrar por Línea</span>
+                        <Tooltip title={filterTooltips.linea}>
+                          <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                        </Tooltip>
+                      </div>
+                    }
+                    className="h-full"
+                  >
+                    <LineaInput onChangeLinea={handleChangeLinea} />
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card
+                    title={
+                      <div className="flex items-center gap-2">
+                        <span>Filtrar por Proveedor</span>
+                        <Tooltip title={filterTooltips.proveedor}>
+                          <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                        </Tooltip>
+                      </div>
+                    }
+                    className="h-full"
+                  >
+                    <ProveedoresInput
+                      onChangeProveedor={handleChangeProveedor}
+                    />
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card
+                    title={
+                      <div className="flex items-center gap-2">
+                        <span>Filtrar por Sublínea</span>
+                        <Tooltip title={filterTooltips.sublinea}>
+                          <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                        </Tooltip>
+                      </div>
+                    }
+                    className="h-full"
+                  >
+                    <SubLineasInput onChangeSubLineas={handleChangeSubLinea} />
+                  </Card>
+                </Col>
+              </Row>
+            </Card>
 
             <Row gutter={[16, 16]}>
               <Col span={12}>
@@ -403,6 +417,7 @@ export default function EstadisticasDashboard() {
                         ? proveedorSeleccionado?.nombre
                         : subLineaSeleccionada?.nombre
                     }`}
+                    description="📈 Productos con mayor volumen de ventas en el filtro seleccionado"
                     data={masVendidos}
                     loading={loading.masVendidos}
                     error={error.masVendidos}
@@ -416,7 +431,23 @@ export default function EstadisticasDashboard() {
                   />
                 ) : (
                   <Card title="Seleccione un filtro" className="h-full">
-                    <Empty description="Por favor seleccione una línea, proveedor o sublínea para ver los resultados" />
+                    <div className="text-center p-8">
+                      <InfoCircleOutlined
+                        style={{
+                          fontSize: "48px",
+                          color: "#d9d9d9",
+                          marginBottom: "16px",
+                        }}
+                      />
+                      <Title level={4} type="secondary">
+                        Análisis de Productos Más Vendidos
+                      </Title>
+                      <Paragraph type="secondary">
+                        Por favor seleccione una línea, proveedor o sublínea
+                        para ver los productos con mayor volumen de ventas en
+                        esa categoría.
+                      </Paragraph>
+                    </div>
                   </Card>
                 )}
               </Col>
@@ -429,6 +460,7 @@ export default function EstadisticasDashboard() {
                       <Tag color="green">Top 10</Tag>
                     </div>
                   }
+                  description="💰 Top 10 productos que generan mayor ganancia total"
                   data={masRentables.slice(0, 10)}
                   loading={loading.masRentables}
                   error={error.masRentables}
@@ -460,6 +492,7 @@ export default function EstadisticasDashboard() {
                       <Tag color="red">Alerta de Inventario</Tag>
                     </div>
                   }
+                  description="⚠️ Productos sin ventas registradas - Revisar para gestión de inventario"
                   data={articulosSinVentas}
                   loading={loading.articulosSinVentas}
                   error={error.articulosSinVentas}
@@ -482,6 +515,12 @@ export default function EstadisticasDashboard() {
                     </div>
                   }
                 >
+                  <div className="mb-3 p-2 bg-orange-50 rounded border-l-4 border-orange-400">
+                    <Text type="secondary" className="text-sm">
+                      📊 Top 10 productos con mayor cantidad de unidades
+                      vendidas
+                    </Text>
+                  </div>
                   {loading.masUnidadesVendidas ? (
                     <div className="flex justify-center items-center h-64">
                       <Spin size="large" />
@@ -527,9 +566,21 @@ export default function EstadisticasDashboard() {
           </TabPane>
 
           <TabPane tab="Tablas Detalladas" key="2">
+            <Card className="mb-6" title="📋 Vista Detallada">
+              <Text type="secondary">
+                Tablas completas con información detallada y opciones de
+                ordenamiento
+              </Text>
+            </Card>
+
             <Row gutter={[16, 16]}>
               <Col span={24}>
-                <Card title="Productos Más Vendidos">
+                <Card title="Productos Más Vendidos - Vista Detallada">
+                  <div className="mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                    <Text type="secondary" className="text-sm">
+                      📊 Tabla completa ordenada por volumen de ventas
+                    </Text>
+                  </div>
                   {loading.masVendidos ? (
                     <Spin size="large" />
                   ) : error.masVendidos ? (
@@ -569,7 +620,12 @@ export default function EstadisticasDashboard() {
               </Col>
 
               <Col span={24}>
-                <Card title="Productos Más Rentables">
+                <Card title="Productos Más Rentables - Vista Detallada">
+                  <div className="mb-3 p-2 bg-green-50 rounded border-l-4 border-green-400">
+                    <Text type="secondary" className="text-sm">
+                      💰 Productos ordenados por ganancia total generada
+                    </Text>
+                  </div>
                   {loading.masRentables ? (
                     <Spin size="large" />
                   ) : error.masRentables ? (
@@ -607,7 +663,13 @@ export default function EstadisticasDashboard() {
               </Col>
 
               <Col span={24}>
-                <Card title="Artículos Sin Ventas">
+                <Card title="Artículos Sin Ventas - Vista Detallada">
+                  <div className="mb-3 p-2 bg-red-50 rounded border-l-4 border-red-400">
+                    <Text type="secondary" className="text-sm">
+                      ⚠️ Inventario de productos sin movimiento - Gestión de
+                      stock
+                    </Text>
+                  </div>
                   {loading.articulosSinVentas ? (
                     <Spin size="large" />
                   ) : error.articulosSinVentas ? (
@@ -645,7 +707,12 @@ export default function EstadisticasDashboard() {
               </Col>
 
               <Col span={24}>
-                <Card title="Productos con Más Unidades Vendidas">
+                <Card title="Productos con Más Unidades Vendidas - Vista Detallada">
+                  <div className="mb-3 p-2 bg-orange-50 rounded border-l-4 border-orange-400">
+                    <Text type="secondary" className="text-sm">
+                      📦 Ranking por cantidad de unidades vendidas
+                    </Text>
+                  </div>
                   {loading.masUnidadesVendidas ? (
                     <Spin size="large" />
                   ) : error.masUnidadesVendidas ? (

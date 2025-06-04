@@ -82,9 +82,10 @@ const ResumenCuenta = () => {
       let saldoAcumulado = 0; // Saldo inicial
 
       const filteredData = response.data
-        .map((item) => ({
+        .map((item, index) => ({
           ...item,
           tipoPlano: typeof item.tipo === "string" ? item.tipo : "",
+          uniqueKey: `${item.tipo}-${item.id}-${index}`, // Clave única combinada
         }))
         .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenamos por fecha ascendente
         .map((item) => {
@@ -122,8 +123,7 @@ const ResumenCuenta = () => {
     const fin = dayjs().format("YYYY-MM-DD");
     setRangoFechas([inicio, fin]);
   }, []);
-
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!selectedCliente) {
       return message.warning("Seleccione un cliente.");
     }
@@ -131,9 +131,18 @@ const ResumenCuenta = () => {
       return message.warning("Seleccione un rango de fechas.");
     }
     setLoading(true);
-    fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
+    await fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
   };
-
+  const handleClienteChange = async (cliente) => {
+    setSelectedCliente(cliente);
+    setData([]);
+    if (cliente && rangoFechas && rangoFechas.length === 2) {
+      setLoading(true);
+      await fetchData(cliente.id, rangoFechas[0], rangoFechas[1]);
+    } else {
+      setLoading(false);
+    }
+  };
   const handleOpenEditDrawer = async (id, tipo) => {
     try {
       setTipoEdicion(tipo);
@@ -834,7 +843,7 @@ const ResumenCuenta = () => {
       <div style={{ padding: "20px" }}>
         <h1>Resumen de Cuenta</h1>
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-          <ClienteInput onChangeCliente={setSelectedCliente} />
+          <ClienteInput onChangeCliente={handleClienteChange} />
           <RangePicker
             value={
               rangoFechas.length === 2
@@ -929,7 +938,7 @@ const ResumenCuenta = () => {
                 headCells: { style: customHeaderStyles },
                 cells: { style: customCellsStyles },
               }}
-              keyField="id"
+              keyField="uniqueKey" // Cambiar esto
               selectableRows // 👉 activa los checkboxes
               selectableRowDisabled={(row) =>
                 row.tipoPlano !== "Nota de Crédito"
@@ -1091,8 +1100,8 @@ const ResumenCuenta = () => {
           onClose={() => setDrawerVisible(false)}
           clienteId={selectedCliente?.id}
           nextNroPago={nextNroPago}
-          onPagoAdded={(nuevoPago) => {
-            fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
+          onPagoAdded={async (nuevoPago) => {
+            await fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
             setDrawerVisible(false);
           }}
         />

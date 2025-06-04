@@ -11,7 +11,7 @@ const getMasVendidos = async (filtro, id) => {
 
   const query = `
     SELECT 
-      a.nombre,
+      CONCAT(a.codigo_producto, ' - ', a.nombre, ' - ', a.mediciones) AS nombre,
       SUM(dv.cantidad) AS total_vendido,
       SUM(dv.sub_total) AS total_facturado
     FROM detalle_venta dv
@@ -28,7 +28,7 @@ const getMasVendidos = async (filtro, id) => {
 const getMasRentables = async () => {
   const query = `
     SELECT 
-      a.nombre,
+      CONCAT(a.codigo_producto, ' - ', a.nombre, ' - ', a.mediciones) AS nombre,
       SUM((dv.precio_monotributista - dv.costo) * dv.cantidad) AS ganancia_total
     FROM detalle_venta dv
     JOIN articulo a ON dv.articulo_id = a.id
@@ -72,7 +72,8 @@ const getComparativaVentas = async (filtro) => {
 const getArticulosSinVentas = async () => {
   const query = `
     SELECT 
-      a.id, a.nombre
+      a.id, 
+      CONCAT(a.codigo_producto, ' - ', a.nombre, ' - ', a.mediciones) AS nombre
     FROM articulo a
     LEFT JOIN detalle_venta dv ON a.id = dv.articulo_id
     WHERE dv.id IS NULL
@@ -97,7 +98,7 @@ const getEvolucionVentas = async () => {
 const getMasUnidadesVendidas = async () => {
   const query = `
     SELECT 
-      a.nombre,
+      CONCAT(a.codigo_producto, ' - ', a.nombre, ' - ', a.mediciones) AS nombre,
       SUM(dv.cantidad) AS unidades_vendidas
     FROM detalle_venta dv
     JOIN articulo a ON dv.articulo_id = a.id
@@ -112,7 +113,7 @@ const getMasUnidadesVendidas = async () => {
 const getPrecioPromedioVenta = async () => {
   const query = `
     SELECT 
-      a.nombre,
+      CONCAT(a.codigo_producto, ' - ', a.nombre, ' - ', a.mediciones) AS nombre,
       AVG(dv.precio_monotributista) AS precio_promedio_venta
     FROM detalle_venta dv
     JOIN articulo a ON dv.articulo_id = a.id
