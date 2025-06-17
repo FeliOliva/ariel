@@ -176,10 +176,27 @@ const increasePrice = async (req, res) => {
   try {
     const ID = req.params.ID;
     const { percentage } = req.body;
+    console.log("desde increasePrice");
+    console.log(req.body, ID);
     if (!percentage || isNaN(percentage)) {
       return res.status(400).json({ error: "Invalid percentage value" });
     }
     await articuloModel.increasePrice(ID, percentage);
+    res.status(200).json({ message: "Price updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const decreasePrice = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const { percentage } = req.body;
+    console.log("desde decreasePrice");
+    console.log(req.body);
+    if (!percentage || isNaN(percentage)) {
+      return res.status(400).json({ error: "Invalid percentage value" });
+    }
+    await articuloModel.decreasePrice(ID, percentage);
     res.status(200).json({ message: "Price updated successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -246,6 +263,33 @@ const getArticulosOrdenados = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getArticulosVendidosPorLinea = async (req, res) => {
+  try {
+    const { linea_id, fecha_inicio, fecha_fin } = req.query;
+
+    if (!linea_id || !fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Faltan parámetros: linea_id, fecha_inicio o fecha_fin",
+      });
+    }
+
+    const productos = await articuloModel.getArticulosVendidosPorLinea({
+      linea_id,
+      fecha_inicio,
+      fecha_fin,
+    });
+
+    // Sumamos el total general de todos los subtotales
+    const totalGeneral = productos.reduce(
+      (acc, prod) => acc + parseFloat(prod.subtotal),
+      0
+    );
+
+    res.json({ productos, totalGeneral: totalGeneral.toFixed(2) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getAllArticulos,
@@ -264,4 +308,6 @@ module.exports = {
   deshacerCambios,
   getArticulosOrdenados,
   decreasePrices,
+  getArticulosVendidosPorLinea,
+  decreasePrice,
 };

@@ -53,6 +53,7 @@ function Articulos() {
   const [currentIncrease, setCurrentIncrease] = useState(null);
   const [subLineaExists, setSubLineaExists] = useState(true);
   const [isIncrease, setIsIncrease] = useState(false);
+  const [isIndividualIncrease, setIsIndividualIncrease] = useState(true);
   const navigate = useNavigate();
   const { confirm } = Modal;
   const { Option } = Select;
@@ -249,49 +250,36 @@ function Articulos() {
       });
       return;
     }
+
     confirm({
-      title: "¿Esta seguro realizar este aumento?",
+      title: `¿Esta seguro de ${
+        isIndividualIncrease ? "aumentar" : "bajar"
+      } este precio?`,
       icon: <ExclamationCircleOutlined />,
       okText: "Si, confirmar",
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          const response = await axios.get(
-            `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
-          );
-          const articuloAntiguo = response.data;
-
+          const endpoint = isIndividualIncrease
+            ? "increasePrice"
+            : "decreasePrice";
           await axios.put(
-            `http://localhost:3001/increasePrice/${currentIncrease.id}`,
+            `http://localhost:3001/${endpoint}/${currentIncrease.id}`,
             {
               percentage: currentIncrease.percentage,
             }
           );
-
-          const response2 = await axios.get(
-            `http://localhost:3001/getArticuloByID/${currentIncrease.id}`
-          );
-          const articuloNuevo = response2.data;
-
-          await axios.post(`http://localhost:3001/updateLog`, {
-            articulo_id: currentIncrease.id,
-            costo_nuevo: articuloNuevo.costo,
-            costo_antiguo: articuloAntiguo.costo,
-            precio_monotributista_nuevo: articuloNuevo.precio_monotributista,
-            precio_monotributista_antiguo:
-              articuloAntiguo.precio_monotributista,
-            porcentaje: currentIncrease.percentage,
-          });
-
           fetchData();
           setOpenIncreaseDrawer(false);
           notification.success({
-            message: "Aumento exitoso",
-            description: "El aumento se realizo exitosamente",
+            message: `${isIndividualIncrease ? "Aumento" : "Baja"} exitosa`,
+            description: `El ${
+              isIndividualIncrease ? "aumento" : "baja"
+            } se realizó exitosamente`,
             duration: 1,
           });
         } catch (error) {
-          console.error("Error updating prices:", error);
+          console.error("Error actualizando precios:", error);
         }
       },
     });
@@ -729,6 +717,24 @@ function Articulos() {
         title="Aumentar precio"
         style={{ padding: 0 }}
       >
+        <div style={{ display: "flex", marginBottom: 10 }}>
+          <Tooltip title="Cambiar de aumentar a bajar">
+            <span> Cambiar de aumentar a bajar </span>
+          </Tooltip>
+        </div>
+        <Switch
+          checked={isIndividualIncrease}
+          onChange={(checked) => setIsIndividualIncrease(checked)}
+          defaultChecked
+          checkedChildren={
+            <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+              AUMENTO
+            </span>
+          }
+          unCheckedChildren={
+            <span style={{ fontSize: "16px", fontWeight: "bold" }}>BAJADO</span>
+          }
+        />
         <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
           <Tooltip>
             <strong>Porcentaje</strong>

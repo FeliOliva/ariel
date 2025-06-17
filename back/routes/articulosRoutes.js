@@ -17,15 +17,26 @@ router.get(
   articulosControllers.getArticulosByLineaID
 );
 router.get(
+  "/getArticulosVendidosPorLinea",
+  articulosControllers.getArticulosVendidosPorLinea
+);
+router.get(
   "/getArticulosBySubLineaID/:subLineaID",
   articulosControllers.getArticulosBySubLineaID
 );
 router.put("/increasePrice/:ID", articulosControllers.increasePrice);
-router.put("/AumentarPrecioxLinea/:linea_id", articulosControllers.increasePrices);
+router.put("/decreasePrice/:ID", articulosControllers.decreasePrice);
+router.put(
+  "/AumentarPrecioxLinea/:linea_id",
+  articulosControllers.increasePrices
+);
 router.put("/BajarPrecioxLinea/:linea_id", articulosControllers.decreasePrices);
 router.post("/updateLog", articulosControllers.updateLogPrecios);
 router.get("/logsPreciosById/:ID", articulosControllers.logsPreciosById);
 router.put("/deshacerCambios/:id", articulosControllers.deshacerCambios);
-router.get("/getArticulosOrdenados", articulosControllers.getArticulosOrdenados);
+router.get(
+  "/getArticulosOrdenados",
+  articulosControllers.getArticulosOrdenados
+);
 
 module.exports = router;

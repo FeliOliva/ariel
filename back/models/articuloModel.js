@@ -150,7 +150,15 @@ const decreasePrices = async (linea_id, percentage) => {
 const increasePrice = async (ID, percentage) => {
   try {
     const query = queriesArticulos.increasePrice;
-    await db.query(query, [percentage, percentage, ID]);
+    await db.query(query, [percentage, ID]);
+  } catch (error) {
+    throw new Error("Error updating price: " + error.message);
+  }
+};
+const decreasePrice = async (ID, percentage) => {
+  try {
+    const query = queriesArticulos.decreasePrice;
+    await db.query(query, [percentage, ID]);
   } catch (error) {
     throw new Error("Error updating price: " + error.message);
   }
@@ -217,6 +225,26 @@ const getArticulosOrdenados = async () => {
   }
 };
 
+const getArticulosVendidosPorLinea = async ({
+  linea_id,
+  fecha_inicio,
+  fecha_fin,
+}) => {
+  try {
+    const query = queriesArticulos.getArticulosVendidosPorLinea;
+    const [results] = await db.query(query, [
+      fecha_inicio,
+      fecha_fin,
+      linea_id,
+    ]);
+    return results;
+  } catch (error) {
+    throw new Error(
+      "Error al obtener artículos vendidos por línea: " + error.message
+    );
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -234,4 +262,6 @@ module.exports = {
   deshacerCambios,
   getArticulosOrdenados,
   decreasePrices,
+  getArticulosVendidosPorLinea,
+  decreasePrice,
 };

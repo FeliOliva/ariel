@@ -1,754 +1,414 @@
 import React, { useState, useEffect } from "react";
 import {
-  Tabs,
+  DatePicker,
+  Button,
   Card,
+  Statistic,
   Row,
   Col,
-  Spin,
-  Typography,
   Table,
-  Divider,
-  Alert,
-  List,
-  Badge,
-  Tag,
-  Empty,
-  Tooltip,
+  message,
+  Spin,
 } from "antd";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
-import LineaInput from "../components/LineaInput";
-import ProveedoresInput from "../components/ProveedoresInput";
-import SubLineasInput from "../components/InputSubLineas";
+import { FilePdfOutlined, BarChartOutlined } from "@ant-design/icons";
 import axios from "axios";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import LineaInput from "../components/LineaInput"; // Ajusta la ruta según tu estructura
 import MenuLayout from "../components/MenuLayout";
-import { InfoCircleOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
+import imageUrl from "../logoRenacer.png";
 
-const { TabPane } = Tabs;
-const { Title, Text, Paragraph } = Typography;
-
-// Colores para gráficos
-const COLORS = [
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-  "#8884d8",
-  "#82ca9d",
-  "#ffc658",
-  "#8dd1e1",
-  "#a4de6c",
-  "#d0ed57",
-];
-
-// Componente para mostrar listas con scroll
-const ListaConScroll = ({
-  title,
-  description,
-  data,
-  loading,
-  error,
-  renderItem,
-  height = 300,
-  extra,
-}) => (
-  <Card title={title} extra={extra}>
-    {description && (
-      <div className="mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-        <Text type="secondary" className="text-sm">
-          {description}
-        </Text>
-      </div>
-    )}
-    {loading ? (
-      <div className="flex justify-center items-center" style={{ height }}>
-        <Spin size="large" />
-      </div>
-    ) : error ? (
-      <Alert message={`Error: ${error}`} type="error" />
-    ) : data.length > 0 ? (
-      <div style={{ height, overflowY: "auto" }}>
-        <List dataSource={data} renderItem={renderItem} />
-      </div>
-    ) : (
-      <Empty description="No hay datos disponibles" />
-    )}
-  </Card>
-);
-
-// Tooltips explicativos para los filtros
-const filterTooltips = {
-  linea:
-    "Filtra los productos por línea de productos. Ej: 'Capilares', 'Profesional'",
-  proveedor: "Filtra los productos por proveedor específico",
-  sublinea: "Filtra por subcategorías dentro de una línea de productos",
-};
+const { RangePicker } = DatePicker;
 
 export default function EstadisticasDashboard() {
-  // Estados para almacenar datos de las API
-  const [masVendidos, setMasVendidos] = useState([]);
-  const [masRentables, setMasRentables] = useState([]);
-  const [articulosSinVentas, setArticulosSinVentas] = useState([]);
-  const [masUnidadesVendidas, setMasUnidadesVendidas] = useState([]);
+  const [selectedLinea, setSelectedLinea] = useState(null);
+  const [dateRange, setDateRange] = useState([]);
+  const [estadisticas, setEstadisticas] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Estados para filtros
-  const [filtroSeleccionado, setFiltroSeleccionado] = useState("linea");
-  const [idSeleccionado, setIdSeleccionado] = useState(null);
-  const [lineaSeleccionada, setLineaSeleccionada] = useState(null);
-  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
-  const [subLineaSeleccionada, setSubLineaSeleccionada] = useState(null);
-
-  // Estado para loading
-  const [loading, setLoading] = useState({
-    masVendidos: false,
-    masRentables: false,
-    articulosSinVentas: false,
-    masUnidadesVendidas: false,
-  });
-
-  // Estado para errores
-  const [error, setError] = useState({
-    masVendidos: null,
-    masRentables: null,
-    articulosSinVentas: null,
-    masUnidadesVendidas: null,
-  });
-
-  // Función para cargar los productos más vendidos
-  const fetchMasVendidos = async () => {
-    setLoading((prev) => ({ ...prev, masVendidos: true }));
-    setError((prev) => ({ ...prev, masVendidos: null }));
-    try {
-      const response = await axios.get(
-        `http://localhost:3001/estadisticas/masVendidos`,
-        {
-          params: {
-            filtro: filtroSeleccionado,
-            id: idSeleccionado,
-          },
-        }
-      );
-      setMasVendidos(response.data);
-    } catch (err) {
-      setError((prev) => ({ ...prev, masVendidos: err.message }));
-      console.error("Error fetching más vendidos:", err);
-    } finally {
-      setLoading((prev) => ({ ...prev, masVendidos: false }));
-    }
-  };
-
-  // Función para cargar los productos más rentables
-  const fetchMasRentables = async () => {
-    setLoading((prev) => ({ ...prev, masRentables: true }));
-    setError((prev) => ({ ...prev, masRentables: null }));
-    try {
-      const response = await axios.get(
-        `http://localhost:3001/estadisticas/masRentables`
-      );
-      setMasRentables(response.data);
-    } catch (err) {
-      setError((prev) => ({ ...prev, masRentables: err.message }));
-      console.error("Error fetching más rentables:", err);
-    } finally {
-      setLoading((prev) => ({ ...prev, masRentables: false }));
-    }
-  };
-
-  // Función para cargar los artículos sin ventas
-  const fetchArticulosSinVentas = async () => {
-    setLoading((prev) => ({ ...prev, articulosSinVentas: true }));
-    setError((prev) => ({ ...prev, articulosSinVentas: null }));
-    try {
-      const response = await axios.get(
-        `http://localhost:3001/estadisticas/articulosSinVentas`
-      );
-      console.log("Artículos sin ventas:", response.data);
-      setArticulosSinVentas(response.data);
-    } catch (err) {
-      setError((prev) => ({ ...prev, articulosSinVentas: err.message }));
-      console.error("Error fetching artículos sin ventas:", err);
-    } finally {
-      setLoading((prev) => ({ ...prev, articulosSinVentas: false }));
-    }
-  };
-
-  // Función para cargar más unidades vendidas
-  const fetchMasUnidadesVendidas = async () => {
-    setLoading((prev) => ({ ...prev, masUnidadesVendidas: true }));
-    setError((prev) => ({ ...prev, masUnidadesVendidas: null }));
-    try {
-      const response = await axios.get(
-        `http://localhost:3001/estadisticas/masUnidadesVendidas`
-      );
-      setMasUnidadesVendidas(response.data);
-    } catch (err) {
-      setError((prev) => ({ ...prev, masUnidadesVendidas: err.message }));
-      console.error("Error fetching más unidades vendidas:", err);
-    } finally {
-      setLoading((prev) => ({ ...prev, masUnidadesVendidas: false }));
-    }
-  };
-
-  // Efecto para cargar datos iniciales
-  useEffect(() => {
-    fetchMasRentables();
-    fetchArticulosSinVentas();
-    fetchMasUnidadesVendidas();
-  }, []);
-
-  // Efecto para recargar datos cuando cambia el filtro
-  useEffect(() => {
-    fetchMasVendidos();
-  }, [filtroSeleccionado, idSeleccionado]);
-
-  // Manejadores de cambio para los componentes de selección
   const handleChangeLinea = (linea) => {
-    if (linea) {
-      setLineaSeleccionada(linea);
-      setFiltroSeleccionado("linea");
-      setIdSeleccionado(linea.id);
-    } else {
-      setLineaSeleccionada(null);
-      setIdSeleccionado(null);
+    setSelectedLinea(linea);
+  };
+
+  const handleDateRangeChange = (dates) => {
+    setDateRange(dates);
+  };
+
+  const fetchEstadisticas = async () => {
+    if (!selectedLinea || !dateRange || dateRange.length !== 2) {
+      message.warning("Por favor selecciona una línea y un rango de fechas");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const fechaInicio = dateRange[0].format("YYYY-MM-DD");
+      const fechaFin = dateRange[1].format("YYYY-MM-DD");
+
+      const response = await axios.get(
+        `http://localhost:3001/getArticulosVendidosPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+      );
+
+      const { productos, totalGeneral } = response.data;
+      setEstadisticas(productos);
+      message.success("Estadísticas cargadas correctamente");
+    } catch (error) {
+      console.error("Error fetching estadísticas:", error);
+      message.error("Error al cargar las estadísticas");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChangeProveedor = (proveedor) => {
-    if (proveedor) {
-      setProveedorSeleccionado(proveedor);
-      setFiltroSeleccionado("proveedor");
-      setIdSeleccionado(proveedor.id);
-    } else {
-      setProveedorSeleccionado(null);
-      setIdSeleccionado(null);
+  const calculateTotals = () => {
+    if (!estadisticas || estadisticas.length === 0) {
+      return {
+        totalArticulos: 0,
+        totalVendido: 0,
+        totalCantidad: 0,
+        promedioVenta: 0,
+      };
     }
+
+    const totalArticulos = estadisticas.length;
+    const totalVendidoRaw = estadisticas.reduce(
+      (sum, item) => sum + (parseFloat(item.subtotal) || 0),
+      0
+    );
+    const totalCantidad = estadisticas.reduce(
+      (sum, item) => sum + (parseInt(item.unidades_vendidas) || 0),
+      0
+    );
+    const promedioVentaRaw =
+      totalArticulos > 0 ? totalVendidoRaw / totalArticulos : 0;
+
+    return {
+      totalArticulos,
+      totalVendido: Math.ceil(totalVendidoRaw),
+      totalCantidad,
+      promedioVenta: Math.ceil(promedioVentaRaw),
+    };
   };
 
-  const handleChangeSubLinea = (subLinea) => {
-    if (subLinea) {
-      setSubLineaSeleccionada(subLinea);
-      setFiltroSeleccionado("sublinea");
-      setIdSeleccionado(subLinea.id);
-    } else {
-      setSubLineaSeleccionada(null);
-      setIdSeleccionado(null);
+  const handleGeneratePDF = () => {
+    if (!estadisticas || estadisticas.length === 0 || !selectedLinea) {
+      message.warning("No hay datos para generar el PDF");
+      return;
     }
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.width;
+    const marginTop = 40;
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const phone = "Teléfono: +54 9 3518 16-8151";
+    const instagram = "Instagram: @distribuidoraRenacer";
+
+    const addHeader = (doc, isFirstPage = false) => {
+      doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
+      if (isFirstPage) {
+        doc.setFontSize(20);
+        doc.text("Distribuidora Renacer", logoWidth + 10, 20);
+        doc.setFontSize(12);
+        doc.text(phone, logoWidth + 10, 30);
+        doc.text(instagram, logoWidth + 10, 37);
+      }
+    };
+
+    addHeader(pdf, true);
+
+    // Título del reporte
+    pdf.setFontSize(16);
+    pdf.setTextColor(0);
+    const fechaInicio = dateRange[0].format("DD/MM/YYYY");
+    const fechaFin = dateRange[1].format("DD/MM/YYYY");
+    const reportTitle = `ESTADÍSTICAS DE VENTAS - LÍNEA: ${selectedLinea.nombre}`;
+    const dateTitle = `Período: ${fechaInicio} - ${fechaFin}`;
+
+    const titleX = (pageWidth - pdf.getTextWidth(reportTitle)) / 2;
+    pdf.text(reportTitle, titleX, 50);
+
+    pdf.setFontSize(12);
+    const dateTitleX = (pageWidth - pdf.getTextWidth(dateTitle)) / 2;
+    pdf.text(dateTitle, dateTitleX, 58);
+
+    let currentY = 70;
+
+    // Agregar estadísticas generales
+    const totals = calculateTotals();
+    pdf.setFontSize(14);
+    pdf.text("RESUMEN GENERAL", 10, currentY);
+    currentY += 10;
+
+    pdf.setFontSize(10);
+    pdf.text(`Total de Artículos: ${totals.totalArticulos}`, 10, currentY);
+    pdf.text(
+      `Total Vendido: $${totals.totalVendido.toLocaleString("es-ES")}`,
+      105,
+      currentY
+    );
+    currentY += 7;
+    pdf.text(`Cantidad Total Vendida: ${totals.totalCantidad}`, 10, currentY);
+    pdf.text(
+      `Promedio por Artículo: $${totals.promedioVenta.toLocaleString("es-ES")}`,
+      105,
+      currentY
+    );
+    currentY += 15;
+
+    // Ordenar los datos por total vendido (descendente)
+    const sortedData = [...estadisticas].sort(
+      (a, b) => parseFloat(b.total_vendido) - parseFloat(a.total_vendido)
+    );
+
+    const tableData = sortedData.map((row) => [
+      row.codigo_articulo || "",
+      row.nombre_completo || "",
+      parseInt(row.stock) || 0,
+      parseInt(row.unidades_vendidas) || 0,
+      "$" + Math.ceil(parseFloat(row.subtotal)).toLocaleString("es-ES"),
+      "$" +
+        Math.ceil(parseFloat(row.precio_monotributista || 0)).toLocaleString(
+          "es-ES"
+        ),
+    ]);
+
+    pdf.autoTable({
+      startY: currentY,
+      head: [
+        [
+          "Código",
+          "Artículo",
+          "Stock",
+          "Cantidad Vendida",
+          "Total Vendido",
+          "Precio Monotributista",
+        ],
+      ],
+      body: tableData,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: {
+        fillColor: [200, 200, 200],
+        textColor: 0,
+        fontStyle: "bold",
+        halign: "center", 
+      },
+      margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
+      tableWidth: pageWidth - 10,
+      columnStyles: {
+        0: { cellWidth: 25 }, // Código
+        1: { cellWidth: "auto" }, // Artículo
+        3: { cellWidth: 25, halign: "center" }, // Stock
+        2: { cellWidth: 25, halign: "center" }, // Cantidad Vendida
+        4: { cellWidth: 30, halign: "right" }, // Total Vendido
+        5: { cellWidth: 30, halign: "right" }, // Precio Promedio
+      },
+      didDrawPage: (data) => {
+        addHeader(pdf, false);
+      },
+    });
+
+    const fileName = `Estadisticas_${
+      selectedLinea.nombre
+    }_${fechaInicio.replace(/\//g, "-")}_${fechaFin.replace(/\//g, "-")}.pdf`;
+    pdf.save(fileName);
+    message.success("PDF generado correctamente");
   };
 
-  // Función para formatear números a moneda
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-    }).format(value);
-  };
+  const columns = [
+    {
+      title: "Código",
+      dataIndex: "codigo_articulo",
+      key: "codigo_articulo",
+      width: 100,
+    },
+    {
+      title: "Artículo",
+      dataIndex: "nombre_completo",
+      key: "nombre_completo",
+      ellipsis: true,
+    },
+    {
+      title: "Stock",
+      dataIndex: "stock",
+      key: "stock",
+      width: 100,
+      align: "center",
+      render: (_, record) => parseInt(record.stock) || 0,
+    },
+    {
+      title: "Cantidad Vendida",
+      dataIndex: "unidades_vendidas",
+      key: "unidades_vendidas",
+      width: 120,
+      align: "center",
+      render: (_, record) => parseInt(record.unidades_vendidas) || 0,
+    },
+    {
+      title: "Total Vendido",
+      dataIndex: "subtotal",
+      key: "subtotal",
+      align: "right",
+      render: (_, record) =>
+        "$" +
+        Math.ceil(parseFloat(record.subtotal || 0)).toLocaleString("es-ES"),
+    },
+    {
+      title: "Precio Monotributista",
+      dataIndex: "precio_monotributista",
+      key: "precio_monotributista",
+      align: "right",
+      render: (_, record) =>
+        "$" +
+        Math.ceil(parseFloat(record.precio_monotributista || 0)).toLocaleString(
+          "es-ES"
+        ),
+    },
+  ];
 
-  // Renderizado de items para listas
-  const renderListItemFiltrados = (item, index) => (
-    <List.Item>
-      <div className="w-full flex justify-between items-center">
-        <div className="flex items-center">
-          <Badge
-            count={index + 1}
-            style={{
-              backgroundColor: index < 3 ? COLORS[index] : "#999",
-              marginRight: "10px",
-            }}
-          />
-          <Text ellipsis style={{ maxWidth: "200px" }}>
-            {item.nombre}
-          </Text>
-        </div>
-        <div className="flex gap-2">
-          <Tag color="blue">{item.total_vendido} unid.</Tag>
-          <Tag color="green">
-            {formatCurrency(parseFloat(item.total_facturado))}
-          </Tag>
-        </div>
-      </div>
-    </List.Item>
-  );
-
-  const renderListItemMasRentables = (item, index) => (
-    <List.Item>
-      <div className="w-full flex justify-between items-center">
-        <div className="flex items-center">
-          <Badge
-            count={index + 1}
-            style={{
-              backgroundColor: index < 3 ? COLORS[index] : "#999",
-              marginRight: "10px",
-            }}
-          />
-          <Text ellipsis style={{ maxWidth: "200px" }}>
-            {item.nombre}
-          </Text>
-        </div>
-        <Tag color={index < 3 ? COLORS[index] : undefined}>
-          {formatCurrency(parseFloat(item.ganancia_total))}
-        </Tag>
-      </div>
-    </List.Item>
-  );
-
-  const renderListItemMenosVendidos = (item, index) => (
-    <List.Item>
-      <div className="w-full flex justify-between items-center">
-        <div className="flex items-center">
-          <Badge
-            count={index + 1}
-            style={{
-              backgroundColor: "#fa541c",
-              marginRight: "10px",
-            }}
-          />
-          <Text ellipsis style={{ maxWidth: "200px" }}>
-            {item.nombre}
-          </Text>
-        </div>
-        <div className="flex gap-2">
-          <Tag color="volcano">{item.total_vendido} unid.</Tag>
-          <Tag color="orange">
-            {formatCurrency(parseFloat(item.total_facturado))}
-          </Tag>
-        </div>
-      </div>
-    </List.Item>
-  );
-
-  const renderListItemSinVentas = (item, index) => (
-    <List.Item>
-      <div className="w-full flex justify-between items-center">
-        <div className="flex items-center">
-          <Badge
-            count={index + 1}
-            style={{
-              backgroundColor: "#f5222d",
-              marginRight: "10px",
-            }}
-          />
-          <Text ellipsis style={{ maxWidth: "250px" }}>
-            {item.nombre}
-          </Text>
-        </div>
-      </div>
-    </List.Item>
-  );
+  const totals = calculateTotals();
 
   return (
     <MenuLayout>
-      <div className="p-6">
-        <Title level={2} className="mb-6">
-          Dashboard de Estadísticas
-        </Title>
+      <div style={{ padding: "20px" }}>
+        <Card
+          title={
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <BarChartOutlined />
+              Estadísticas de Ventas por Línea
+            </div>
+          }
+        >
+          {/* Controles */}
+          <Row gutter={16} style={{ marginBottom: "20px" }}>
+            <Col xs={24} sm={8}>
+              <div style={{ marginBottom: "8px" }}>
+                <strong>Seleccionar Línea:</strong>
+              </div>
+              <LineaInput onChangeLinea={handleChangeLinea} />
+            </Col>
+            <Col xs={24} sm={10}>
+              <div style={{ marginBottom: "8px" }}>
+                <strong>Rango de Fechas:</strong>
+              </div>
+              <RangePicker
+                style={{ width: "100%" }}
+                onChange={handleDateRangeChange}
+                format="DD/MM/YYYY"
+                placeholder={["Fecha inicio", "Fecha fin"]}
+              />
+            </Col>
+            <Col xs={24} sm={6}>
+              <div style={{ marginBottom: "8px" }}>
+                <strong>Acciones:</strong>
+              </div>
+              <Button
+                type="primary"
+                onClick={fetchEstadisticas}
+                loading={loading}
+                style={{ width: "100%", marginBottom: "8px" }}
+              >
+                Consultar
+              </Button>
+              <Button
+                icon={<FilePdfOutlined />}
+                onClick={handleGeneratePDF}
+                disabled={!estadisticas || estadisticas.length === 0}
+                style={{ width: "100%" }}
+              >
+                Generar PDF
+              </Button>
+            </Col>
+          </Row>
 
-        <Tabs defaultActiveKey="1" className="mb-8">
-          <TabPane tab="General" key="1">
-            {/* Sección de filtros con explicación */}
-            <Card className="mb-6" title="🔍 Filtros de Análisis">
-              <Row gutter={[16, 16]}>
-                <Col span={8}>
-                  <Card
-                    title={
-                      <div className="flex items-center gap-2">
-                        <span>Filtrar por Línea</span>
-                        <Tooltip title={filterTooltips.linea}>
-                          <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                        </Tooltip>
-                      </div>
-                    }
-                    className="h-full"
-                  >
-                    <LineaInput onChangeLinea={handleChangeLinea} />
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card
-                    title={
-                      <div className="flex items-center gap-2">
-                        <span>Filtrar por Proveedor</span>
-                        <Tooltip title={filterTooltips.proveedor}>
-                          <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                        </Tooltip>
-                      </div>
-                    }
-                    className="h-full"
-                  >
-                    <ProveedoresInput
-                      onChangeProveedor={handleChangeProveedor}
+          {/* Estadísticas Generales */}
+          {estadisticas && estadisticas.length > 0 && (
+            <>
+              <Row gutter={16} style={{ marginBottom: "20px" }}>
+                <Col xs={12} sm={6}>
+                  <Card>
+                    <Statistic
+                      title="Total Artículos"
+                      value={totals.totalArticulos}
+                      valueStyle={{ color: "#1890ff" }}
                     />
                   </Card>
                 </Col>
-                <Col span={8}>
-                  <Card
-                    title={
-                      <div className="flex items-center gap-2">
-                        <span>Filtrar por Sublínea</span>
-                        <Tooltip title={filterTooltips.sublinea}>
-                          <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                        </Tooltip>
-                      </div>
-                    }
-                    className="h-full"
-                  >
-                    <SubLineasInput onChangeSubLineas={handleChangeSubLinea} />
+                <Col xs={12} sm={6}>
+                  <Card>
+                    <Statistic
+                      title="Cantidad Vendida"
+                      value={totals.totalCantidad}
+                      valueStyle={{ color: "#52c41a" }}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Card>
+                    <Statistic
+                      title="Total Vendido"
+                      value={totals.totalVendido}
+                      precision={0} // ← sin decimales
+                      prefix="$"
+                      valueStyle={{ color: "#f5222d" }}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Card>
+                    <Statistic
+                      title="Promedio por Artículo"
+                      value={totals.promedioVenta}
+                      precision={0} // ← sin decimales
+                      prefix="$"
+                      valueStyle={{ color: "#722ed1" }}
+                    />
                   </Card>
                 </Col>
               </Row>
-            </Card>
 
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                {idSeleccionado ? (
-                  <ListaConScroll
-                    title={`Productos más vendidos - ${
-                      filtroSeleccionado === "linea"
-                        ? lineaSeleccionada?.nombre
-                        : filtroSeleccionado === "proveedor"
-                        ? proveedorSeleccionado?.nombre
-                        : subLineaSeleccionada?.nombre
-                    }`}
-                    description="📈 Productos con mayor volumen de ventas en el filtro seleccionado"
-                    data={masVendidos}
-                    loading={loading.masVendidos}
-                    error={error.masVendidos}
-                    height={400}
-                    extra={
-                      <Tag color="blue">
-                        Total: {masVendidos.length} productos
-                      </Tag>
-                    }
-                    renderItem={renderListItemFiltrados}
-                  />
-                ) : (
-                  <Card title="Seleccione un filtro" className="h-full">
-                    <div className="text-center p-8">
-                      <InfoCircleOutlined
-                        style={{
-                          fontSize: "48px",
-                          color: "#d9d9d9",
-                          marginBottom: "16px",
-                        }}
-                      />
-                      <Title level={4} type="secondary">
-                        Análisis de Productos Más Vendidos
-                      </Title>
-                      <Paragraph type="secondary">
-                        Por favor seleccione una línea, proveedor o sublínea
-                        para ver los productos con mayor volumen de ventas en
-                        esa categoría.
-                      </Paragraph>
-                    </div>
-                  </Card>
-                )}
-              </Col>
-
-              <Col span={12}>
-                <ListaConScroll
-                  title={
-                    <div className="flex justify-between items-center">
-                      <span>Productos Más Rentables</span>
-                      <Tag color="green">Top 10</Tag>
-                    </div>
-                  }
-                  description="💰 Top 10 productos que generan mayor ganancia total"
-                  data={masRentables.slice(0, 10)}
-                  loading={loading.masRentables}
-                  error={error.masRentables}
-                  height={400}
-                  extra={
-                    <Tag color="green">
-                      Total ganancia:{" "}
-                      {formatCurrency(
-                        masRentables.reduce(
-                          (sum, item) => sum + parseFloat(item.ganancia_total),
-                          0
-                        )
-                      )}
-                    </Tag>
-                  }
-                  renderItem={renderListItemMasRentables}
+              {/* Tabla de Datos */}
+              <Card title="Detalle de Ventas">
+                <Table
+                  columns={columns}
+                  dataSource={estadisticas}
+                  rowKey="codigo_articulo"
+                  scroll={{ x: 800 }}
+                  pagination={{
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) =>
+                      `${range[0]}-${range[1]} de ${total} artículos`,
+                  }}
                 />
-              </Col>
-            </Row>
+              </Card>
+            </>
+          )}
 
-            <Divider />
+          {/* Loading */}
+          {loading && (
+            <div style={{ textAlign: "center", padding: "50px" }}>
+              <Spin size="large" />
+              <div style={{ marginTop: "16px" }}>Cargando estadísticas...</div>
+            </div>
+          )}
 
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <ListaConScroll
-                  title={
-                    <div className="flex justify-between items-center">
-                      <span>Artículos Sin Ventas</span>
-                      <Tag color="red">Alerta de Inventario</Tag>
-                    </div>
-                  }
-                  description="⚠️ Productos sin ventas registradas - Revisar para gestión de inventario"
-                  data={articulosSinVentas}
-                  loading={loading.articulosSinVentas}
-                  error={error.articulosSinVentas}
-                  height={400}
-                  extra={
-                    <Tag color="red">
-                      Total: {articulosSinVentas.length} artículos
-                    </Tag>
-                  }
-                  renderItem={renderListItemSinVentas}
-                />
-              </Col>
-
-              <Col span={12}>
-                <Card
-                  title={
-                    <div className="flex justify-between items-center">
-                      <span>Productos con Más Unidades Vendidas</span>
-                      <Tag color="orange">Top 10</Tag>
-                    </div>
-                  }
-                >
-                  <div className="mb-3 p-2 bg-orange-50 rounded border-l-4 border-orange-400">
-                    <Text type="secondary" className="text-sm">
-                      📊 Top 10 productos con mayor cantidad de unidades
-                      vendidas
-                    </Text>
-                  </div>
-                  {loading.masUnidadesVendidas ? (
-                    <div className="flex justify-center items-center h-64">
-                      <Spin size="large" />
-                    </div>
-                  ) : error.masUnidadesVendidas ? (
-                    <Alert
-                      message={`Error: ${error.masUnidadesVendidas}`}
-                      type="error"
-                    />
-                  ) : masUnidadesVendidas.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={masUnidadesVendidas.slice(0, 10)}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="nombre" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Legend />
-                        <Bar
-                          dataKey="unidades_vendidas"
-                          name="Unidades Vendidas"
-                          fill="#FFBB28"
-                        >
-                          {masUnidadesVendidas
-                            .slice(0, 10)
-                            .map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <Empty description="No hay datos disponibles" />
-                  )}
-                </Card>
-              </Col>
-            </Row>
-          </TabPane>
-
-          <TabPane tab="Tablas Detalladas" key="2">
-            <Card className="mb-6" title="📋 Vista Detallada">
-              <Text type="secondary">
-                Tablas completas con información detallada y opciones de
-                ordenamiento
-              </Text>
-            </Card>
-
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <Card title="Productos Más Vendidos - Vista Detallada">
-                  <div className="mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                    <Text type="secondary" className="text-sm">
-                      📊 Tabla completa ordenada por volumen de ventas
-                    </Text>
-                  </div>
-                  {loading.masVendidos ? (
-                    <Spin size="large" />
-                  ) : error.masVendidos ? (
-                    <Alert
-                      message={`Error: ${error.masVendidos}`}
-                      type="error"
-                    />
-                  ) : (
-                    <Table
-                      dataSource={masVendidos.map((item, index) => ({
-                        ...item,
-                        key: index,
-                      }))}
-                      columns={[
-                        {
-                          title: "Producto",
-                          dataIndex: "nombre",
-                          key: "nombre",
-                        },
-                        {
-                          title: "Unidades Vendidas",
-                          dataIndex: "total_vendido",
-                          key: "total_vendido",
-                        },
-                        {
-                          title: "Total Facturado",
-                          dataIndex: "total_facturado",
-                          key: "total_facturado",
-                          render: (value) => formatCurrency(parseFloat(value)),
-                        },
-                      ]}
-                      pagination={{ pageSize: 10 }}
-                      scroll={{ y: 400 }}
-                    />
-                  )}
-                </Card>
-              </Col>
-
-              <Col span={24}>
-                <Card title="Productos Más Rentables - Vista Detallada">
-                  <div className="mb-3 p-2 bg-green-50 rounded border-l-4 border-green-400">
-                    <Text type="secondary" className="text-sm">
-                      💰 Productos ordenados por ganancia total generada
-                    </Text>
-                  </div>
-                  {loading.masRentables ? (
-                    <Spin size="large" />
-                  ) : error.masRentables ? (
-                    <Alert
-                      message={`Error: ${error.masRentables}`}
-                      type="error"
-                    />
-                  ) : (
-                    <Table
-                      dataSource={masRentables.map((item, index) => ({
-                        ...item,
-                        key: index,
-                      }))}
-                      columns={[
-                        {
-                          title: "Producto",
-                          dataIndex: "nombre",
-                          key: "nombre",
-                        },
-                        {
-                          title: "Ganancia Total",
-                          dataIndex: "ganancia_total",
-                          key: "ganancia_total",
-                          render: (value) => formatCurrency(parseFloat(value)),
-                          sorter: (a, b) =>
-                            parseFloat(a.ganancia_total) -
-                            parseFloat(b.ganancia_total),
-                        },
-                      ]}
-                      pagination={{ pageSize: 10 }}
-                      scroll={{ y: 400 }}
-                    />
-                  )}
-                </Card>
-              </Col>
-
-              <Col span={24}>
-                <Card title="Artículos Sin Ventas - Vista Detallada">
-                  <div className="mb-3 p-2 bg-red-50 rounded border-l-4 border-red-400">
-                    <Text type="secondary" className="text-sm">
-                      ⚠️ Inventario de productos sin movimiento - Gestión de
-                      stock
-                    </Text>
-                  </div>
-                  {loading.articulosSinVentas ? (
-                    <Spin size="large" />
-                  ) : error.articulosSinVentas ? (
-                    <Alert
-                      message={`Error: ${error.articulosSinVentas}`}
-                      type="error"
-                    />
-                  ) : (
-                    <Table
-                      dataSource={articulosSinVentas.map((item, index) => ({
-                        ...item,
-                        key: index,
-                      }))}
-                      columns={[
-                        {
-                          title: "Producto",
-                          dataIndex: "nombre",
-                          key: "nombre",
-                        },
-                        {
-                          title: "Acción",
-                          key: "action",
-                          render: () => (
-                            <Tag color="red" style={{ cursor: "pointer" }}>
-                              Revisar Stock
-                            </Tag>
-                          ),
-                        },
-                      ]}
-                      pagination={{ pageSize: 15 }}
-                      scroll={{ y: 400 }}
-                    />
-                  )}
-                </Card>
-              </Col>
-
-              <Col span={24}>
-                <Card title="Productos con Más Unidades Vendidas - Vista Detallada">
-                  <div className="mb-3 p-2 bg-orange-50 rounded border-l-4 border-orange-400">
-                    <Text type="secondary" className="text-sm">
-                      📦 Ranking por cantidad de unidades vendidas
-                    </Text>
-                  </div>
-                  {loading.masUnidadesVendidas ? (
-                    <Spin size="large" />
-                  ) : error.masUnidadesVendidas ? (
-                    <Alert
-                      message={`Error: ${error.masUnidadesVendidas}`}
-                      type="error"
-                    />
-                  ) : (
-                    <Table
-                      dataSource={masUnidadesVendidas.map((item, index) => ({
-                        ...item,
-                        key: index,
-                      }))}
-                      columns={[
-                        {
-                          title: "Producto",
-                          dataIndex: "nombre",
-                          key: "nombre",
-                        },
-                        {
-                          title: "Unidades Vendidas",
-                          dataIndex: "unidades_vendidas",
-                          key: "unidades_vendidas",
-                          sorter: (a, b) =>
-                            a.unidades_vendidas - b.unidades_vendidas,
-                        },
-                      ]}
-                      pagination={{ pageSize: 10 }}
-                      scroll={{ y: 400 }}
-                    />
-                  )}
-                </Card>
-              </Col>
-            </Row>
-          </TabPane>
-        </Tabs>
+          {/* Sin datos */}
+          {!loading && (!estadisticas || estadisticas.length === 0) && (
+            <div
+              style={{ textAlign: "center", padding: "50px", color: "#999" }}
+            >
+              <BarChartOutlined
+                style={{ fontSize: "48px", marginBottom: "16px" }}
+              />
+              <div>
+                Selecciona una línea y rango de fechas para ver las estadísticas
+              </div>
+            </div>
+          )}
+        </Card>
       </div>
     </MenuLayout>
   );

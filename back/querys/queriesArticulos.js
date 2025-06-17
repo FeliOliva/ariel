@@ -107,7 +107,7 @@ LEFT JOIN
 LEFT JOIN 
     subLinea sl ON a.subLinea_id = sl.id
 WHERE 
-    l.estado = 1 AND sl.estado = 1 AND a.linea_id = ?
+    a.estado = 1 AND l.estado = 1 AND sl.estado = 1 AND a.linea_id = ?
 ORDER BY 
     l.nombre ASC, 
     sl.nombre ASC,
@@ -128,8 +128,13 @@ ORDER BY
   increasePrice: `
       UPDATE articulo
       SET 
-        precio_monotributista = precio_monotributista * (1 + ? / 100),
-        costo = costo * (1 + ? / 100)
+        precio_monotributista = ROUND(precio_monotributista * (1 + ? / 100), 0)
+      WHERE ID = ?;
+    `,
+  decreasePrice: `
+      UPDATE articulo
+      SET 
+        precio_monotributista = ROUND(precio_monotributista * (1 - ? / 100), 0)
       WHERE ID = ?;
     `,
   updateLogPrecios: `
@@ -176,5 +181,21 @@ ORDER BY
     l.nombre ASC, 
     sl.nombre ASC,
     a.nombre ASC; 
+`,
+  getArticulosVendidosPorLinea: `
+SELECT 
+  a.codigo_producto AS codigo_articulo,
+  CONCAT(a.nombre, ' - ', sl.nombre, ' - ', a.mediciones) AS nombre_completo,
+  a.stock,
+  ROUND(a.precio_monotributista, 2) AS precio_monotributista,
+  COALESCE(SUM(dv.cantidad), 0) AS unidades_vendidas,
+  ROUND(COALESCE(SUM(dv.precio_monotributista * dv.cantidad), 0), 2) AS subtotal
+FROM articulo a
+LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
+LEFT JOIN detalle_venta dv ON a.id = dv.articulo_id
+  AND dv.fecha BETWEEN ? AND ?
+WHERE a.linea_id = ? AND a.estado = 1 AND sl.estado = 1
+GROUP BY a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones, a.stock, a.precio_monotributista
+ORDER BY unidades_vendidas DESC;
 `,
 };
