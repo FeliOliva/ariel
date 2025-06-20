@@ -109,10 +109,8 @@ const updateVentas = async (req, res) => {
 const getVentasByZona = async (req, res) => {
   try {
     const { ID: zona_id } = req.params;
-    const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
-    console.log("ID desde el back:", zona_id);
+    const { fecha_inicio, fecha_fin } = req.query;
 
-    // Validar los parámetros requeridos
     if (!zona_id) {
       return res.status(400).json({ error: "ID de zona no proporcionado" });
     }
@@ -122,14 +120,12 @@ const getVentasByZona = async (req, res) => {
         error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
       });
     }
-    // Llamar al modelo con los parámetros
+
     const ventas = await ventasModel.getVentasByZona(
       zona_id,
       fecha_inicio,
       fecha_fin
     );
-
-    console.log("Ventas obtenidas:", ventas);
 
     // Manejar el caso de que no existan ventas
     if (!ventas || ventas.length === 0) {
