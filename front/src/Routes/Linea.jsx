@@ -36,6 +36,11 @@ const Linea = () => {
   const [openSubLineaDrawer, setOpenSubLineaDrawer] = useState(false);
   const [currentLinea, setCurrentLinea] = useState({});
   const [OpenEditDrawer, setOpenEditDrawer] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredLineas = lineas.filter((linea) =>
+    linea.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const { confirm } = Modal;
   const fetchData = async () => {
     try {
@@ -287,28 +292,44 @@ const Linea = () => {
   return (
     <MenuLayout>
       <h1>Listado de lineas</h1>
-      <Button
-        style={{ marginBottom: 10 }}
-        onClick={() => setOpenLineaDrawer(true)}
-        type="primary"
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 10,
+          marginBottom: 10,
+        }}
       >
-        Añadir Línea
-      </Button>
+        <Input
+          placeholder="Buscar línea..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: 300 }}
+        />
+        <Button type="primary" onClick={() => setOpenLineaDrawer(true)}>
+          Añadir Línea
+        </Button>
+      </div>
+
+      {/* ⬇️ LineaSelect + Limpiar Filtro */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "10px",
-          marginBottom: "10px",
+          gap: 10,
+          marginBottom: 20,
         }}
       >
         <LineaSelect />
         <Button
           icon={<CloseOutlined />}
           onClick={handleClearLineas}
-          style={{ width: "40px" }}
+          style={{ width: 40 }}
         />
       </div>
+
       <div>
         {loading ? (
           <p>Cargando...</p>
@@ -316,7 +337,7 @@ const Linea = () => {
           <DataTable
             style={{ width: "100%" }}
             columns={columns}
-            data={lineas}
+            data={filteredLineas}
             pagination={true}
             paginationComponent={CustomPagination}
             customStyles={{

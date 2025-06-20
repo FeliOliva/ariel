@@ -60,6 +60,7 @@ export default function ResumenCuentaXZona() {
         const totalPagos = pago ? parseFloat(pago.total_pagos) : 0;
         const totalVentas = parseFloat(venta.total_ventas);
         const saldoRestante = totalVentas - totalPagos - notasCreditoCliente;
+        console.log(venta);
 
         return {
           cliente_id: venta.cliente_id,

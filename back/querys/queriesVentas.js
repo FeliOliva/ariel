@@ -72,6 +72,7 @@ JOIN
     cliente c ON v.cliente_id = c.id
 WHERE 
     c.zona_id = ?
+    AND c.estado = 1
     AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?)
     AND v.estado = 1
 GROUP BY 

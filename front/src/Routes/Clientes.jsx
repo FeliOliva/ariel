@@ -46,6 +46,7 @@ const Clientes = () => {
   });
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
   const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { confirm } = Modal;
 
@@ -66,6 +67,19 @@ const Clientes = () => {
       setLoading(false);
     }
   };
+  const filteredData = data.filter((cliente) => {
+    const fullName = `${cliente.nombre} ${cliente.apellido}`.toLowerCase();
+    return (
+      fullName.includes(searchTerm.toLowerCase()) ||
+      (cliente.farmacia &&
+        cliente.farmacia.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (cliente.localidad &&
+        cliente.localidad.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (cliente.email &&
+        cliente.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
+
   const handleGeneratePDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
 
@@ -448,24 +462,33 @@ const Clientes = () => {
   return (
     <MenuLayout>
       <h1>Listado de clientes</h1>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <Button
-          style={{ marginBottom: 10 }}
-          onClick={() => setOpenAddDrawer(true)}
-          type="primary"
-        >
-          Agregar Cliente
-        </Button>
-        <Button onClick={handleGoToZonas} type="primary">
-          Ver Zonas
-        </Button>
-        <Button
-          onClick={handleGeneratePDF}
-          type="primary"
-          style={{ marginBottom: 20 }}
-        >
-          Generar lista
-        </Button>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 20,
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <Input
+          placeholder="Buscar cliente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: 300 }}
+        />
+        <div style={{ display: "flex", gap: 10 }}>
+          <Button onClick={() => setOpenAddDrawer(true)} type="primary">
+            Agregar Cliente
+          </Button>
+          <Button onClick={handleGoToZonas} type="primary">
+            Ver Zonas
+          </Button>
+          <Button onClick={handleGeneratePDF} type="primary">
+            Generar lista
+          </Button>
+        </div>
       </div>
       <Drawer
         open={openAddDrawer}
@@ -786,7 +809,7 @@ const Clientes = () => {
       </Drawer>
       <DataTable
         columns={columns}
-        data={data}
+        data={filteredData}
         progressPending={loading}
         keyField="id"
         pagination
