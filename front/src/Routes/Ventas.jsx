@@ -129,9 +129,9 @@ function Ventas() {
         setFilteredData([]);
         return;
       }
-      const filtered = data.filter(
-        (venta) => venta.cliente_id === client.id // adaptá según tu estructura
-      );
+
+      const filtered = data.filter((venta) => venta.cliente_id === client.id);
+
       setFilteredData(filtered);
     }
   }, [client, data, searchMode]);
@@ -468,7 +468,6 @@ function Ventas() {
       const response = await axios.get(
         `http://localhost:3001/getVentaByID/${id}`
       );
-      console.log(response.data);
       setOpenEditDrawer(true);
       setEditedVenta(response.data);
     } catch (error) {
@@ -477,7 +476,6 @@ function Ventas() {
   };
   const editVenta = async () => {
     try {
-      console.log("venta editada", editedVenta);
       // Limpiar los formatos numéricos antes de enviar
       const cleanNumber = (num) => {
         if (typeof num === "string") {
@@ -492,7 +490,6 @@ function Ventas() {
         descuento: cleanNumber(editedVenta.descuento),
         ID: editedVenta.venta_id,
       };
-      console.log("payload", payload);
       await axios.put(`http://localhost:3001/updateVenta`, {
         ...payload,
       });
@@ -752,9 +749,8 @@ function Ventas() {
 
         {searchMode === "cliente" && (
           <ClienteInput
-            value={client}
+            value={client?.id || null} // ⬅️ Pasar solo el ID
             onChangeCliente={handleClietChange}
-            onInputChange={setClient}
             style={{ width: 200 }}
           />
         )}

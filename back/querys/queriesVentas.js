@@ -5,6 +5,7 @@ module.exports = {
   c.nombre AS nombre_cliente, 
   c.apellido AS apellido_cliente,
   c.farmacia,
+  c.id AS cliente_id,
   v.nroVenta,
   z.nombre AS nombre_zona,
    v.descuento,  -- Sin FORMAT para mantener el valor numérico real

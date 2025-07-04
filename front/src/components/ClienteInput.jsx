@@ -25,6 +25,7 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
   const handleChangeCliente = (value) => {
     const selectedCliente = clientes.find((cliente) => cliente.id === value);
     onChangeCliente(selectedCliente); // Pass selected cliente to parent
+    console.log("Cliente seleccionado:", selectedCliente);
 
     // Solo llama a onInputChange si se ha pasado como prop
     if (onInputChange) {
