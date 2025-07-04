@@ -11,6 +11,7 @@ import {
   InputNumber,
   Modal,
   notification,
+  Select,
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { format, set } from "date-fns";
@@ -56,6 +57,9 @@ function Ventas() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [editedVenta, setEditedVenta] = useState({});
   const [openEditDrawer, setOpenEditDrawer] = useState(false);
+  const [searchMode, setSearchMode] = useState("cliente"); // cliente | nroVenta
+  const [searchNroVenta, setSearchNroVenta] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -105,6 +109,32 @@ function Ventas() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (searchMode === "nroVenta") {
+      if (searchNroVenta.trim() === "") {
+        setFilteredData([]);
+        return;
+      }
+      const filtered = data.filter((venta) =>
+        venta.nroVenta.toLowerCase().includes(searchNroVenta.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  }, [searchNroVenta, data, searchMode]);
+
+  useEffect(() => {
+    if (searchMode === "cliente") {
+      if (!client) {
+        setFilteredData([]);
+        return;
+      }
+      const filtered = data.filter(
+        (venta) => venta.cliente_id === client.id // adaptá según tu estructura
+      );
+      setFilteredData(filtered);
+    }
+  }, [client, data, searchMode]);
 
   const calculateTotal = () => {
     const subtotal = venta.articulos.reduce(
@@ -480,9 +510,11 @@ function Ventas() {
     }
   };
   const handleClearSearch = () => {
-    fetchVentasByClient("");
-    fetchData(); // Limpiar el filtro y mostrar todos los datos
+    setClient(null);
+    setSearchNroVenta("");
+    setFilteredData([]);
   };
+
   const handleDropVenta = async (id) => {
     try {
       confirm({
@@ -666,6 +698,23 @@ function Ventas() {
       </div>
     );
   }
+  const handleBuscar = () => {
+    if (searchNroVenta.trim() !== "") {
+      const filtered = data.filter((venta) =>
+        venta.nroVenta.toLowerCase().includes(searchNroVenta.toLowerCase())
+      );
+      setFilteredData(filtered);
+    } else if (client) {
+      fetchVentasByClient(client);
+    } else {
+      Modal.warning({
+        title: "Advertencia",
+        content:
+          "Por favor, ingresa un número de venta o selecciona un cliente.",
+        icon: <ExclamationCircleOutlined />,
+      });
+    }
+  };
 
   return (
     <MenuLayout>
@@ -684,22 +733,45 @@ function Ventas() {
       >
         Ver Cheques
       </Button>
-      <div style={{ display: "flex", width: "30%" }}>
-        <ClienteInput
-          value={client}
-          onChangeCliente={handleClietChange}
-          onInputChange={setClient}
-        />
+      <div style={{ display: "flex", gap: "10px", marginBottom: 10 }}>
+        <Select
+          value={searchMode}
+          onChange={(value) => {
+            setSearchMode(value);
+            setClient(null);
+            setSearchNroVenta("");
+            setFilteredData([]);
+          }}
+          style={{ width: 180 }}
+        >
+          <Select.Option value="cliente">Buscar por Cliente</Select.Option>
+          <Select.Option value="nroVenta">
+            Buscar por Nro. de Venta
+          </Select.Option>
+        </Select>
 
-        <Button onClick={handleSelectedClient} type="primary">
-          <span>
-            <SearchOutlined />
-          </span>
-        </Button>
+        {searchMode === "cliente" && (
+          <ClienteInput
+            value={client}
+            onChangeCliente={handleClietChange}
+            onInputChange={setClient}
+            style={{ width: 200 }}
+          />
+        )}
+
+        {searchMode === "nroVenta" && (
+          <Input
+            placeholder="Nro. de Venta"
+            value={searchNroVenta}
+            onChange={(e) => setSearchNroVenta(e.target.value)}
+            style={{ width: 300 }}
+          />
+        )}
+
         <Button
           icon={<CloseOutlined />}
           onClick={handleClearSearch}
-          style={{ width: "40px" }} // Ajusta el tamaño del botón
+          style={{ width: "40px" }}
         />
       </div>
       <Drawer
@@ -726,7 +798,7 @@ function Ventas() {
       </Drawer>
       <DataTable
         columns={columns}
-        data={data}
+        data={filteredData.length > 0 ? filteredData : data}
         pagination
         paginationComponent={CustomPagination}
         customStyles={{
