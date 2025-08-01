@@ -11,14 +11,14 @@ const getAllVentas = async () => {
   }
 };
 
-const addVenta = async (cliente_id, nroVenta, zona_id, descuento) => {
+const addVenta = async (cliente_id, nroVenta, zona_id, descuentoDB) => {
   try {
     const query = queriesVentas.addVenta;
     const [result] = await db.query(query, [
       cliente_id,
       nroVenta,
       zona_id,
-      descuento,
+      descuentoDB,
     ]);
     return result.insertId;
   } catch (err) {

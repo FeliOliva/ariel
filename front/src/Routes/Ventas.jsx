@@ -12,6 +12,7 @@ import {
   Modal,
   notification,
   Select,
+  Switch,
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { format, set } from "date-fns";
@@ -60,6 +61,7 @@ function Ventas() {
   const [searchMode, setSearchMode] = useState("cliente"); // cliente | nroVenta
   const [searchNroVenta, setSearchNroVenta] = useState("");
   const [filteredData, setFilteredData] = useState([]);
+  const [modoDescuento, setModoDescuento] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -146,8 +148,15 @@ function Ventas() {
   };
 
   useEffect(() => {
-    setTotalVenta(calculateTotal());
+    if (modoDescuento) {
+      setTotalVenta(calculateTotal());
+    }
   }, [venta.articulos, venta.descuento]); // Actualiza el total cuando cambian los artículos o el descuento.
+
+  // Función para alternar el modo
+  const handleToggleDescuento = (checked) => {
+    setModoDescuento(checked);
+  };
 
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
@@ -292,11 +301,19 @@ function Ventas() {
         return; // Detener la ejecución si no hay suficiente stock
       }
       try {
+        let tipoDescuento;
+        if (modoDescuento === false) {
+          tipoDescuento = 1; // Aumento
+        } else {
+          tipoDescuento = 0; // Descuento
+        }
+        console.log("tipoDescuento", tipoDescuento);
         const ventaData = {
           cliente_id: venta.cliente.id,
           nroVenta: venta.nroVenta,
           zona_id: venta.cliente.zona_id,
           descuento: venta.descuento,
+          tipoDescuento: tipoDescuento,
           detalles: venta.articulos.map((articulo) => ({
             linea_id: articulo.linea_id,
             articulo_id: articulo.value, // Usamos el ID del artículo
@@ -327,7 +344,7 @@ function Ventas() {
             });
             setTimeout(() => {
               window.location.reload();
-            }, 2000);
+            }, 1500);
           },
         });
       } catch (error) {
@@ -623,7 +640,7 @@ function Ventas() {
           className={row.estado === 0 ? "strikethrough" : ""}
           title={formatNumber(row.total)}
         >
-          <span>{formatNumber(row.total)}</span>
+          $<span>{formatNumber(row.total)}</span>
         </Tooltip>
       ),
       sortable: true,
@@ -647,7 +664,7 @@ function Ventas() {
           className={row.estado === 0 ? "strikethrough" : ""}
           title={formatNumber(row.total_con_descuento)}
         >
-          <span>{formatNumber(row.total_con_descuento)}</span>
+          $<span>{formatNumber(row.total_con_descuento)}</span>
         </Tooltip>
       ),
       sortable: true,
@@ -874,8 +891,19 @@ function Ventas() {
           onGiftChange={handleGiftChange}
           onEdit={handleEditPrecio}
         />
-        <div style={{ display: "flex", margin: 10 }}>
-          <Tooltip>Descuento</Tooltip>
+        <div
+          style={{ display: "flex", alignItems: "center", margin: "10px 0" }}
+        >
+          <Tooltip>
+            {modoDescuento ? "Descuento activado" : "Aumento activado"}
+          </Tooltip>
+          <Switch
+            checkedChildren="Descuento"
+            unCheckedChildren="Aumento"
+            checked={modoDescuento}
+            onChange={handleToggleDescuento}
+            style={{ marginLeft: 10 }}
+          />
         </div>
         <InputNumber
           min={0}

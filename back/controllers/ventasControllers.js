@@ -11,15 +11,25 @@ const getAllVentas = async (req, res) => {
 };
 const addVenta = async (req, res) => {
   try {
-    const { cliente_id, nroVenta, zona_id, descuento, detalles } = req.body;
-    console.log("Datos recibidos para agregar la venta:", req.body);
+    const {
+      cliente_id,
+      nroVenta,
+      zona_id,
+      descuento,
+      tipoDescuento,
+      detalles,
+    } = req.body;
+
     const lineas = (await ventasModel.getLineasStock()).map((l) => l.linea_id);
+
+    // 👇 Si es aumento, seteamos descuento a 0 para la DB
+    const descuentoDB = tipoDescuento === 1 ? 0 : descuento;
     // Crear la venta
     const ventaId = await ventasModel.addVenta(
       cliente_id,
       nroVenta,
       zona_id,
-      descuento
+      descuentoDB
     );
     let totalVenta = 0;
     let sub_total = 0;
@@ -29,17 +39,19 @@ const addVenta = async (req, res) => {
         // // Descontar el stock del artículo
         await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
       }
+      // ✅ calcular precio final del artículo si es aumento
+      let precioUnitario = detalle.precio_monotributista;
+      if (tipoDescuento === 1) {
+        precioUnitario = Math.round(precioUnitario * (1 + descuento / 100)); // aplicar aumento
+      }
       if (detalle.isGift === true) {
         sub_total = 0;
-        console.log(sub_total);
       } else {
         sub_total = Math.round(
           detalle.cantidad * detalle.precio_monotributista
         );
-        console.log(sub_total);
       }
       Math.round((totalVenta += sub_total));
-      console.log(totalVenta);
 
       // Agregar el detalle de la venta
       await ventasModel.addDetalleVenta(
@@ -47,7 +59,7 @@ const addVenta = async (req, res) => {
         detalle.articulo_id,
         detalle.costo,
         detalle.cantidad,
-        detalle.precio_monotributista,
+        precioUnitario,
         sub_total
       );
 
@@ -59,10 +71,11 @@ const addVenta = async (req, res) => {
       );
     }
 
-    const totalConDescuento = (
-      totalVenta -
-      totalVenta * (descuento / 100)
-    ).toFixed(3);
+    const totalConDescuento =
+      tipoDescuento === 0
+        ? (totalVenta - totalVenta * (descuento / 100)).toFixed(3)
+        : totalVenta.toFixed(3);
+
     // Actualizar la venta con el total y el total con descuento
     await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
     res.status(201).json({ message: "Venta agregada con éxito" });
