@@ -60,11 +60,12 @@ export default function ResumenCuentaXZona() {
         const totalPagos = pago ? parseFloat(pago.total_pagos) : 0;
         const totalVentas = parseFloat(venta.total_ventas);
         const saldoRestante = totalVentas - totalPagos - notasCreditoCliente;
-        console.log(venta);
+        console.log("venta", venta);
 
         return {
           cliente_id: venta.cliente_id,
           nombre: `${venta.cliente_farmacia} - ${venta.cliente_nombre} ${venta.cliente_apellido}`,
+          localidad: venta.cliente_localidad,
           totalVentas,
           totalPagos,
           totalNotasCredito: notasCreditoCliente,
@@ -148,7 +149,7 @@ export default function ResumenCuentaXZona() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
-    // Función para limpiar valores y convertirlos a enteros
+    // Función para limpiar valores y convertirlos a enteros (la mantuve)
     const toInt = (valor) => {
       if (typeof valor === "string") {
         return parseInt(valor.replace(/[^0-9-]+/g, ""), 10) || 0;
@@ -165,9 +166,10 @@ export default function ResumenCuentaXZona() {
     const saldoGlobal =
       totalVentasGlobal - totalPagosGlobal - totalNotasCreditoGlobal;
 
-    // Construcción de la tabla
+    // Construcción de la tabla: agregué localidad COMO SEGUNDO CAMPO después del nombre
     const tableData = datos.map((d) => [
       d.nombre,
+      d.localidad, // <- localidad agregada aquí
       `$${Math.round(d.totalVentas).toLocaleString("es-ES")}`,
       `$${Math.round(d.totalPagos).toLocaleString("es-ES")}`,
       `$${Math.round(d.totalNotasCredito).toLocaleString("es-ES")}`,
@@ -181,6 +183,7 @@ export default function ResumenCuentaXZona() {
       head: [
         [
           "Cliente",
+          "Localidad", // <- nuevo encabezado
           "Total Ventas",
           "Total Pagos",
           "Total Notas de Crédito",
@@ -190,7 +193,7 @@ export default function ResumenCuentaXZona() {
       body: tableData,
     });
 
-    // Agregar resumen de totales al final
+    // Agregar resumen de totales al final (lo dejé tal cual)
     let finalY = doc.lastAutoTable.finalY + 10;
 
     // Si estamos muy cerca del borde inferior, agregamos una nueva página

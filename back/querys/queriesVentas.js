@@ -35,7 +35,7 @@ ORDER BY
   v.id DESC;
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, descuento) VALUES (?, ?, ?, ?);`,
-  addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista,sub_total) VALUES (?, ?, ?, ?, ?, ?);`,
+  addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista,sub_total, aumento_porcentaje) VALUES (?, ?, ?, ?, ?, ?, ?);`,
   updateVentas: `UPDATE Venta SET fecha_venta = ?, total_con_descuento = ?, descuento = ? WHERE ID = ?;`,
   getVentasByClientes: `SELECT 
     v.id, 
@@ -66,6 +66,7 @@ WHERE v.cliente_id = ?;`,
     c.apellido AS cliente_apellido,
     c.farmacia AS cliente_farmacia,
     c.zona_id AS cliente_zona,
+    c.localidad AS cliente_localidad,
     SUM(v.total_con_descuento) AS total_ventas
 FROM 
     venta v
@@ -104,6 +105,7 @@ ORDER BY
   dv.cantidad AS cantidad, -- Cantidad sin modificar
   REPLACE(FORMAT(ROUND(dv.precio_monotributista, 0), 0), ',', '.') AS precio_monotributista, -- Precio redondeado y formateado
   dv.fecha, 
+  dv.aumento_porcentaje, -- Porcentaje de aumento
   REPLACE(FORMAT(ROUND(dv.sub_total, 0), 0), ',', '.') AS sub_total, -- Subtotal redondeado y formateado
   CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente_completo, -- Nombre completo del cliente
   c.direccion, -- Dirección del cliente

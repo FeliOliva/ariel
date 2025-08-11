@@ -103,6 +103,16 @@ const getClientsByID = async (ID) => {
   }
 };
 
+const getClientesByZona = async (ID) => {
+  try {
+    const query = queriesClients.getClientesByZona;
+    const [rows] = await db.query(query, [ID]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   getAllClients,
   addClient,
@@ -110,4 +120,5 @@ module.exports = {
   upClient,
   updateClients,
   getClientsByID,
+  getClientesByZona,
 };

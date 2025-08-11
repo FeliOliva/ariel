@@ -356,6 +356,16 @@ const VentaDetalles = () => {
       ),
     },
     {
+      name: "Aumento",
+      selector: (row) => row.aumento_porcentaje,
+      sortable: true,
+      cell: (row) => (
+        <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
+          {Math.round(row.aumento_porcentaje)}%
+        </div>
+      ),
+    },
+    {
       name: "Importe",
       selector: (row) => row.sub_total,
       sortable: true,

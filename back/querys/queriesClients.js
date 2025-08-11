@@ -41,4 +41,31 @@ LEFT JOIN
 WHERE 
   C.ID = ?;
 `,
+  getClientesByZona: `SELECT 
+  cliente.id,
+  cliente.nombre,
+  cliente.apellido,
+  cliente.direccion,
+  cliente.estado,
+  cliente.email,
+  cliente.cuil,
+  cliente.zona_id,
+  cliente.telefono,
+  cliente.localidad,
+  cliente.instagram,
+  cliente.farmacia,
+  zona.nombre AS zona_nombre,
+  tipo_cliente.id AS tipo_cliente_id,
+  tipo_cliente.nombre_tipo AS nombre_tipo_cliente
+FROM 
+  cliente
+JOIN 
+  zona ON cliente.zona_id = zona.id
+JOIN
+  tipo_cliente ON cliente.tipo_cliente = tipo_cliente.id
+WHERE 
+  cliente.zona_id = ?
+ORDER BY 
+  cliente.id DESC;
+`,
 };

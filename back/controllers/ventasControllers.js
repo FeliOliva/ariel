@@ -47,11 +47,10 @@ const addVenta = async (req, res) => {
       if (detalle.isGift === true) {
         sub_total = 0;
       } else {
-        sub_total = Math.round(
-          detalle.cantidad * detalle.precio_monotributista
-        );
+        sub_total = Math.round(detalle.cantidad * precioUnitario);
       }
-      Math.round((totalVenta += sub_total));
+
+      totalVenta = Math.round(totalVenta + sub_total);
 
       // Agregar el detalle de la venta
       await ventasModel.addDetalleVenta(
@@ -60,7 +59,8 @@ const addVenta = async (req, res) => {
         detalle.costo,
         detalle.cantidad,
         precioUnitario,
-        sub_total
+        sub_total,
+        tipoDescuento === 1 ? descuento : 0
       );
 
       // Registrar el cambio en el log de stock
@@ -209,6 +209,7 @@ const getVentaByID = async (req, res) => {
           precio_monotributista: detalle.precio_monotributista,
           sub_total: detalle.sub_total,
           detalle_venta_id: detalle.id_dv,
+          aumento_porcentaje: detalle.aumento_porcentaje,
         })),
       };
       res.json(data);

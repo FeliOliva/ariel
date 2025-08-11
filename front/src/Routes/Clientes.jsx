@@ -47,6 +47,9 @@ const Clientes = () => {
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
   const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [zonaSeleccionada, setZonaSeleccionada] = useState(null);
+  const [clientesPorZona, setClientesPorZona] = useState([]);
+  const [openClientesPorZona, setOpenClientesPorZona] = useState(false);
   const navigate = useNavigate();
   const { confirm } = Modal;
 
@@ -81,46 +84,47 @@ const Clientes = () => {
   });
 
   const handleGeneratePDF = () => {
-    const pdf = new jsPDF("p", "mm", "a4");
+    if (!clientes.length) {
+      notification.warning({
+        message: "Sin datos",
+        description: "No hay clientes cargados.",
+        duration: 2,
+        placement: "topRight",
+      });
+      return;
+    }
 
-    // Título
-    pdf.setFontSize(16); // Aumentar tamaño del título
+    const pdf = new jsPDF("p", "mm", "a4");
+    pdf.setFontSize(16);
     pdf.text("Lista de Clientes", 105, 20, { align: "center" });
 
-    // Preparar los datos de la tabla
-    const tableData = clientes.map((cliente) => ({
-      farmacia: cliente.farmacia,
-      nombre: cliente.nombre,
-      zona: cliente.zona_nombre,
-      localidad: cliente.localidad,
-      direccion: cliente.direccion,
-    }));
+    const tableData = clientes.map((c) => [
+      c.farmacia,
+      c.nombre,
+      c.zona_nombre,
+      c.localidad,
+      c.direccion,
+      c.telefono || "—",
+    ]);
 
     pdf.autoTable({
       startY: 30,
-      head: [["Farmacia", "Nombre", "Zona", "Localidad", "Dirección"]],
-      body: tableData.map((cliente) => [
-        cliente.farmacia,
-        cliente.nombre,
-        cliente.zona,
-        cliente.localidad,
-        cliente.direccion,
-      ]),
+      head: [
+        ["Farmacia", "Nombre", "Zona", "Localidad", "Dirección", "Teléfono"],
+      ],
+      body: tableData,
       theme: "grid",
-      styles: {
-        fontSize: 10, // Aumentar tamaño de la fuente
-        cellPadding: 3, // Incrementar ligeramente el espacio dentro de las celdas
-      },
+      styles: { fontSize: 10, cellPadding: 3 },
       columnStyles: {
-        0: { cellWidth: 30 }, // Farmacia
+        0: { cellWidth: 35 }, // Farmacia
         1: { cellWidth: 30 }, // Nombre
-        2: { cellWidth: 50 }, // Zona
+        2: { cellWidth: 35 }, // Zona
         3: { cellWidth: 25 }, // Localidad
-        4: { cellWidth: 50 }, // Dirección
+        4: { cellWidth: 40 }, // Dirección
+        5: { cellWidth: 25 }, // Teléfono
       },
     });
 
-    // Descargar el PDF con un nombre específico
     pdf.save("Lista_de_Clientes.pdf");
   };
 
@@ -459,6 +463,61 @@ const Clientes = () => {
     navigate("/zonas");
   };
 
+  const fetchClientesPorZona = async (zonaId) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:3001/getClientesByZona/${zonaId}`
+      );
+      setClientesPorZona(res.data);
+    } catch (err) {
+      console.error("Error obteniendo clientes por zona:", err);
+    }
+  };
+
+  // PDF por zona (incluye teléfono)
+  const handleGeneratePDFZona = () => {
+    if (!clientesPorZona.length) {
+      notification.warning({
+        message: "Sin datos",
+        description: "No hay clientes para la zona seleccionada.",
+        duration: 2,
+        placement: "topRight",
+      });
+      return;
+    }
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    pdf.setFontSize(16);
+    pdf.text(`Clientes - ${clientesPorZona[0]?.zona_nombre || ""}`, 105, 20, {
+      align: "center",
+    });
+
+    const tableData = clientesPorZona.map((c) => [
+      `${c.nombre} ${c.apellido}`,
+      c.farmacia,
+      c.direccion,
+      c.localidad,
+      c.telefono || "—",
+    ]);
+
+    pdf.autoTable({
+      startY: 30,
+      head: [["Nombre", "Farmacia", "Dirección", "Localidad", "Teléfono"]],
+      body: tableData,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 3 },
+      columnStyles: {
+        0: { cellWidth: 45 }, // Nombre
+        1: { cellWidth: 40 }, // Farmacia
+        2: { cellWidth: 45 }, // Dirección
+        3: { cellWidth: 30 }, // Localidad
+        4: { cellWidth: 30 }, // Teléfono
+      },
+    });
+
+    pdf.save(`Clientes_Zona_${clientesPorZona[0]?.zona_nombre || ""}.pdf`);
+  };
+
   return (
     <MenuLayout>
       <h1>Listado de clientes</h1>
@@ -487,6 +546,9 @@ const Clientes = () => {
           </Button>
           <Button onClick={handleGeneratePDF} type="primary">
             Generar lista
+          </Button>
+          <Button onClick={() => setOpenClientesPorZona(true)} type="primary">
+            Imprimir Clientes por Zona
           </Button>
         </div>
       </div>
@@ -806,6 +868,38 @@ const Clientes = () => {
         <Button onClick={handleEditCliente} type="primary">
           Guardar
         </Button>
+      </Drawer>
+      <Drawer
+        open={openClientesPorZona}
+        title="Seleccione una zona para ver sus clientes"
+        onClose={() => setOpenClientesPorZona(false)}
+        width={400} // Controla el ancho del Drawer
+        bodyStyle={{ padding: "20px" }} // Espaciado interno
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            alignItems: "stretch", // Hace que los hijos ocupen todo el ancho
+          }}
+        >
+          <ZonasInput
+            onChangeZona={(value) => {
+              setZonaSeleccionada(value);
+              fetchClientesPorZona(value.id);
+            }}
+          />
+
+          <Button
+            type="primary"
+            onClick={handleGeneratePDFZona}
+            disabled={!clientesPorZona.length}
+            style={{ width: "100%" }} // Botón ancho completo
+          >
+            Generar PDF por Zona
+          </Button>
+        </div>
       </Drawer>
       <DataTable
         columns={columns}

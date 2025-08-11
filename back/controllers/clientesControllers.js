@@ -10,7 +10,7 @@ const getAllClients = async (req, res) => {
 const addClient = async (req, res) => {
   try {
     const {
-      farmacia = "",  // Valores por defecto para evitar undefined
+      farmacia = "", // Valores por defecto para evitar undefined
       nombre = "",
       apellido = "",
       direccion = "",
@@ -35,7 +35,7 @@ const addClient = async (req, res) => {
       nombreMayus,
       apellidoMayus,
       direccionValue,
-      email,  // Email y teléfono no necesitan toUpperCase()
+      email, // Email y teléfono no necesitan toUpperCase()
       telefono,
       cuilValue,
       zona_id,
@@ -127,6 +127,16 @@ const getClientsByID = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const getClientesByZona = async (req, res) => {
+  try {
+    const ID = req.params.ID;
+    const clients = await clientModels.getClientesByZona(ID);
+    res.json(clients);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   getAllClients,
   addClient,
@@ -134,4 +144,5 @@ module.exports = {
   upClient,
   updateClients,
   getClientsByID,
+  getClientesByZona,
 };

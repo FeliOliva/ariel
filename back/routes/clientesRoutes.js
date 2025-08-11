@@ -8,4 +8,5 @@ router.put("/dropClient/:ID", clientControllers.dropClient);
 router.put("/upClient/:ID", clientControllers.upClient);
 router.put("/updateClients", clientControllers.updateClients);
 router.get("/getClientsByID/:ID", clientControllers.getClientsByID);
+router.get("/getClientesByZona/:ID", clientControllers.getClientesByZona);
 module.exports = router;
