@@ -62,8 +62,8 @@ const getPagosByClienteId = async (req, res) => {
 
 const addPago = async (req, res) => {
   try {
-    const { cliente_id, monto, metodo_pago } = req.body;
-    await pagosModel.addPago(cliente_id, monto, metodo_pago);
+    const { cliente_id, monto, metodo_pago, vendedor_id } = req.body;
+    await pagosModel.addPago(cliente_id, monto, metodo_pago, vendedor_id);
     res.status(201).json({ message: "Pago agregado con éxito" });
   } catch (error) {
     console.error(error);

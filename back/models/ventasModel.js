@@ -282,6 +282,179 @@ const getLineasStock = async () => {
     throw err;
   }
 };
+const getArticuloById = async (articulo_id) => {
+  try {
+    const query = "SELECT * FROM articulo WHERE id = ?";
+    const [rows] = await db.query(query, [articulo_id]);
+    if (rows.length === 0) {
+      throw new Error("Artículo no encontrado");
+    }
+    return rows[0];
+  } catch (err) {
+    throw new Error("Error al obtener el artículo: " + err.message);
+  }
+};
+
+const editarVenta = async (ventaId, articulo_id, cantidad) => {
+  try {
+    // 1. Obtener líneas controladas
+    const lineas = await getLineasStock(); 
+    const lineasControladas = lineas.map((l) => l.linea_id);
+
+    // 2. Verificar si el artículo pertenece a esas líneas
+    const articulo = await getArticuloById(articulo_id);
+    const controlaStock = lineasControladas.includes(articulo.linea_id);
+
+    if (controlaStock) {
+      const stockCheck = await checkStock(articulo_id, cantidad);
+      if (!stockCheck.disponible) {
+        const err = new Error(
+          `No hay suficiente stock para el artículo ${stockCheck.nombre}`
+        );
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    // 3. Obtener venta
+    const venta = await getVentaByID(ventaId);
+    if (!venta || venta.length === 0) {
+      throw new Error("Venta no encontrada");
+    }
+
+    // 4. Insertar nuevo detalle
+    const subTotal = articulo.precio_monotributista * cantidad;
+    const insertDetalleQuery = `
+      INSERT INTO detalle_venta 
+      (articulo_id, venta_id, costo, cantidad, precio_monotributista, fecha, sub_total, aumento_porcentaje)
+      VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)
+    `;
+    await db.query(insertDetalleQuery, [
+      articulo_id,
+      ventaId,
+      articulo.costo ?? 0,
+      cantidad,
+      articulo.precio_monotributista,
+      subTotal,
+      articulo.aumento_porcentaje ?? 0,
+    ]);
+
+    // 5. Recalcular totales de la venta
+    const [detalles] = await db.query(
+      "SELECT sub_total FROM detalle_venta WHERE venta_id = ?",
+      [ventaId]
+    );
+    const total = detalles.reduce((acc, d) => acc + Number(d.sub_total), 0);
+
+    const totalConDescuento = total - Number(venta[0].descuento || 0);
+
+    // 6. Actualizar venta
+    const updateVentaQuery = `
+      UPDATE venta 
+      SET total = ?, total_con_descuento = ?
+      WHERE id = ?
+    `;
+    await db.query(updateVentaQuery, [total, totalConDescuento, ventaId]);
+
+    // 7. Descontar stock si corresponde
+    if (controlaStock) {
+      await descontarStock(articulo_id, cantidad);
+    }
+
+    // 8. Log
+    await updateLogVenta(ventaId, articulo_id, cantidad);
+
+    // 9. Devolver la venta actualizada
+    const ventaFinal = await getVentaByID(ventaId);
+    const [detallesFinal] = await db.query(
+      "SELECT * FROM detalle_venta WHERE venta_id = ?",
+      [ventaId]
+    );
+
+    return {
+      venta: ventaFinal[0],
+      detalles: detallesFinal,
+    };
+  } catch (error) {
+    console.error("Error al editar la venta:", error);
+    throw error;
+  }
+};
+
+const eliminarDetalleVenta = async (detalleVentaId) => {
+  try {
+    // 1. Buscar el detalle antes de eliminarlo
+    const [detalleRows] = await db.query(
+      "SELECT * FROM detalle_venta WHERE id = ?",
+      [detalleVentaId]
+    );
+    if (detalleRows.length === 0) {
+      const err = new Error("Detalle de venta no encontrado");
+      err.status = 404;
+      throw err;
+    }
+    const detalle = detalleRows[0];
+    const ventaId = detalle.venta_id;
+
+    // 2. Eliminar el detalle
+    await db.query("DELETE FROM detalle_venta WHERE id = ?", [detalleVentaId]);
+
+    // 3. Recalcular totales de la venta
+    const [detalles] = await db.query(
+      "SELECT sub_total FROM detalle_venta WHERE venta_id = ?",
+      [ventaId]
+    );
+
+    let total = 0;
+    if (detalles.length > 0) {
+      total = detalles.reduce((acc, d) => acc + Number(d.sub_total), 0);
+    }
+
+    // obtener descuento de la venta
+    const [ventaRows] = await db.query(
+      "SELECT descuento FROM venta WHERE id = ?",
+      [ventaId]
+    );
+    const descuento = ventaRows[0]?.descuento || 0;
+
+    const totalConDescuento = total - descuento;
+
+    // 4. Actualizar la venta
+    await db.query(
+      "UPDATE venta SET total = ?, total_con_descuento = ? WHERE id = ?",
+      [total, totalConDescuento, ventaId]
+    );
+
+    // 5. Si controlaba stock, devolver stock con SQL directo
+    const lineas = await getLineasStock();
+    const lineasControladas = lineas.map((l) => l.linea_id);
+
+    const articulo = await getArticuloById(detalle.articulo_id);
+    if (lineasControladas.includes(articulo.linea_id)) {
+      await db.query("UPDATE articulo SET stock = stock + ? WHERE id = ?", [
+        detalle.cantidad,
+        detalle.articulo_id,
+      ]);
+    }
+
+    // 6. Devolver venta actualizada
+    const [ventaFinal] = await db.query("SELECT * FROM venta WHERE id = ?", [
+      ventaId,
+    ]);
+    const [detallesFinal] = await db.query(
+      "SELECT * FROM detalle_venta WHERE venta_id = ?",
+      [ventaId]
+    );
+
+    return {
+      venta: ventaFinal[0],
+      detalles: detallesFinal,
+    };
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   getAllVentas,
   addVenta,
@@ -301,4 +474,6 @@ module.exports = {
   getResumenZonas,
   getLineasStock,
   getResumenCliente,
+  editarVenta,
+  eliminarDetalleVenta,
 };

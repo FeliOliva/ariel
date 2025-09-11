@@ -151,7 +151,9 @@ WHERE dv.venta_id = ?;
     v.fecha_venta AS fecha, 
     FORMAT(v.total_con_descuento, 0, 'de_DE') AS total_con_descuento, 
     NULL AS monto, 
-    NULL AS metodo_pago
+    NULL AS metodo_pago,
+    NULL AS vendedor_id,
+    NULL AS vendedor_nombre
 FROM venta v
 WHERE v.cliente_id = ?
 AND v.fecha_venta BETWEEN ? AND ?
@@ -167,8 +169,11 @@ SELECT
     p.fecha_pago AS fecha, 
     NULL AS total_con_descuento, 
     FORMAT(p.monto, 0, 'de_DE') AS monto, 
-    p.metodo_pago
+    p.metodo_pago,
+    vend.id AS vendedor_id,
+    vend.nombre AS vendedor_nombre
 FROM pagos p
+LEFT JOIN vendedores vend ON p.vendedor_id = vend.id
 WHERE p.cliente_id = ?
 AND p.fecha_pago BETWEEN ? AND ?
 
@@ -183,7 +188,9 @@ SELECT
     nc.fecha, 
     FORMAT(SUM(dnc.subtotal), 0, 'de_DE') AS total_con_descuento, 
     NULL AS monto, 
-    NULL AS metodo_pago
+    NULL AS metodo_pago,
+    NULL AS vendedor_id,
+    NULL AS vendedor_nombre
 FROM notasCredito nc
 JOIN detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
 WHERE nc.cliente_id = ? 

@@ -66,6 +66,7 @@ const recalcularTotales = async (venta_id) => {
   }
 };
 
+
 module.exports = {
   getDetalleVentaById,
   updateDetalleVenta,

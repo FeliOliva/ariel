@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import { ConfigProvider } from "antd";
 import axios from "axios";
+import VendedoresInput from "./VendedoresInput";
 
 dayjs.locale("es"); // Configura el idioma a español
 
@@ -71,11 +72,13 @@ const AgregarPagoDrawer = ({
             ...rest,
             cliente_id: clienteId,
             metodo_pago,
+            vendedor_id: values.vendedor_id,
           });
           await axios.post("http://localhost:3001/addPago", {
             ...rest,
             cliente_id: clienteId,
             metodo_pago,
+            vendedor_id: values.vendedor_id,
           });
 
           notification.success({
@@ -140,7 +143,9 @@ const AgregarPagoDrawer = ({
               <Option value="cheque">Cheque</Option>
             </Select>
           </Form.Item>
-
+          <Form.Item name="vendedor_id" label="Vendedor">
+            <VendedoresInput />
+          </Form.Item>
           {isCheque && (
             <>
               <Form.Item

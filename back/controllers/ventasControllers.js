@@ -309,6 +309,60 @@ const getResumenZonas = async (req, res) => {
   }
 };
 
+const editarVenta = async (req, res) => {
+  try {
+    const { venta_id, articulo_id, cantidad } = req.body;
+    console.log("Datos recibidos para editar la venta:", req.body);
+
+    // Validar que se recibieron los datos necesarios
+    if (!venta_id || !articulo_id || !cantidad) {
+      return res
+        .status(400)
+        .json({ error: "Datos incompletos para editar la venta" });
+    }
+
+    const result = await ventasModel.editarVenta(
+      venta_id,
+      articulo_id,
+      cantidad
+    );
+
+    res.status(200).json({
+      message: "Venta editada correctamente",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al editar la venta:", error);
+    const status = error.status || 500;
+    res
+      .status(status)
+      .json({ error: error.message || "Error al editar la venta" });
+  }
+};
+
+const eliminarDetalleVenta = async (req, res) => {
+  try {
+    const { detalle_venta_id } = req.body;
+
+    if (!detalle_venta_id) {
+      return res
+        .status(400)
+        .json({ error: "Se requiere el id del detalle de venta" });
+    }
+
+    const result = await ventasModel.eliminarDetalleVenta(detalle_venta_id);
+
+    res.status(200).json({
+      message: "Detalle eliminado y venta recalculada correctamente",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al eliminar el detalle:", error);
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || "Error interno" });
+  }
+};
+
 module.exports = {
   getAllVentas,
   addVenta,
@@ -321,4 +375,6 @@ module.exports = {
   getVentasByClientesxFecha,
   getResumenZonas,
   getResumenCliente,
+  editarVenta,
+  eliminarDetalleVenta,
 };

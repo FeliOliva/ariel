@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Button, Space, message, DatePicker } from "antd";
 import axios from "axios";
 import ZonasInput from "../components/ZonasInput";
 import MenuLayout from "../components/MenuLayout";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import dayjs from "dayjs";
 
 const { RangePicker } = DatePicker;
 
@@ -17,6 +18,11 @@ export default function ResumenCuentaXZona() {
   const handleZonaChange = (zona) => {
     setZonaSeleccionada(zona);
   };
+  useEffect(() => {
+    const inicio = dayjs("2025-01-01");
+    const fin = dayjs();
+    setRangoFechas([inicio, fin]);
+  }, []);
 
   const fetchData = async () => {
     if (!zonaSeleccionada || rangoFechas.length !== 2) {
@@ -24,7 +30,9 @@ export default function ResumenCuentaXZona() {
       return;
     }
 
-    const [fechaInicio, fechaFin] = rangoFechas;
+    const [fechaInicio, fechaFin] = rangoFechas.map((d) =>
+      d.format("YYYY-MM-DD")
+    );
     setLoading(true);
 
     try {
@@ -144,8 +152,11 @@ export default function ResumenCuentaXZona() {
 
     const rangoInfo =
       rangoFechas.length === 2
-        ? `${rangoFechas[0]} a ${rangoFechas[1]}`
+        ? `${rangoFechas[0].format("DD/MM/YYYY")} a ${rangoFechas[1].format(
+            "DD/MM/YYYY"
+          )}`
         : "Sin rango de fechas";
+
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
@@ -235,7 +246,8 @@ export default function ResumenCuentaXZona() {
         <ZonasInput onChangeZona={handleZonaChange} />
         <Space style={{ margin: "20px 0" }}>
           <RangePicker
-            onChange={(dates, dateStrings) => setRangoFechas(dateStrings)}
+            value={rangoFechas}
+            onChange={(dates) => setRangoFechas(dates)}
           />
           <Button type="primary" onClick={fetchData} loading={loading}>
             Cargar Datos

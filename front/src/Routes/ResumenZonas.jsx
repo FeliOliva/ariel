@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Button, Space, message, DatePicker } from "antd";
 import axios from "axios";
 import MenuLayout from "../components/MenuLayout";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import dayjs from "dayjs";
 
 const { RangePicker } = DatePicker;
 
@@ -11,14 +12,21 @@ export default function ResumenZonas() {
   const [rangoFechas, setRangoFechas] = useState([]);
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  useEffect(() => {
+    const inicio = dayjs("2025-01-01");
+    const fin = dayjs();
+    setRangoFechas([inicio, fin]);
+  }, []);
   const fetchData = async () => {
     if (rangoFechas.length !== 2) {
       message.warning("Por favor selecciona un rango de fechas.");
       return;
     }
 
-    const [fechaInicio, fechaFin] = rangoFechas;
+    const [fechaInicio, fechaFin] = rangoFechas.map((d) =>
+      d.format("YYYY-MM-DD")
+    );
+
     setLoading(true);
 
     try {
@@ -82,11 +90,13 @@ export default function ResumenZonas() {
 
     const rangoInfo =
       rangoFechas.length === 2
-        ? `${rangoFechas[0]} a ${rangoFechas[1]}`
+        ? `${rangoFechas[0].format("DD/MM/YYYY")} a ${rangoFechas[1].format(
+            "DD/MM/YYYY"
+          )}`
         : "Sin rango de fechas";
+
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
-
     const tableData = datos.map((d) => [
       d.nombre_zona,
       `$${Math.round(d.total_ventas).toLocaleString("es-ES")}`,
@@ -134,7 +144,8 @@ export default function ResumenZonas() {
         <h2>Resumen de Ventas por Zona</h2>
         <Space style={{ margin: "20px 0" }}>
           <RangePicker
-            onChange={(dates, dateStrings) => setRangoFechas(dateStrings)}
+            value={rangoFechas}
+            onChange={(dates) => setRangoFechas(dates)}
           />
           <Button type="primary" onClick={fetchData} loading={loading}>
             Cargar Datos

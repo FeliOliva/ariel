@@ -18,7 +18,13 @@ import {
 } from "../style/dataTableStyles";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { EditOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  ExclamationCircleOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
+import ArticulosInput from "../components/ArticulosInput";
+import warning from "antd/es/_util/warning";
 
 const VentaDetalles = () => {
   const { id } = useParams();
@@ -37,9 +43,12 @@ const VentaDetalles = () => {
     farmacia: "",
   });
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [open, setOpen] = useState(false);
   const [detalleVenta, setDetalleVenta] = useState({});
   const [precio, setPrecio] = useState(0);
   const [cantidad, setCantidad] = useState(0);
+  const [articuloValue, setArticuloValue] = useState("");
+  const [selectedArticulo, setSelectedArticulo] = useState(null);
   const { confirm } = Modal;
 
   useEffect(() => {
@@ -63,6 +72,7 @@ const VentaDetalles = () => {
           farmacia,
           localidad,
         } = response.data;
+        console.log("Detalles de la venta:", response.data);
         if (Array.isArray(detalles)) {
           setData(detalles);
           setVentaInfo({
@@ -90,7 +100,65 @@ const VentaDetalles = () => {
     };
     fetchData();
   }, [id]);
+  const handleArticuloChange = (articulo) => {
+    setSelectedArticulo(articulo);
+    setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
+    console.log(selectedArticulo);
+    console.log(articulo);
+  };
+  const handleAddArticulo = async () => {
+    if (!selectedArticulo) {
+      notification.error({
+        message: "Error",
+        description: "Por favor, seleccione un artículo válido.",
+      });
+      return;
+    }
 
+    confirm({
+      title: "Confirmar acción",
+      icon: <ExclamationCircleOutlined />,
+      content: "¿Está seguro de agregar este artículo a la venta?",
+      okText: "Sí",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          const response = await axios.post(
+            "http://localhost:3001/editarVenta",
+            {
+              articulo_id: selectedArticulo.id,
+              cantidad,
+              venta_id: ventaInfo.venta_id,
+            }
+          );
+
+          message.success("Artículo agregado correctamente");
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } catch (error) {
+          if (error.response) {
+            if (error.response.status === 400) {
+              notification.warning({
+                message: "Stock insuficiente",
+                description:
+                  error.response.data.error ||
+                  "No hay suficiente stock para agregar este artículo.",
+              });
+            } else {
+              message.error(
+                "Error al agregar el artículo: " + error.response.data.error
+              );
+            }
+          } else {
+            message.error("Error de conexión con el servidor");
+          }
+          console.error("Error al agregar el artículo:", error);
+        }
+      },
+    });
+  };
   const handleGeneratePDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
 
@@ -278,6 +346,35 @@ const VentaDetalles = () => {
       console.error("Error fetching detalle de venta:", error);
     }
   };
+  const handleDelete = (detalleId) => {
+    console.log("Detalle ID a eliminar:", detalleId);
+    confirm({
+      title: "Confirmar eliminación",
+      icon: <ExclamationCircleOutlined />,
+      content: "¿Está seguro de eliminar este detalle de venta?",
+      okText: "Sí",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          const response = await axios.delete(
+            "http://localhost:3001/eliminarDetalleVenta",
+            { data: { detalle_venta_id: detalleId } }
+          );
+          if (response.status === 200) {
+            message.success("Detalle eliminado correctamente");
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else {
+            message.error("Error al eliminar el detalle de venta");
+          }
+        } catch (error) {
+          console.error("Error al eliminar el detalle de venta:", error);
+          message.error("Error al eliminar el detalle de venta");
+        }
+      },
+    });
+  };
 
   const updatePrice = async () => {
     confirm({
@@ -378,11 +475,18 @@ const VentaDetalles = () => {
     {
       name: "Acciones",
       cell: (row) => (
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => handleEditPrice(row.detalle_venta_id)}
-        ></Button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => handleEditPrice(row.detalle_venta_id)}
+          ></Button>
+          <Button
+            type="primary"
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(row.detalle_venta_id)}
+          ></Button>
+        </div>
       ),
     },
   ];
@@ -405,6 +509,13 @@ const VentaDetalles = () => {
         style={{ marginLeft: 10 }}
       >
         Generar Factura Reparto
+      </Button>
+      <Button
+        onClick={() => setOpen(true)}
+        type="primary"
+        style={{ marginLeft: 10 }}
+      >
+        Agregar Artículo
       </Button>
       {loading ? (
         <p>Cargando...</p>
@@ -450,7 +561,32 @@ const VentaDetalles = () => {
           <span>${ventaInfo.total_con_descuento}</span>
         </div>
       </div>
-
+      <Drawer
+        title="Agregar Artículo"
+        placement="right"
+        onClose={() => setOpen(false)}
+        open={open}
+      >
+        <ArticulosInput
+          value={articuloValue}
+          onChangeArticulo={handleArticuloChange}
+          onInputChange={setArticuloValue}
+        />
+        <InputNumber
+          style={{ width: "70%", marginTop: 16 }}
+          min={1}
+          onChange={(value) => setCantidad(value)}
+          placeholder="Cantidad"
+        />
+        <Button
+          onClick={handleAddArticulo}
+          type="primary"
+          block
+          style={{ marginTop: 16, width: "70%" }}
+        >
+          Agregar artículo
+        </Button>
+      </Drawer>
       <Drawer
         title="Modificar Precio y Cantidad"
         placement="right"

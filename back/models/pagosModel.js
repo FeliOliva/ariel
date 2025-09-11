@@ -31,7 +31,7 @@ const getUltimoPago = async (cliente_id) => {
   return rows[0]?.nro_pago || null;
 };
 
-const addPago = async (cliente_id, monto, metodo_pago) => {
+const addPago = async (cliente_id, monto, metodo_pago, vendedor_id) => {
   const ultimoNroPago = await getUltimoPago(cliente_id);
   let nuevoNro;
   if (!ultimoNroPago) {
@@ -41,8 +41,14 @@ const addPago = async (cliente_id, monto, metodo_pago) => {
     nuevoNro = siguiente.toString().padStart(5, "0");
   }
 
-  const query = `INSERT INTO pagos (nro_pago, cliente_id, monto, metodo_pago) VALUES (?, ?, ?, ?)`;
-  return await db.query(query, [nuevoNro, cliente_id, monto, metodo_pago]);
+  const query = `INSERT INTO pagos (nro_pago, cliente_id, monto, metodo_pago, vendedor_id) VALUES (?, ?, ?, ?, ?)`;
+  return await db.query(query, [
+    nuevoNro,
+    cliente_id,
+    monto,
+    metodo_pago,
+    vendedor_id,
+  ]);
 };
 
 const getPagoById = async (ID) => {

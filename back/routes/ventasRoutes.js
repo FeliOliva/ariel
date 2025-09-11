@@ -5,7 +5,7 @@ const ventaControllers = require("../controllers/ventasControllers");
 router.get("/ventas", ventaControllers.getAllVentas);
 router.post("/addVenta", ventaControllers.addVenta);
 router.put("/dropVenta/:ID", ventaControllers.dropVenta);
-router.put("/updateVenta", ventaControllers.updateVentas); 
+router.put("/updateVenta", ventaControllers.updateVentas);
 router.get("/ventasCliente/:ID", ventaControllers.getVentasByClientes);
 router.get("/ventasZona/:ID", ventaControllers.getVentasByZona);
 router.get("/ventasProducto/:ID", ventaControllers.getVentasByProducto);
@@ -16,4 +16,9 @@ router.get(
 );
 router.get("/resumenCliente/:ID", ventaControllers.getResumenCliente);
 router.get("/resumenZonas", ventaControllers.getResumenZonas);
+router.post("/editarVenta", ventaControllers.editarVenta);
+router.delete(
+  "/eliminarDetalleVenta",
+  ventaControllers.eliminarDetalleVenta
+);
 module.exports = router;

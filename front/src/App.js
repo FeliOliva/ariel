@@ -22,6 +22,7 @@ import ResumenZonas from "./Routes/ResumenZonas";
 import Pedido from "./Routes/Pedido";
 import PedidoDetalles from "./Routes/PedidoDetalles";
 import EstadisticasDashboard from "./Routes/EstadisticasDashboard";
+import ResumenPagosPorVendedor from "./Routes/ResumenPagosPorVendedor";
 function App() {
   return (
     <Routes>
@@ -47,6 +48,10 @@ function App() {
       <Route path="/pedido" element={<Pedido />} />
       <Route path="/pedido/:id" element={<PedidoDetalles />} />
       <Route path="/estadisticas" element={<EstadisticasDashboard />} />
+      <Route
+        path="/ResumenCuentaXVendedor"
+        element={<ResumenPagosPorVendedor />}
+      />
     </Routes>
   );
 }

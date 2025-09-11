@@ -288,6 +288,19 @@ const ResumenCuenta = () => {
       sortable: true,
     },
     {
+      name: "Vendedor",
+      selector: (row) => (
+        <Tooltip
+          title={row.vendedor_nombre || "N/A"}
+          className={row.estado === 0 ? "strikethrough" : ""}
+        >
+          <span>
+            <span>{row.vendedor_nombre ? row.vendedor_nombre : "N/A"}</span>
+          </span>
+        </Tooltip>
+      ),
+    },
+    {
       name: "Saldo Restante",
       selector: (row) => (
         <Tooltip title={`Saldo: ${row.saldoRestante}`}>
@@ -708,6 +721,9 @@ const ResumenCuenta = () => {
   const goToResumenZona = () => {
     navigate("/ResumenZonas");
   };
+  const goToResumenCuentaXVendedor = () => {
+    navigate("/ResumenCuentaXVendedor");
+  };
   const items = [
     {
       label: (
@@ -721,6 +737,14 @@ const ResumenCuenta = () => {
       label: (
         <a target="_blank" onClick={goToResumenCuentaXZona}>
           Resumen de clientes por zona
+        </a>
+      ),
+      key: "1",
+    },
+    {
+      label: (
+        <a target="_blank" onClick={goToResumenCuentaXVendedor}>
+          Resumen por vendendor
         </a>
       ),
       key: "1",
