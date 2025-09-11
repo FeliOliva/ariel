@@ -298,7 +298,7 @@ const getArticuloById = async (articulo_id) => {
 const editarVenta = async (ventaId, articulo_id, cantidad) => {
   try {
     // 1. Obtener líneas controladas
-    const lineas = await getLineasStock(); 
+    const lineas = await getLineasStock();
     const lineasControladas = lineas.map((l) => l.linea_id);
 
     // 2. Verificar si el artículo pertenece a esas líneas
@@ -346,8 +346,9 @@ const editarVenta = async (ventaId, articulo_id, cantidad) => {
     );
     const total = detalles.reduce((acc, d) => acc + Number(d.sub_total), 0);
 
-    const totalConDescuento = total - Number(venta[0].descuento || 0);
-
+    const totalConDescuento =
+      total - total * (Number(venta[0].descuento) / 100);
+    console.log("totalConDescuento", totalConDescuento);
     // 6. Actualizar venta
     const updateVentaQuery = `
       UPDATE venta 
@@ -417,7 +418,7 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
     );
     const descuento = ventaRows[0]?.descuento || 0;
 
-    const totalConDescuento = total - descuento;
+    const totalConDescuento = total - total * (Number(descuento) / 100);
 
     // 4. Actualizar la venta
     await db.query(
