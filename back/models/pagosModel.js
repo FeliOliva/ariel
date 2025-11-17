@@ -31,9 +31,17 @@ const getUltimoPago = async (cliente_id) => {
   return rows[0]?.nro_pago || null;
 };
 
-const addPago = async (cliente_id, monto, metodo_pago, vendedor_id) => {
+const addPago = async (
+  cliente_id,
+  monto,
+  metodo_pago,
+  vendedor_id,
+  cheque // 👈 objeto opcional { banco, nro_cheque, fecha_emision, fecha_cobro }
+) => {
+  // 1) Calcular siguiente nro_pago para ese cliente
   const ultimoNroPago = await getUltimoPago(cliente_id);
   let nuevoNro;
+
   if (!ultimoNroPago) {
     nuevoNro = "00001";
   } else {
@@ -41,14 +49,53 @@ const addPago = async (cliente_id, monto, metodo_pago, vendedor_id) => {
     nuevoNro = siguiente.toString().padStart(5, "0");
   }
 
-  const query = `INSERT INTO pagos (nro_pago, cliente_id, monto, metodo_pago, vendedor_id) VALUES (?, ?, ?, ?, ?)`;
-  return await db.query(query, [
+  // 2) Insertar pago
+  const insertPagoQuery = `
+    INSERT INTO pagos (nro_pago, cliente_id, monto, metodo_pago, vendedor_id)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  const [insertResult] = await db.query(insertPagoQuery, [
     nuevoNro,
     cliente_id,
     monto,
     metodo_pago,
     vendedor_id,
   ]);
+
+  const pagoId = insertResult.insertId;
+  const bancoMayus = cheque?.banco ? cheque.banco.toUpperCase() : null;
+  // 3) Si el método es cheque, insertamos en la tabla cheque con pago_id
+  if (metodo_pago === "cheque" && cheque) {
+    const insertChequeQuery = `
+      INSERT INTO cheque (
+        banco,
+        nro_cheque,
+        fecha_emision,
+        fecha_cobro,
+        importe,
+        cliente_id,
+        pago_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await db.query(insertChequeQuery, [
+      bancoMayus,
+      cheque.nro_cheque,
+      cheque.fecha_emision, // "YYYY-MM-DD" desde el front
+      cheque.fecha_cobro, // "YYYY-MM-DD"
+      monto, // importe del cheque = monto del pago
+      cliente_id,
+      pagoId, // 👈 relación directa con pagos.id
+    ]);
+  }
+
+  // 4) Devolvemos algo útil al controller
+  return {
+    pagoId,
+    nro_pago: nuevoNro,
+  };
 };
 
 const getPagoById = async (ID) => {

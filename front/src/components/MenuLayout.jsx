@@ -38,9 +38,9 @@ const MenuLayout = ({ children }) => {
       case "5":
         navigate("/Compras");
         break;
-      case "6":
-        navigate("/Ofertas");
-        break;
+      // case "6":
+      //   navigate("/Ofertas");
+      //   break;
       case "7":
         navigate("/ResumenCuenta");
         break;
@@ -76,8 +76,8 @@ const MenuLayout = ({ children }) => {
         return ["4"];
       case "/Compras":
         return ["5"];
-      case "/Ofertas":
-        return ["6"];
+      // case "/Ofertas":
+      //   return ["6"];
       case "/ResumenCuenta":
         return ["7"];
       case "/pedido":
@@ -130,11 +130,11 @@ const MenuLayout = ({ children }) => {
               icon: <ShoppingOutlined />,
               label: "Compras",
             },
-            {
-              key: "6",
-              icon: <SubnodeOutlined />,
-              label: "Ofertas",
-            },
+            // {
+            //   key: "6",
+            //   icon: <SubnodeOutlined />,
+            //   label: "Ofertas",
+            // },
             {
               key: "7",
               icon: <SubnodeOutlined />,

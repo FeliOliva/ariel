@@ -71,6 +71,27 @@ const ResumenCuenta = () => {
   );
 
   const { confirm } = Modal;
+  const parseMonto = (valor) => {
+    if (!valor) return 0;
+
+    // Si viene con formato alemán: "1.234,56"
+    if (valor.includes(",")) {
+      // Quitar puntos (miles) y reemplazar coma por punto
+      const normalizado = valor.replace(/\./g, "").replace(",", ".");
+      return parseFloat(normalizado);
+    }
+
+    return parseFloat(valor);
+  };
+  const formatMonto = (numero) => {
+    if (numero === null || numero === undefined || isNaN(numero)) return "0,00";
+
+    return new Intl.NumberFormat("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numero);
+  };
+
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
       const response = await axios.get(
@@ -91,11 +112,11 @@ const ResumenCuenta = () => {
         .map((item) => {
           // Convertimos el monto correctamente
           let monto = 0;
+
           if (item.total_con_descuento) {
-            monto =
-              parseInt(item.total_con_descuento.replace(/\./g, ""), 10) || 0;
+            monto = parseMonto(item.total_con_descuento);
           } else if (item.monto) {
-            monto = parseInt(item.monto.replace(/\./g, ""), 10) || 0;
+            monto = parseMonto(item.monto);
           }
 
           // Calculamos el saldo acumulado
@@ -104,10 +125,16 @@ const ResumenCuenta = () => {
           } else if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
             saldoAcumulado -= monto; // Resta saldo con un pago o nota de crédito
           }
+          const totalNumerico = item.total_con_descuento
+            ? parseMonto(item.total_con_descuento)
+            : 0;
 
           return {
             ...item,
-            saldoRestante: saldoAcumulado, // Asigna el saldo acumulado actual
+            montoNumerico: monto,
+            saldoRestante: saldoAcumulado,
+            montoFormateado: formatMonto(monto),
+            totalFormateado: formatMonto(totalNumerico),
           };
         })
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -237,7 +264,7 @@ const ResumenCuenta = () => {
           className={row.estado === 0 ? "strikethrough" : ""}
         >
           <span>
-            <span>{row.tipo}</span>
+            <span>{row.tipo ? row.tipo.toUpperCase() : ""}</span>
           </span>
         </Tooltip>
       ),
@@ -245,18 +272,22 @@ const ResumenCuenta = () => {
     },
     {
       name: "Total",
-      selector: (row) => (
-        <Tooltip
-          title={row.total_con_descuento || row.monto}
-          className={row.estado === 0 ? "strikethrough" : ""}
-        >
-          <span>
-            <span>
-              ${row.total_con_descuento ? row.total_con_descuento : row.monto}
-            </span>
-          </span>
-        </Tooltip>
-      ),
+      selector: (row) => {
+        // Para ventas y NC usamos totalFormateado, para pagos montoFormateado
+        const texto =
+          row.tipo === "Venta" || row.tipo === "Nota de Crédito"
+            ? row.totalFormateado
+            : row.montoFormateado;
+
+        return (
+          <Tooltip
+            title={texto}
+            className={row.estado === 0 ? "strikethrough" : ""}
+          >
+            <span>${texto}</span>
+          </Tooltip>
+        );
+      },
       sortable: true,
     },
     {
@@ -281,7 +312,9 @@ const ResumenCuenta = () => {
           className={row.estado === 0 ? "strikethrough" : ""}
         >
           <span>
-            <span>{row.metodo_pago ? row.metodo_pago : "N/A"}</span>
+            <span>
+              {row.metodo_pago ? row.metodo_pago.toUpperCase() : "N/A"}
+            </span>
           </span>
         </Tooltip>
       ),
@@ -302,11 +335,15 @@ const ResumenCuenta = () => {
     },
     {
       name: "Saldo Restante",
-      selector: (row) => (
-        <Tooltip title={`Saldo: ${row.saldoRestante}`}>
-          <span>${row.saldoRestante.toLocaleString()}</span>
-        </Tooltip>
-      ),
+      selector: (row) => {
+        const saldoFmt = formatMonto(row.saldoRestante);
+
+        return (
+          <Tooltip title={`Saldo: ${saldoFmt}`}>
+            <span>${saldoFmt}</span>
+          </Tooltip>
+        );
+      },
       sortable: true,
     },
     {
@@ -375,34 +412,23 @@ const ResumenCuenta = () => {
   };
 
   const calcularSaldoRestante = (data) => {
-    // Función para limpiar y convertir valores numéricos
-    const parseNumber = (value) => {
-      return value ? parseInt(value.replace(/\./g, ""), 10) : 0;
-    };
+    return data
+      .filter((item) => item.estado === 1)
+      .reduce((saldo, item) => {
+        const monto = item.montoNumerico || 0;
 
-    // Sumar ventas activas
-    const totalVentas = data
-      .filter((item) => item.tipo === "Venta" && item.estado === 1)
-      .reduce((sum, venta) => sum + parseNumber(venta.total_con_descuento), 0);
+        if (item.tipo === "Venta") {
+          return saldo + monto;
+        }
 
-    // Sumar pagos y notas de crédito activas
-    const totalPagosNotas = data
-      .filter(
-        (item) =>
-          (item.tipo === "Pago" || item.tipo === "Nota de Crédito") &&
-          item.estado === 1
-      )
-      .reduce(
-        (sum, pago) =>
-          sum + parseNumber(pago.monto || pago.total_con_descuento),
-        0
-      );
+        if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
+          return saldo - monto;
+        }
 
-    // Saldo restante
-    return totalVentas - totalPagosNotas;
+        return saldo;
+      }, 0);
   };
 
-  // Ejemplo de uso con la data
   const saldoRestante = calcularSaldoRestante(data);
 
   const handleArticuloChange = (articulo) => {
@@ -624,22 +650,15 @@ const ResumenCuenta = () => {
   const generateResumenCuentaPDF = () => {
     const doc = new jsPDF();
 
-    // Filtrar y ordenar los datos por fecha (ascendente)
     const filteredData = data
       .filter((row) => row.estado === 1)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    const parseNumber = (value) => {
-      return value ? parseInt(value.toString().replace(/\./g, ""), 10) : 0;
-    };
-    const formatNumber = (value) => {
-      return new Intl.NumberFormat("es-AR").format(value);
-    };
 
-    // Título
+    let saldoAcumulado = 0;
+
     doc.setFontSize(16);
     doc.text("Resumen de Cuenta", 80, 20);
 
-    // Información del cliente y rango de fechas
     doc.setFontSize(14);
     doc.text(`Farmacia: ${selectedCliente.farmacia}`, 14, 30);
     doc.text(
@@ -650,10 +669,8 @@ const ResumenCuenta = () => {
     doc.text(`Rango de Fechas: ${rangoFechas[0]} - ${rangoFechas[1]}`, 14, 50);
 
     let yPos = 60;
-    let saldoAcumulado = 0;
 
     if (filteredData.length > 0) {
-      // Generar tabla solo si hay datos
       doc.autoTable({
         startY: yPos,
         head: [
@@ -667,9 +684,7 @@ const ResumenCuenta = () => {
           ],
         ],
         body: filteredData.map((row) => {
-          const monto = parseNumber(
-            row.total_con_descuento ? row.total_con_descuento : row.monto
-          );
+          const monto = row.montoNumerico ?? 0;
 
           if (row.tipo === "Venta") saldoAcumulado += monto;
           else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito")
@@ -678,10 +693,10 @@ const ResumenCuenta = () => {
           return [
             new Date(row.fecha).toLocaleDateString("es-AR"),
             row.tipo,
-            `$${formatNumber(monto)}`,
+            `$${formatMonto(monto)}`,
             row.numero,
             row.metodo_pago ? row.metodo_pago : "N/A",
-            `$${formatNumber(saldoAcumulado)}`,
+            `$${formatMonto(saldoAcumulado)}`,
           ];
         }),
         theme: "grid",
@@ -690,7 +705,6 @@ const ResumenCuenta = () => {
 
       yPos = doc.lastAutoTable.finalY + 10;
     } else {
-      // Si no hay registros, avisamos
       yPos += 10;
       doc.setFontSize(12);
       doc.text(
@@ -701,15 +715,9 @@ const ResumenCuenta = () => {
       yPos += 10;
     }
 
-    // Mostrar saldo final
     doc.setFontSize(14);
-    doc.text(
-      `Saldo Restante Final: $${saldoAcumulado.toLocaleString("es-AR")}`,
-      14,
-      yPos
-    );
+    doc.text(`Saldo Restante Final: $${formatMonto(saldoAcumulado)}`, 14, yPos);
 
-    // Guardar PDF
     doc.save(`ResumenCuenta_${selectedCliente.nombre}.pdf`);
   };
 
@@ -982,7 +990,7 @@ const ResumenCuenta = () => {
                 fontWeight: "bold",
               }}
             >
-              Saldo Restante: ${saldoRestante.toLocaleString("es-AR")}
+              Saldo Restante: ${formatMonto(saldoRestante)}{" "}
             </h2>
           </>
         )}
@@ -1124,6 +1132,7 @@ const ResumenCuenta = () => {
           onClose={() => setDrawerVisible(false)}
           clienteId={selectedCliente?.id}
           nextNroPago={nextNroPago}
+          saldoRestante={saldoRestante}
           onPagoAdded={async (nuevoPago) => {
             await fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
             setDrawerVisible(false);

@@ -11,6 +11,7 @@ import {
   notification,
   Modal,
   message,
+  Switch,
 } from "antd";
 import {
   customHeaderStyles,
@@ -25,7 +26,7 @@ import {
 } from "@ant-design/icons";
 import ArticulosInput from "../components/ArticulosInput";
 import warning from "antd/es/_util/warning";
-
+import DynamicList from "../components/DynamicList";
 const VentaDetalles = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
@@ -42,6 +43,7 @@ const VentaDetalles = () => {
     descuento: "",
     farmacia: "",
   });
+  const [modoEdicion, setModoEdicion] = useState("manual");
   const [openDrawer, setOpenDrawer] = useState(false);
   const [open, setOpen] = useState(false);
   const [detalleVenta, setDetalleVenta] = useState({});
@@ -49,7 +51,11 @@ const VentaDetalles = () => {
   const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState("");
   const [selectedArticulo, setSelectedArticulo] = useState(null);
+  const [aumento, setAumento] = useState(0);
   const { confirm } = Modal;
+  const [venta, setVenta] = useState({
+    articulos: [],
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,59 +112,93 @@ const VentaDetalles = () => {
     console.log(selectedArticulo);
     console.log(articulo);
   };
-  const handleAddArticulo = async () => {
-    if (!selectedArticulo) {
-      notification.error({
-        message: "Error",
-        description: "Por favor, seleccione un artículo válido.",
+  const handleAddArticuloToList = () => {
+    if (!selectedArticulo || !cantidad || cantidad <= 0) {
+      notification.warning({
+        message: "Datos incompletos",
+        description: "Seleccione un artículo y una cantidad válida.",
+      });
+      return;
+    }
+
+    const uniqueId = `${selectedArticulo.id}-${Date.now()}`;
+
+    setVenta((prev) => ({
+      ...prev,
+      articulos: [
+        ...prev.articulos,
+        {
+          ...selectedArticulo,
+          quantity: cantidad,
+          precio_monotributista: selectedArticulo.precio_monotributista,
+          price: selectedArticulo.precio_monotributista, // para usar en el DynamicList
+          label:
+            selectedArticulo.nombre +
+            " - " +
+            selectedArticulo.linea_nombre +
+            " - " +
+            (selectedArticulo.sublinea_nombre || ""),
+          value: selectedArticulo.id,
+          uniqueId,
+          isGift: false,
+        },
+      ],
+    }));
+
+    // limpiar inputs
+    setSelectedArticulo(null);
+    setArticuloValue("");
+    setCantidad(0);
+  };
+  const handleConfirmArticulos = () => {
+    if (venta.articulos.length === 0) {
+      notification.warning({
+        message: "Sin artículos",
+        description: "Agregá al menos un artículo antes de confirmar.",
       });
       return;
     }
 
     confirm({
-      title: "Confirmar acción",
+      title: "Confirmar artículos",
       icon: <ExclamationCircleOutlined />,
-      content: "¿Está seguro de agregar este artículo a la venta?",
+      content: "¿Desea agregar estos artículos a la venta?",
       okText: "Sí",
       cancelText: "No",
       onOk: async () => {
         try {
-          const response = await axios.post(
-            "http://localhost:3001/editarVenta",
-            {
-              articulo_id: selectedArticulo.id,
-              cantidad,
+          for (const art of venta.articulos) {
+            console.log("articulo", art);
+            await axios.post("http://localhost:3001/editarVenta", {
+              articulo_id: art.id,
+              cantidad: art.quantity,
+              // si extendés el backend:
+              precio_monotributista: parseFloat(art.precio_monotributista),
+              isGift: !!art.isGift,
               venta_id: ventaInfo.venta_id,
-            }
-          );
+            });
+          }
 
-          message.success("Artículo agregado correctamente");
+          notification.success({
+            message: "Artículos agregados",
+            description: "Los artículos se agregaron correctamente a la venta.",
+            duration: 2,
+          });
+
+          setVenta({ articulos: [] });
+          setOpen(false);
 
           setTimeout(() => {
             window.location.reload();
-          }, 1000);
+          }, 1500);
         } catch (error) {
-          if (error.response) {
-            if (error.response.status === 400) {
-              notification.warning({
-                message: "Stock insuficiente",
-                description:
-                  error.response.data.error ||
-                  "No hay suficiente stock para agregar este artículo.",
-              });
-            } else {
-              message.error(
-                "Error al agregar el artículo: " + error.response.data.error
-              );
-            }
-          } else {
-            message.error("Error de conexión con el servidor");
-          }
-          console.error("Error al agregar el artículo:", error);
+          console.error("Error al agregar artículos:", error);
+          message.error("Error al agregar los artículos a la venta");
         }
       },
     });
   };
+
   const handleGeneratePDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
 
@@ -376,9 +416,9 @@ const VentaDetalles = () => {
     });
   };
 
-  const updatePrice = async () => {
+  const updatePrice = () => {
     confirm({
-      title: "Confirmar cambio de precio",
+      title: "Confirmar cambio",
       icon: <ExclamationCircleOutlined />,
       content: "¿Está seguro de realizar este cambio?",
       okText: "Sí",
@@ -389,23 +429,18 @@ const VentaDetalles = () => {
             ID: detalleVenta.id,
             new_precio_monotributista: precio,
             cantidad,
+            aumento_porcentaje: modoEdicion === "porcentaje" ? aumento : null,
+            modoEdicion,
             venta_id: ventaInfo.venta_id,
           };
-          const response = await axios.put(
-            "http://localhost:3001/updateDetalleVenta",
-            payload
-          );
-          if (response.status === 200) {
-            message.success("Detalle actualizado correctamente");
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          } else {
-            message.error("Error al actualizar el detalle de venta");
-          }
-        } catch (error) {
-          console.error("Error al actualizar el detalle de venta:", error);
-          message.error("Error al actualizar el detalle de venta");
+
+          await axios.put("http://localhost:3001/updateDetalleVenta", payload);
+
+          message.success("Detalle actualizado correctamente");
+          setTimeout(() => window.location.reload(), 800);
+        } catch (err) {
+          console.error(err);
+          message.error("Error al actualizar detalle");
         }
       },
     });
@@ -490,6 +525,37 @@ const VentaDetalles = () => {
       ),
     },
   ];
+
+  const handleEditPrecio = (uniqueId, newPrice) => {
+    const updatedArticulos = venta.articulos.map((item) =>
+      item.uniqueId === uniqueId
+        ? { ...item, precio_monotributista: newPrice, price: newPrice }
+        : item
+    );
+    setVenta((prevVenta) => ({ ...prevVenta, articulos: updatedArticulos }));
+  };
+  const handleDeleteArticulo = (uniqueId) => {
+    setVenta((prev) => ({
+      ...prev,
+      articulos: prev.articulos.filter(
+        (articulo) => articulo.uniqueId !== uniqueId
+      ),
+    }));
+  };
+  const handleGiftChange = (uniqueId, isGift) => {
+    setVenta((prev) => ({
+      ...prev,
+      articulos: prev.articulos.map((articulo) =>
+        articulo.uniqueId === uniqueId
+          ? {
+              ...articulo,
+              isGift, // Actualiza simplemente el estado de "isGift"
+            }
+          : articulo
+      ),
+    }));
+  };
+
   return (
     <MenuLayout>
       <h1>Detalle de Venta {ventaInfo.nroVenta}</h1>
@@ -566,51 +632,132 @@ const VentaDetalles = () => {
         placement="right"
         onClose={() => setOpen(false)}
         open={open}
+        width={500}
       >
+        {/* Selector de artículo + cantidad */}
         <ArticulosInput
           value={articuloValue}
           onChangeArticulo={handleArticuloChange}
           onInputChange={setArticuloValue}
         />
+
         <InputNumber
           style={{ width: "70%", marginTop: 16 }}
           min={1}
           onChange={(value) => setCantidad(value)}
           placeholder="Cantidad"
+          value={cantidad}
         />
+
         <Button
-          onClick={handleAddArticulo}
+          onClick={handleAddArticuloToList}
           type="primary"
           block
           style={{ marginTop: 16, width: "70%" }}
         >
-          Agregar artículo
+          Agregar a la lista
+        </Button>
+
+        {/* Lista dinámica editable */}
+        <div style={{ marginTop: 24 }}>
+          <DynamicList
+            items={venta.articulos}
+            onDelete={handleDeleteArticulo}
+            onGiftChange={handleGiftChange}
+            onEdit={handleEditPrecio}
+          />
+        </div>
+
+        {/* Confirmar y mandar al backend */}
+        <Button
+          type="primary"
+          block
+          style={{ marginTop: 16 }}
+          onClick={handleConfirmArticulos}
+          disabled={venta.articulos.length === 0}
+        >
+          Confirmar artículos
         </Button>
       </Drawer>
+
+      {/* Drawer para editar precio y cantidad */}
       <Drawer
         title="Modificar Precio y Cantidad"
         placement="right"
         onClose={() => setOpenDrawer(false)}
         open={openDrawer}
+        width={350}
       >
-        <div style={{ marginBottom: "16px" }}>
-          <label>Precio:</label>
-          <InputNumber
-            style={{ width: "100%" }}
-            min={0}
-            value={precio}
-            onChange={(value) => setPrecio(value)}
+        {/* SWITCH ENTRE MODOS */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ marginRight: 8 }}>Aumento:</label>
+          <Switch
+            checkedChildren="MANUAL"
+            unCheckedChildren="PORCENTAJE"
+            checked={modoEdicion === "manual"}
+            onChange={(checked) => {
+              if (checked) {
+                setModoEdicion("manual");
+                setAumento(null); // limpiar % si cambia a manual
+                setPrecio(detalleVenta.precio_monotributista); // valor base
+              } else {
+                setModoEdicion("porcentaje");
+                setPrecio(detalleVenta.precio_monotributista);
+                setAumento(0); // reiniciar %
+              }
+            }}
           />
         </div>
+
+        {/* MODO MANUAL */}
+        {modoEdicion === "manual" && (
+          <div style={{ marginBottom: "16px" }}>
+            <label>Precio Manual:</label>
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0}
+              value={precio}
+              onChange={(value) => {
+                setAumento(null);
+                setPrecio(value);
+              }}
+            />
+          </div>
+        )}
+
+        {/* MODO POR PORCENTAJE */}
+        {modoEdicion === "porcentaje" && (
+          <div style={{ marginBottom: "16px" }}>
+            <label>Aumentar por %:</label>
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0} // no permitimos bajar
+              max={500}
+              value={aumento}
+              formatter={(value) => `${value}%`}
+              parser={(value) => value.replace("%", "")}
+              onChange={(value) => {
+                setAumento(value);
+
+                const base = Number(detalleVenta.precio_monotributista);
+                const nuevoPrecio = base * (1 + value / 100);
+                setPrecio(Number(nuevoPrecio.toFixed(2)));
+              }}
+            />
+          </div>
+        )}
+
+        {/* CANTIDAD */}
         <div style={{ marginBottom: "16px" }}>
           <label>Cantidad:</label>
           <InputNumber
             style={{ width: "100%" }}
-            min={0}
+            min={1}
             value={cantidad}
             onChange={(value) => setCantidad(value)}
           />
         </div>
+
         <Button type="primary" block onClick={updatePrice}>
           Confirmar
         </Button>

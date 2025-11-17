@@ -1,7 +1,7 @@
 module.exports = {
-  getAllNotasCreditoByClienteId: `
+  getAllNotascreditoByClienteId: `
     SELECT 
-    nc.id AS notaCredito_id,
+    nc.id AS notacredito_id,
     nc.nroNC,
     c.nombre AS cliente_nombre,
     c.apellido AS cliente_apellido, 
@@ -19,18 +19,18 @@ module.exports = {
     dnc.fecha AS detalle_fecha,
     dnc.precio,
     dnc.subTotal
-FROM notasCredito nc
+FROM notascredito nc
 JOIN cliente c ON nc.cliente_id = c.id
-JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
+JOIN detallenotacredito dnc ON nc.id = dnc.notacredito_id
 JOIN articulo a ON dnc.articulo_id = a.id
 JOIN linea l ON a.linea_id = l.id
 JOIN sublinea sl ON a.sublinea_id = sl.id
 WHERE nc.cliente_id = ?;
 `,
-  addNotaCredito: "INSERT INTO notasCredito (cliente_id) VALUES (?)",
+  addNotaCredito: "INSERT INTO notascredito (cliente_id) VALUES (?)",
   getDetallesNotaCredito: `SELECT 
     dnc.id, 
-    dnc.notaCredito_id, 
+    dnc.notacredito_id, 
     dnc.articulo_id, 
     a.nombre AS articulo_nombre,
     a.codigo_producto,
@@ -42,32 +42,32 @@ WHERE nc.cliente_id = ?;
     dnc.fecha, 
     dnc.precio, 
     dnc.subTotal
-FROM detallenotaCredito dnc
+FROM detallenotacredito dnc
 JOIN articulo a ON dnc.articulo_id = a.id
 JOIN linea l ON a.linea_id = l.id
-WHERE dnc.notaCredito_id = ?;`,
+WHERE dnc.notacredito_id = ?;`,
   addDetallesNotaCredito:
-    "INSERT INTO detalleNotaCredito (notaCredito_id, articulo_id, cantidad, precio) VALUES (?, ?, ?, ?)",
+    "INSERT INTO detallenotacredito (notacredito_id, articulo_id, cantidad, precio) VALUES (?, ?, ?, ?)",
   updateStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
-  dropNotaCredito: "DELETE FROM notasCredito WHERE id = ?",
+  dropNotaCredito: "DELETE FROM notascredito WHERE id = ?",
   dropDetallesNotaCredito:
-    "DELETE FROM detalleNotaCredito WHERE notaCredito_id = ?",
-  getNotasCreditoByZona: `SELECT 
+    "DELETE FROM detallenotacredito WHERE notacredito_id = ?",
+  getNotascreditoByZona: `SELECT 
     c.id AS cliente_id,
     c.nombre AS cliente_nombre,
     c.apellido AS cliente_apellido,
     c.farmacia AS cliente_farmacia,
     c.zona_id AS cliente_zona,
-    nc.id AS notaCredito_id,
+    nc.id AS notacredito_id,
     nc.nroNC,
     nc.fecha,
     COALESCE(SUM(dnc.subTotal), 0) AS total
 FROM 
-    notasCredito nc
+    notascredito nc
 JOIN 
     cliente c ON nc.cliente_id = c.id
 LEFT JOIN 
-    detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
+    detallenotacredito dnc ON nc.id = dnc.notacredito_id
 WHERE 
     c.zona_id = ?
     AND nc.estado = 1 
@@ -76,6 +76,6 @@ GROUP BY
 ORDER BY 
     total DESC;
     `,
-  updateNotaCredito: `UPDATE notasCredito SET fecha = ? WHERE id = ?`,
-  getNotaCreditoById: `SELECT * FROM notasCredito WHERE id = ?`,
+  updateNotaCredito: `UPDATE notascredito SET fecha = ? WHERE id = ?`,
+  getNotaCreditoById: `SELECT * FROM notascredito WHERE id = ?`,
 };

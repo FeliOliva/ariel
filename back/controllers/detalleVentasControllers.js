@@ -13,17 +13,28 @@ const getDetalleVentaById = async (req, res) => {
 
 const updateDetalleVenta = async (req, res) => {
   try {
-    const { ID, new_precio_monotributista, cantidad, venta_id } = req.body;
-    const sub_total = new_precio_monotributista * cantidad;
-    // Actualizamos el precio del detalle
-    await detalleVentaModel.updateDetalleVenta(
+    const {
       ID,
       new_precio_monotributista,
       cantidad,
-      sub_total
+      aumento_porcentaje,
+      modoEdicion,
+      venta_id,
+    } = req.body;
+
+    const precioFinal = Number(new_precio_monotributista);
+    const cantidadNum = Number(cantidad);
+    const sub_total = precioFinal * cantidadNum;
+
+    await detalleVentaModel.updateDetalleVenta(
+      ID,
+      precioFinal,
+      cantidadNum,
+      sub_total,
+      aumento_porcentaje,
+      modoEdicion
     );
 
-    // Continuamos con el siguiente paso (recalcular el total)
     await recalcularTotales(venta_id);
 
     res.status(200).json({
@@ -35,6 +46,7 @@ const updateDetalleVenta = async (req, res) => {
     res.status(500).json({ error: "Error al actualizar el detalle de venta" });
   }
 };
+
 const recalcularTotales = async (venta_id) => {
   try {
     // Obtener todos los detalles de la venta
@@ -65,7 +77,6 @@ const recalcularTotales = async (venta_id) => {
     throw err;
   }
 };
-
 
 module.exports = {
   getDetalleVentaById,

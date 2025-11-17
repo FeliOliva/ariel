@@ -10,14 +10,53 @@ const getDetalleVentaById = async (ID) => {
     throw err;
   }
 };
-const updateDetalleVenta = async (ID, new_precio_monotributista, cantidad, sub_total) => {
+const updateDetalleVenta = async (
+  ID,
+  new_precio,
+  cantidad,
+  sub_total,
+  aumento_porcentaje,
+  modoEdicion
+) => {
   try {
-    const query = queriesDetalleVenta.updateDetalleVenta;
-    await db.query(query, [new_precio_monotributista, cantidad, sub_total, ID]);
+    // Buscar precio base del artículo
+    const [row] = await db.query(
+      `
+      SELECT a.precio_monotributista AS precio_base
+      FROM detalle_venta dv
+      JOIN articulo a ON dv.articulo_id = a.id
+      WHERE dv.id = ?
+      `,
+      [ID]
+    );
+
+    const precioBase = Number(row[0].precio_base);
+    let aumentoFinal = 0;
+
+    if (modoEdicion === "porcentaje" && aumento_porcentaje !== null) {
+      aumentoFinal = Number(aumento_porcentaje);
+    } else {
+      // modo manual: calcular aumento solo si realmente subió
+      if (new_precio >= precioBase && precioBase > 0) {
+        aumentoFinal = ((new_precio - precioBase) / precioBase) * 100;
+      }
+    }
+
+    const query = `
+      UPDATE detalle_venta
+      SET precio_monotributista = ?, 
+          cantidad = ?, 
+          sub_total = ?, 
+          aumento_porcentaje = ?
+      WHERE id = ?
+    `;
+
+    await db.query(query, [new_precio, cantidad, sub_total, aumentoFinal, ID]);
   } catch (err) {
     throw err;
   }
 };
+
 const getDetalleVenta = async (venta_id) => {
   try {
     const query = queriesDetalleVenta.getDetalleVenta;

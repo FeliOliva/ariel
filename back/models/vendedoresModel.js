@@ -5,7 +5,7 @@ const getAllVendedores = async () => {
     const [rows] = await db.query("SELECT * FROM vendedores");
     return rows;
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };
 const addVendedor = async (nombre) => {

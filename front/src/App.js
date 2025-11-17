@@ -9,8 +9,8 @@ import Linea from "./Routes/Linea";
 import SubLinea from "./Routes/SubLinea";
 import Proveedor from "./Routes/Proveedor";
 import Zonas from "./Routes/Zonas";
-import Ofertas from "./Routes/Ofertas";
-import OfertasDetalles from "./Routes/OfertasDetalles";
+// import Ofertas from "./Routes/Ofertas";
+// import OfertasDetalles from "./Routes/OfertasDetalles";
 import Compras from "./Routes/Compras";
 import CompraDetalles from "./Routes/CompraDetalles";
 import ResumenCuenta from "./Routes/ResumenCuenta";
@@ -23,6 +23,8 @@ import Pedido from "./Routes/Pedido";
 import PedidoDetalles from "./Routes/PedidoDetalles";
 import EstadisticasDashboard from "./Routes/EstadisticasDashboard";
 import ResumenPagosPorVendedor from "./Routes/ResumenPagosPorVendedor";
+import ResumenVentasPorFecha from "./Routes/VentasPorFechas";
+
 function App() {
   return (
     <Routes>
@@ -36,8 +38,8 @@ function App() {
       <Route path="/linea/:id" element={<SubLinea />} />
       <Route path="/proveedor" element={<Proveedor />} />
       <Route path="/zonas" element={<Zonas />} />
-      <Route path="/ofertas" element={<Ofertas />} />
-      <Route path="/ofertas/:id" element={<OfertasDetalles />} />
+      {/* <Route path="/ofertas" element={<Ofertas />} />
+      <Route path="/ofertas/:id" element={<OfertasDetalles />} /> */}
       <Route path="/compras" element={<Compras />} />
       <Route path="/compras/:id" element={<CompraDetalles />} />
       <Route path="/ResumenCuenta" element={<ResumenCuenta />} />
@@ -52,6 +54,7 @@ function App() {
         path="/ResumenCuentaXVendedor"
         element={<ResumenPagosPorVendedor />}
       />
+      <Route path="/ventasPorFechas" element={<ResumenVentasPorFecha />} />
     </Routes>
   );
 }

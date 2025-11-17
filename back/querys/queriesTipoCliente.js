@@ -1,8 +1,8 @@
 module.exports = {
-  getAllTipoCliente: `SELECT * FROM Tipo_Cliente;`,
-  addTipoCliente: `INSERT INTO Tipo_Cliente (nombre) VALUES (?);`,
-  dropTipoCliente: `UPDATE Tipo_Cliente SET estado = 0 WHERE ID = ?`,
-  upTipoCliente: `UPDATE Tipo_Cliente SET estado = 1 WHERE ID = ?`,
-  updateTipoCliente: `UPDATE Tipo_Cliente SET nombre = ?  WHERE ID = ?`,
-  getTipoClienteByID: `SELECT * FROM Tipo_Cliente WHERE ID = ?;`,
+  getAllTipoCliente: `SELECT * FROM tipo_cliente;`,
+  addTipoCliente: `INSERT INTO tipo_cliente (nombre) VALUES (?);`,
+  dropTipoCliente: `UPDATE tipo_cliente SET estado = 0 WHERE ID = ?`,
+  upTipoCliente: `UPDATE tipo_cliente SET estado = 1 WHERE ID = ?`,
+  updateTipoCliente: `UPDATE tipo_cliente SET nombre = ?  WHERE ID = ?`,
+  getTipoClienteByID: `SELECT * FROM tipo_cliente WHERE ID = ?;`,
 };

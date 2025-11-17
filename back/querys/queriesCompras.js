@@ -1,17 +1,17 @@
 module.exports = {
   getAllCompras: `SELECT 
-  Compra.id,
-  Compra.proveedor_id,
-  Proveedor.nombre AS proveedor_nombre,
-  Compra.nro_compra,
-  Compra.total,
-  Compra.fecha_compra, 
-  Compra.estado
+  compra.id,
+  compra.proveedor_id,
+  proveedor.nombre AS proveedor_nombre,
+  compra.nro_compra,
+  compra.total,
+  compra.fecha_compra, 
+  compra.estado
 FROM 
-  Compra
+  compra
 INNER JOIN 
-  Proveedor ON Compra.proveedor_id = Proveedor.id
-ORDER BY Compra.id DESC;
+  proveedor ON compra.proveedor_id = proveedor.id
+ORDER BY compra.id DESC;
 `,
   addCompra: `INSERT INTO Compra (proveedor_id, nro_compra, total) VALUES (?, ?, ?);`,
   getCompraByID: `

@@ -224,13 +224,21 @@ function Ventas() {
   };
 
   const handleDeleteArticulo = (uniqueId) => {
-    setVenta((prev) => ({
-      ...prev,
-      articulos: prev.articulos.filter(
+    setVenta((prev) => {
+      const nuevosArticulos = prev.articulos.filter(
         (articulo) => articulo.uniqueId !== uniqueId
-      ),
-    }));
+      );
+
+      // actualizar localStorage
+      localStorage.setItem("articulosVenta", JSON.stringify(nuevosArticulos));
+
+      return {
+        ...prev,
+        articulos: nuevosArticulos,
+      };
+    });
   };
+
   const handleGiftChange = (uniqueId, isGift) => {
     setVenta((prev) => ({
       ...prev,
@@ -445,6 +453,9 @@ function Ventas() {
   // };
   const handleGoToCheques = () => {
     navigate("/cheques");
+  };
+  const handleGoToFechasPorVentas = () => {
+    navigate("/ventasPorFechas");
   };
   const handleEditPrecio = (uniqueId, newPrice) => {
     const updatedArticulos = venta.articulos.map((item) =>
@@ -746,6 +757,13 @@ function Ventas() {
         style={{ marginLeft: 10 }}
       >
         Ver Cheques
+      </Button>
+      <Button
+        type="primary"
+        onClick={handleGoToFechasPorVentas}
+        style={{ marginLeft: 10 }}
+      >
+        Ventas por Fecha
       </Button>
       <div style={{ display: "flex", gap: "10px", marginBottom: 10 }}>
         <Select

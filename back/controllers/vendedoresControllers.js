@@ -68,7 +68,6 @@ const getPagosPorVendedor = async (req, res) => {
     if (!pagos || pagos.length === 0) {
       return res.json([]);
     }
-    console.log("pagos back", pagos);
     res.json(pagos);
   } catch (error) {
     console.error("Error al obtener los pagos por vendedor:", error);

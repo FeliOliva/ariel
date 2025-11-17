@@ -253,9 +253,9 @@ LEFT JOIN (
 ) AS pagos ON z.id = pagos.zona_id
 LEFT JOIN (
     SELECT c.zona_id, SUM(dnc.subTotal) AS total_notas_credito
-    FROM notasCredito nc
+    FROM notascredito nc
     JOIN cliente c ON nc.cliente_id = c.id
-    LEFT JOIN detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
+    LEFT JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
     WHERE nc.estado = 1
     GROUP BY c.zona_id
 ) AS notas_credito ON z.id = notas_credito.zona_id
@@ -295,7 +295,13 @@ const getArticuloById = async (articulo_id) => {
   }
 };
 
-const editarVenta = async (ventaId, articulo_id, cantidad) => {
+const editarVenta = async (
+  ventaId,
+  articulo_id,
+  cantidad,
+  precio_monotributista, // viene del front
+  isGift = false
+) => {
   try {
     // 1. Obtener líneas controladas
     const lineas = await getLineasStock();
@@ -322,24 +328,53 @@ const editarVenta = async (ventaId, articulo_id, cantidad) => {
       throw new Error("Venta no encontrada");
     }
 
-    // 4. Insertar nuevo detalle
-    const subTotal = articulo.precio_monotributista * cantidad;
+    // 4. Precio base y precio final
+    const precioBaseArticulo = Number(articulo.precio_monotributista) || 0;
+
+    // 👉 FORZAMOS a usar SIEMPRE el precio que viene del front
+    const precioFinalCrudo =
+      precio_monotributista !== null && precio_monotributista !== undefined
+        ? Number(precio_monotributista)
+        : precioBaseArticulo;
+
+    if (isNaN(precioFinalCrudo)) {
+      throw new Error("Precio final inválido");
+    }
+
+    const precioFinal = precioFinalCrudo;
+
+    // 5. Subtotal (si es regalo, sub_total = 0)
+    const subTotal = isGift ? 0 : precioFinal * cantidad;
+
+    if (
+      !isGift &&
+      precioBaseArticulo > 0 &&
+      precioFinal > 0 &&
+      precioFinal >= precioBaseArticulo
+    )
+      console.log({
+        articulo_id,
+        precioBaseArticulo,
+        precioFinal,
+        cantidad,
+        subTotal,
+      });
+
     const insertDetalleQuery = `
       INSERT INTO detalle_venta 
-      (articulo_id, venta_id, costo, cantidad, precio_monotributista, fecha, sub_total, aumento_porcentaje)
-      VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)
+      (articulo_id, venta_id, costo, cantidad, precio_monotributista, fecha, sub_total)
+      VALUES (?, ?, ?, ?, ?, NOW(), ?)
     `;
     await db.query(insertDetalleQuery, [
       articulo_id,
       ventaId,
       articulo.costo ?? 0,
       cantidad,
-      articulo.precio_monotributista,
+      precioFinal, // 👈 acá usamos SIEMPRE el del front
       subTotal,
-      articulo.aumento_porcentaje ?? 0,
     ]);
 
-    // 5. Recalcular totales de la venta
+    // 7. Recalcular totales de la venta
     const [detalles] = await db.query(
       "SELECT sub_total FROM detalle_venta WHERE venta_id = ?",
       [ventaId]
@@ -348,8 +383,7 @@ const editarVenta = async (ventaId, articulo_id, cantidad) => {
 
     const totalConDescuento =
       total - total * (Number(venta[0].descuento) / 100);
-    console.log("totalConDescuento", totalConDescuento);
-    // 6. Actualizar venta
+
     const updateVentaQuery = `
       UPDATE venta 
       SET total = ?, total_con_descuento = ?
@@ -357,15 +391,15 @@ const editarVenta = async (ventaId, articulo_id, cantidad) => {
     `;
     await db.query(updateVentaQuery, [total, totalConDescuento, ventaId]);
 
-    // 7. Descontar stock si corresponde
+    // 8. Descontar stock si corresponde
     if (controlaStock) {
       await descontarStock(articulo_id, cantidad);
     }
 
-    // 8. Log
+    // 9. Log
     await updateLogVenta(ventaId, articulo_id, cantidad);
 
-    // 9. Devolver la venta actualizada
+    // 10. Devolver la venta actualizada
     const ventaFinal = await getVentaByID(ventaId);
     const [detallesFinal] = await db.query(
       "SELECT * FROM detalle_venta WHERE venta_id = ?",
@@ -455,7 +489,15 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
     throw err;
   }
 };
-
+const getVentasPorFecha = async (fecha_inicio, fecha_fin) => {
+  try {
+    const query = queriesVentas.getVentasPorFecha;
+    const [rows] = await db.query(query, [fecha_inicio, fecha_fin]);
+    return rows;
+  } catch (err) {
+    throw err;
+  }
+};
 module.exports = {
   getAllVentas,
   addVenta,
@@ -477,4 +519,5 @@ module.exports = {
   getResumenCliente,
   editarVenta,
   eliminarDetalleVenta,
+  getVentasPorFecha,
 };

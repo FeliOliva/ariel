@@ -36,7 +36,7 @@ ORDER BY
     `,
   addVenta: `INSERT INTO venta (cliente_id, nroVenta, zona_id, descuento) VALUES (?, ?, ?, ?);`,
   addDetalleVenta: `INSERT INTO detalle_venta (venta_id, articulo_id, costo, cantidad, precio_monotributista,sub_total, aumento_porcentaje) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-  updateVentas: `UPDATE Venta SET fecha_venta = ?, total_con_descuento = ?, descuento = ? WHERE ID = ?;`,
+  updateVentas: `UPDATE venta SET fecha_venta = ?, total_con_descuento = ?, descuento = ? WHERE ID = ?;`,
   getVentasByClientes: `SELECT 
     v.id, 
     v.estado, 
@@ -83,10 +83,10 @@ ORDER BY
     total_ventas DESC;
 `,
   getVentasByProducto: `SELECT v.ID, p.nombre AS nombre_producto, c.nombre AS nombre_cliente, z.zona AS nombre_zona, v.cantidad AS cantidad, v.estado AS estado
-  FROM Ventas v
-  JOIN Producto p ON v.producto_id = p.ID
-  JOIN Cliente c ON v.cliente_id = c.ID
-  JOIN Zona z ON v.zona_id = z.ID
+  FROM ventas v
+  JOIN producto p ON v.producto_id = p.ID
+  JOIN cliente c ON v.cliente_id = c.ID
+  JOIN zona z ON v.zona_id = z.ID
   WHERE p.ID = ?;`,
   getVentaByID: `
  SELECT 
@@ -134,13 +134,6 @@ WHERE dv.venta_id = ?;
   updateLogVenta:
     "INSERT INTO stock_log(cliente_id, articulo_id, cantidad, fecha) VALUES (?, ?, ?, NOW())",
   getTotal: `select total, cliente_id from venta where id = ?`,
-  addCuentaCorriente: `INSERT INTO cuenta_corriente (cliente_id, saldo_total, fecha_ultima_actualizacion,venta_id) VALUES (?, ?, NOW(), ?)`,
-  getCuentaCorrienteByClienteId: `SELECT * FROM cuenta_corriente WHERE cliente_id = ?`,
-  updateCuentaCorriente: `UPDATE cuenta_corriente SET saldo_total = ? WHERE cliente_id = ?`,
-  addPagoCuentaCorriente: `INSERT INTO pagos_cuenta_corriente (cliente_id, monto_total, fecha_pago) VALUES (?, ?, NOW())`,
-  getPagoCuentaCorrienteByClienteId: `SELECT * FROM pagos_cuenta_corriente WHERE cliente_id = ?`,
-  updatePagoCuentaCorriente: `UPDATE pagos_cuenta_corriente SET monto_total = ? WHERE cliente_id = ?`,
-  getSaldoTotalCuentaCorriente: `SELECT SUM(saldo_total) as saldo_acumulado FROM cuenta_corriente WHERE cliente_id = ?`,
   updateVentaTotal: `UPDATE venta SET total = ?, total_con_descuento = ? WHERE id = ?`,
   getResumenCliente: `SELECT 
     'Venta' AS tipo,
@@ -149,7 +142,7 @@ WHERE dv.venta_id = ?;
     v.cliente_id, 
     v.nroVenta AS numero, 
     v.fecha_venta AS fecha, 
-    FORMAT(v.total_con_descuento, 0, 'de_DE') AS total_con_descuento, 
+    FORMAT(v.total_con_descuento, 2, 'de_DE') AS total_con_descuento, 
     NULL AS monto, 
     NULL AS metodo_pago,
     NULL AS vendedor_id,
@@ -168,7 +161,7 @@ SELECT
     p.nro_pago AS numero, 
     p.fecha_pago AS fecha, 
     NULL AS total_con_descuento, 
-    FORMAT(p.monto, 0, 'de_DE') AS monto, 
+    FORMAT(p.monto, 2, 'de_DE') AS monto, 
     p.metodo_pago,
     vend.id AS vendedor_id,
     vend.nombre AS vendedor_nombre
@@ -186,13 +179,13 @@ SELECT
     nc.cliente_id, 
     nc.nroNC AS numero, 
     nc.fecha, 
-    FORMAT(SUM(dnc.subtotal), 0, 'de_DE') AS total_con_descuento, 
+    FORMAT(SUM(dnc.subTotal), 2, 'de_DE') AS total_con_descuento, 
     NULL AS monto, 
     NULL AS metodo_pago,
     NULL AS vendedor_id,
     NULL AS vendedor_nombre
-FROM notasCredito nc
-JOIN detalleNotaCredito dnc ON nc.id = dnc.notaCredito_id
+FROM notascredito nc
+JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
 WHERE nc.cliente_id = ? 
 AND nc.fecha BETWEEN ? AND ?
 GROUP BY nc.id, nc.estado, nc.cliente_id, nc.nroNC, nc.fecha
@@ -232,4 +225,40 @@ ORDER BY fecha;
   devolverStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
   dropDetallesVenta: `DELETE FROM detalle_venta WHERE venta_id = ?;`,
   dropVenta: `DELETE FROM venta WHERE id = ?;`,
+  getVentasPorFecha: `SELECT 
+    v.id,
+    v.estado,
+    c.nombre AS nombre_cliente,
+    c.apellido AS apellido_cliente,
+    c.farmacia,
+    v.nroVenta,
+    z.nombre AS nombre_zona,
+    v.descuento,
+    v.total_con_descuento,
+    v.total,
+    v.fecha_venta,
+    COALESCE(SUM(d.costo * d.cantidad), 0) AS total_costo
+FROM 
+    venta v
+INNER JOIN 
+    cliente c ON v.cliente_id = c.id
+INNER JOIN
+    zona z ON v.zona_id = z.id
+LEFT JOIN 
+    detalle_venta d ON v.id = d.venta_id
+WHERE 
+    DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?)
+GROUP BY
+    v.id, 
+    v.estado, 
+    c.nombre,
+    c.apellido, 
+    v.nroVenta, 
+    z.nombre,
+    v.descuento, 
+    v.total_con_descuento,
+    v.total,
+    v.fecha_venta
+ORDER BY 
+    v.id DESC;`,
 };

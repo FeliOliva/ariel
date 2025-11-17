@@ -17,8 +17,6 @@ router.get(
 router.get("/resumenCliente/:ID", ventaControllers.getResumenCliente);
 router.get("/resumenZonas", ventaControllers.getResumenZonas);
 router.post("/editarVenta", ventaControllers.editarVenta);
-router.delete(
-  "/eliminarDetalleVenta",
-  ventaControllers.eliminarDetalleVenta
-);
+router.delete("/eliminarDetalleVenta", ventaControllers.eliminarDetalleVenta);
+router.get("/getVentasPorFecha", ventaControllers.getVentasPorFecha);
 module.exports = router;

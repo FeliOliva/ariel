@@ -1,35 +1,25 @@
 import React, { useState } from "react";
 import { Table, Button, Space, message, DatePicker } from "antd";
 import axios from "axios";
-import VendedoresInput from "../components/VendedoresInput";
 import MenuLayout from "../components/MenuLayout";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import dayjs from "dayjs";
 import "../style/style.css";
-import {
-  customHeaderStyles,
-  customCellsStyles,
-} from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import CustomPagination from "../components/CustomPagination";
 
 const { RangePicker } = DatePicker;
 
-export default function ResumenPagosPorVendedor() {
-  const [vendedorSeleccionado, setVendedorSeleccionado] = useState(null);
+export default function ResumenVentasPorFecha() {
   const [rangoFechas, setRangoFechas] = useState([]);
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
-  const handleVendedorChange = (id, option) => {
-    console.log("id", id, "option", option);
-    setVendedorSeleccionado({ id, nombre: option.label });
-  };
+
   const parseMonto = (valor) => {
     if (valor === null || valor === undefined || valor === "") return 0;
 
-    // Si viene como string "1.234,56"
     if (typeof valor === "string") {
       if (valor.includes(",")) {
         const normalizado = valor.replace(/\./g, "").replace(",", ".");
@@ -38,7 +28,6 @@ export default function ResumenPagosPorVendedor() {
       return parseFloat(valor);
     }
 
-    // Si ya es number
     return Number(valor);
   };
 
@@ -53,33 +42,33 @@ export default function ResumenPagosPorVendedor() {
   };
 
   const fetchData = async () => {
-    if (!vendedorSeleccionado || rangoFechas.length !== 2) {
-      message.warning("Por favor selecciona un vendedor y un rango de fechas.");
+    if (rangoFechas.length !== 2) {
+      message.warning("Por favor selecciona un rango de fechas.");
       return;
     }
 
     const [fechaInicio, fechaFin] = rangoFechas;
     setLoading(true);
-
     try {
       const response = await axios.get(
-        `http://localhost:3001/pagosPorVendedor`,
+        `http://localhost:3001/getVentasPorFecha`,
         {
           params: {
-            vendedor_id: vendedorSeleccionado.id,
             fecha_inicio: fechaInicio,
             fecha_fin: fechaFin,
           },
         }
       );
+      console.log("data", response.data);
       const datosOrdenados = response.data.sort(
-        (a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago)
+        (a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta)
       );
+
       setDatos(datosOrdenados);
       setCurrentPage(1);
     } catch (error) {
       console.error("Error al obtener datos:", error);
-      message.error("Hubo un error al cargar los pagos.");
+      message.error("Hubo un error al cargar las ventas.");
     } finally {
       setLoading(false);
     }
@@ -88,35 +77,38 @@ export default function ResumenPagosPorVendedor() {
   const columns = [
     {
       title: "Fecha",
-      dataIndex: "fecha_pago",
-      key: "fecha_pago",
+      dataIndex: "fecha_venta",
+      key: "fecha_venta",
       render: (text) => (text ? dayjs(text).format("DD-MM-YYYY") : ""),
     },
     {
-      title: "Monto",
-      dataIndex: "monto",
-      key: "monto",
-      render: (text) => (text ? `$${formatMonto(text)}` : ""),
+      title: "Número de Venta",
+      dataIndex: "nroVenta",
+      key: "nroVenta",
+      render: (text) => text || "",
     },
     {
-      title: "Método de Pago",
-      dataIndex: "metodo_pago",
-      key: "metodo_pago",
+      title: "Total",
+      dataIndex: "total_con_descuento",
+      key: "total_con_descuento",
+      render: (text) => (text ? `$${formatMonto(text)}` : ""),
     },
     {
       title: "Cliente",
       key: "cliente",
       render: (record) =>
-        `${record.cliente_farmacia} - ${record.cliente_nombre} ${record.cliente_apellido}`,
+        `${record.farmacia || ""} - ${record.nombre_cliente || ""} ${
+          record.apellido_cliente || ""
+        }`,
     },
   ];
 
-  // Generar PDF
+  // PDF de ventas
   const handlePrint = () => {
     const doc = new jsPDF();
 
     doc.setFontSize(18);
-    doc.text(`Pagos de ${vendedorSeleccionado?.nombre || ""}`, 14, 20);
+    doc.text(`Ventas`, 14, 20);
 
     const rangoInfo =
       rangoFechas.length === 2
@@ -126,38 +118,51 @@ export default function ResumenPagosPorVendedor() {
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
     const tableData = datos
-      .filter((d) => d.pago_id !== null) // excluye la fila TOTAL en detalle
+      .filter((d) => d.farmacia !== "TOTAL")
       .map((d) => [
-        d.fecha_pago ? dayjs(d.fecha_pago).format("DD-MM-YYYY") : "",
-        `$${formatMonto(d.monto)}`,
-        d.metodo_pago,
-        `${d.cliente_farmacia} - ${d.cliente_nombre} ${d.cliente_apellido}`,
+        d.fecha_venta ? dayjs(d.fecha_venta).format("DD-MM-YYYY") : "",
+        d.nroVenta || "",
+        `$${formatMonto(d.total_con_descuento)}`,
+        `${d.farmacia || ""} - ${d.nombre_cliente || ""} ${
+          d.apellido_cliente || ""
+        }`,
       ]);
 
     doc.autoTable({
       startY: 45,
-      head: [["Fecha", "Monto", "Método", "Cliente"]],
+      head: [["Fecha", "Nro Venta", "Monto", "Cliente"]],
       body: tableData,
     });
 
     let finalY = doc.lastAutoTable.finalY + 10;
-    const totalRow = datos.find((d) => d.cliente_farmacia === "TOTAL");
+    const totalRow = datos.find((d) => d.farmacia === "TOTAL");
 
     if (totalRow) {
       doc.setFontSize(12);
-      doc.text(`TOTAL PAGOS: $${formatMonto(totalRow.monto)}`, 14, finalY);
+      doc.text(
+        `TOTAL VENTAS: $${formatMonto(totalRow.total_con_descuento)}`,
+        14,
+        finalY
+      );
     }
 
-    doc.save("resumen_pagos_vendedor.pdf");
+    doc.save("resumen_ventas.pdf");
   };
 
-  const totalPagos = datos.find((d) => d.cliente_farmacia === "TOTAL");
+  const totalVentas = datos.find((d) => d.farmacia === "TOTAL");
+
+  // Paginación manual para poder usar tu CustomPagination
+  const ventasSinTotal = datos.filter((d) => d.farmacia !== "TOTAL");
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedData = ventasSinTotal.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   return (
     <MenuLayout>
       <div>
-        <h2>Resumen de Pagos por Vendedor</h2>
-        <VendedoresInput onChange={handleVendedorChange} />
+        <h2>Resumen de Ventas por Rango de Fechas</h2>
         <Space style={{ margin: "20px 0" }}>
           <RangePicker
             onChange={(dates, dateStrings) => setRangoFechas(dateStrings)}
@@ -178,33 +183,27 @@ export default function ResumenPagosPorVendedor() {
         </Space>
 
         <Table
-          dataSource={datos.filter((d) => d.cliente_farmacia !== "TOTAL")}
+          dataSource={paginatedData}
           columns={columns}
-          rowKey={(record) => record.pago_id}
+          rowKey={(record) =>
+            record.venta_id || `${record.nroVenta}-${record.fecha_venta}`
+          }
           loading={loading}
-          pagination={true}
-          paginationComponent={CustomPagination}
+          pagination={false} // 👈 usamos CustomPagination, no el de AntD
           bordered
           style={{ backgroundColor: "#f9f9f9" }}
-          customStyles={{
-            rows: {
-              style: {
-                fontSize: "12px", // Reducir aún más el tamaño del texto
-                padding: "0px 0px", // Reducir padding al mínimo
-              },
-            },
-            headCells: {
-              style: customHeaderStyles,
-            },
-            cells: {
-              style: customCellsStyles,
-            },
-          }}
         />
 
-        {totalPagos && (
+        <CustomPagination
+          rowsPerPage={rowsPerPage}
+          rowCount={ventasSinTotal.length}
+          currentPage={currentPage}
+          onChangePage={setCurrentPage}
+        />
+
+        {totalVentas && (
           <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
-            <p>Total Pagos: ${formatMonto(totalPagos.monto)}</p>
+            <p>Total Ventas: ${formatMonto(totalVentas.monto)}</p>
           </div>
         )}
       </div>

@@ -311,20 +311,34 @@ const getResumenZonas = async (req, res) => {
 
 const editarVenta = async (req, res) => {
   try {
-    const { venta_id, articulo_id, cantidad } = req.body;
+    const { venta_id, articulo_id, cantidad, precio_monotributista, isGift } =
+      req.body;
+
     console.log("Datos recibidos para editar la venta:", req.body);
 
-    // Validar que se recibieron los datos necesarios
     if (!venta_id || !articulo_id || !cantidad) {
       return res
         .status(400)
         .json({ error: "Datos incompletos para editar la venta" });
     }
 
+    // normalizamos cantidad y precio a números (por si vienen como string)
+    const cantidadNum = Number(cantidad);
+    const precioNum =
+      precio_monotributista !== undefined && precio_monotributista !== null
+        ? Number(precio_monotributista)
+        : null;
+
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      return res.status(400).json({ error: "Cantidad inválida" });
+    }
+
     const result = await ventasModel.editarVenta(
       venta_id,
       articulo_id,
-      cantidad
+      cantidadNum,
+      precioNum,
+      Boolean(isGift)
     );
 
     res.status(200).json({
@@ -362,6 +376,21 @@ const eliminarDetalleVenta = async (req, res) => {
     res.status(status).json({ error: error.message || "Error interno" });
   }
 };
+const getVentasPorFecha = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = req.query;
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
+      });
+    }
+    const ventas = await ventasModel.getVentasPorFecha(fecha_inicio, fecha_fin);
+    res.json(ventas);
+  } catch (error) {
+    console.error("Error al obtener las ventas por fecha:", error);
+    res.status(500).json({ error: "Error al obtener las ventas por fecha" });
+  }
+};
 
 module.exports = {
   getAllVentas,
@@ -377,4 +406,5 @@ module.exports = {
   getResumenCliente,
   editarVenta,
   eliminarDetalleVenta,
+  getVentasPorFecha,
 };

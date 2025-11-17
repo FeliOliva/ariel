@@ -36,11 +36,6 @@ const addDetallesNotaCredito = async (
   precio
 ) => {
   try {
-    console.log("detalles");
-    console.log("notaCreditoId", notaCreditoId);
-    console.log("articulo_id", articulo_id);
-    console.log("cantidad", cantidad);
-    console.log("precio", precio);
     const query = queriesNotasCredito.addDetallesNotaCredito;
     await db.query(query, [notaCreditoId, articulo_id, cantidad, precio]);
   } catch (err) {
@@ -77,7 +72,6 @@ const getNotasCreditoByZona = async (zona_id) => {
 const updateNotaCredito = async (fecha, ID) => {
   try {
     const query = queriesNotasCredito.updateNotaCredito;
-    console.log("fecha", fecha)
     const [day, month, year] = fecha.split("/");
     const formattedFechaNC = `${year}-${month}-${day} 00:00:00`;
     await db.query(query, [formattedFechaNC, ID]);
