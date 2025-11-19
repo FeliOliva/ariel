@@ -49,7 +49,7 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
       options={options}
       optionFilterProp="label"
       onChange={handleChangeCliente}
-      style={{ width: "30%" }}
+      style={{ width: "50%" }}
     />
   );
 };

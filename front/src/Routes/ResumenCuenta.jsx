@@ -99,18 +99,16 @@ const ResumenCuenta = () => {
         { params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin } }
       );
 
-      console.log(response.data);
       let saldoAcumulado = 0; // Saldo inicial
 
       const filteredData = response.data
         .map((item, index) => ({
           ...item,
           tipoPlano: typeof item.tipo === "string" ? item.tipo : "",
-          uniqueKey: `${item.tipo}-${item.id}-${index}`, // Clave única combinada
+          uniqueKey: `${item.tipo}-${item.id}-${index}`,
         }))
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // Ordenamos por fecha ascendente
+        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
         .map((item) => {
-          // Convertimos el monto correctamente
           let monto = 0;
 
           if (item.total_con_descuento) {
@@ -121,10 +119,16 @@ const ResumenCuenta = () => {
 
           // Calculamos el saldo acumulado
           if (item.tipo === "Venta") {
-            saldoAcumulado += monto; // Aumenta saldo con una venta
+            saldoAcumulado += monto;
           } else if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
-            saldoAcumulado -= monto; // Resta saldo con un pago o nota de crédito
+            saldoAcumulado -= monto;
           }
+
+          // 🔹 si el saldo es muy chico (entre -1 y 1), lo forzamos a 0
+          if (Math.abs(saldoAcumulado) < 1) {
+            saldoAcumulado = 0;
+          }
+
           const totalNumerico = item.total_con_descuento
             ? parseMonto(item.total_con_descuento)
             : 0;
@@ -145,6 +149,7 @@ const ResumenCuenta = () => {
       message.error("No se pudo cargar la información del cliente");
     }
   };
+
   useEffect(() => {
     const inicio = dayjs("2025-01-01").format("YYYY-MM-DD");
     const fin = dayjs().format("YYYY-MM-DD");
@@ -990,7 +995,14 @@ const ResumenCuenta = () => {
                 fontWeight: "bold",
               }}
             >
-              Saldo Restante: ${formatMonto(saldoRestante)}{" "}
+              {(() => {
+                const mostrado =
+                  Math.abs(saldoRestante) < 1 ? 0 : saldoRestante;
+                return `Saldo Restante: $${mostrado.toLocaleString("es-AR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`;
+              })()}
             </h2>
           </>
         )}

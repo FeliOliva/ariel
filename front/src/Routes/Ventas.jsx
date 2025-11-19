@@ -63,6 +63,41 @@ function Ventas() {
   const [filteredData, setFilteredData] = useState([]);
   const [modoDescuento, setModoDescuento] = useState(true);
 
+  useEffect(() => {
+    let totalBase = 0;
+
+    // 1) Sumar artículos (ignorando regalos)
+    venta.articulos.forEach((art) => {
+      if (art.isGift) return; // ❌ No se suma al total
+
+      const cantidad = Number(art.quantity || 0);
+      const precio = Number(art.price ?? art.precio_monotributista ?? 0);
+
+      totalBase += cantidad * precio;
+    });
+
+    // 2) Aplicar descuento o aumento
+    const porcentaje = Number(venta.descuento || 0);
+    let totalCalculado = totalBase;
+
+    if (porcentaje > 0) {
+      if (modoDescuento) {
+        // DESCUENTO → redondea hacia arriba
+        const desc = totalBase * (porcentaje / 100);
+        const descRedondeado = Math.ceil(desc);
+        totalCalculado = totalBase - descRedondeado;
+      } else {
+        // AUMENTO → redondeo normal
+        const aumento = totalBase * (porcentaje / 100);
+        const aumentoRed = Math.round(aumento);
+        totalCalculado = totalBase + aumentoRed;
+      }
+    }
+
+    // 3) Redondeo final correcto
+    setTotalVenta(Math.round(totalCalculado));
+  }, [venta.articulos, venta.descuento, modoDescuento]);
+
   const fetchData = async () => {
     try {
       const response = await axios.get("http://localhost:3001/ventas");
@@ -139,19 +174,46 @@ function Ventas() {
   }, [client, data, searchMode]);
 
   const calculateTotal = () => {
-    const subtotal = venta.articulos.reduce(
-      (sum, articulo) => sum + articulo.price * articulo.quantity,
-      0
-    );
-    const descuento = venta.descuento ? subtotal * (venta.descuento / 100) : 0;
-    return subtotal - descuento;
+    // 1) Subtotal solo de los que NO son regalo
+    const subtotal = venta.articulos.reduce((sum, articulo) => {
+      if (articulo.isGift) return sum; // 👈 si es regalo, no suma
+
+      const cantidad = Number(articulo.quantity || 0);
+      const precio = Number(
+        articulo.price ?? articulo.precio_monotributista ?? 0
+      );
+
+      return sum + cantidad * precio;
+    }, 0);
+
+    const porcentaje = Number(venta.descuento || 0);
+    if (!porcentaje) {
+      // sin descuento / aumento → redondeo normal
+      return Math.round(subtotal);
+    }
+
+    let totalCalculado = subtotal;
+
+    if (modoDescuento) {
+      // 🟢 MODO DESCUENTO: restar porcentaje, redondeando el DESCUENTO hacia arriba
+      const desc = subtotal * (porcentaje / 100);
+      const descRedondeado = Math.ceil(desc); // siempre para arriba
+      totalCalculado = subtotal - descRedondeado;
+    } else {
+      // 🔴 MODO AUMENTO: sumar porcentaje, redondeo normal
+      const aumento = subtotal * (porcentaje / 100);
+      const aumentoRedondeado = Math.round(aumento);
+      totalCalculado = subtotal + aumentoRedondeado;
+    }
+
+    // Redondeo final del total
+    return Math.round(totalCalculado);
   };
 
   useEffect(() => {
-    if (modoDescuento) {
-      setTotalVenta(calculateTotal());
-    }
-  }, [venta.articulos, venta.descuento]); // Actualiza el total cuando cambian los artículos o el descuento.
+    // siempre que cambien artículos, descuento o modo, recalculamos
+    setTotalVenta(calculateTotal());
+  }, [venta.articulos, venta.descuento, modoDescuento]);
 
   // Función para alternar el modo
   const handleToggleDescuento = (checked) => {

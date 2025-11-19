@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { Select } from "antd";
 import axios from "axios";
 
-export default function VendedoresInput({ value, onChange }) {
+export default function VendedoresInput({
+  value,
+  onChange,
+  includeAllOption = false,
+}) {
   const [vendedores, setVendedores] = useState([]);
 
   useEffect(() => {
@@ -18,18 +22,28 @@ export default function VendedoresInput({ value, onChange }) {
     fetchVendedores();
   }, []);
 
-  const options = vendedores.map((vendedor) => ({
-    label: vendedor.nombre,
-    value: vendedor.id, // <- acá va el id como valor
-  }));
+  const options = [
+    ...(includeAllOption
+      ? [
+          {
+            label: "AMBOS VENDENDORES",
+            value: "ALL",
+          },
+        ]
+      : []),
+    ...vendedores.map((vendedor) => ({
+      label: vendedor.nombre,
+      value: vendedor.id,
+    })),
+  ];
 
   return (
     <Select
-      value={value} // recibe el id desde el Form
+      value={value}
       showSearch
       placeholder="Selecciona un vendedor"
       optionFilterProp="label"
-      onChange={onChange} // devuelve solo el id
+      onChange={onChange} // (value, option)
       options={options}
       style={{ width: "100%" }}
     />

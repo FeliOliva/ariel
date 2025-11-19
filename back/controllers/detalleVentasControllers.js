@@ -13,26 +13,25 @@ const getDetalleVentaById = async (req, res) => {
 
 const updateDetalleVenta = async (req, res) => {
   try {
-    const {
-      ID,
-      new_precio_monotributista,
-      cantidad,
-      aumento_porcentaje,
-      modoEdicion,
-      venta_id,
-    } = req.body;
+    const { ID, new_precio_monotributista, cantidad, venta_id } = req.body;
 
     const precioFinal = Number(new_precio_monotributista);
     const cantidadNum = Number(cantidad);
+
+    if (isNaN(precioFinal) || precioFinal < 0) {
+      return res.status(400).json({ error: "Precio inválido" });
+    }
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      return res.status(400).json({ error: "Cantidad inválida" });
+    }
+
     const sub_total = precioFinal * cantidadNum;
 
     await detalleVentaModel.updateDetalleVenta(
       ID,
       precioFinal,
       cantidadNum,
-      sub_total,
-      aumento_porcentaje,
-      modoEdicion
+      sub_total
     );
 
     await recalcularTotales(venta_id);
@@ -42,7 +41,7 @@ const updateDetalleVenta = async (req, res) => {
         "Detalle de venta actualizado y totales recalculados correctamente",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en updateDetalleVenta:", error);
     res.status(500).json({ error: "Error al actualizar el detalle de venta" });
   }
 };

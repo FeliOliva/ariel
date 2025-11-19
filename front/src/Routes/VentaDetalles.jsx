@@ -43,7 +43,6 @@ const VentaDetalles = () => {
     descuento: "",
     farmacia: "",
   });
-  const [modoEdicion, setModoEdicion] = useState("manual");
   const [openDrawer, setOpenDrawer] = useState(false);
   const [open, setOpen] = useState(false);
   const [detalleVenta, setDetalleVenta] = useState({});
@@ -51,7 +50,10 @@ const VentaDetalles = () => {
   const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState("");
   const [selectedArticulo, setSelectedArticulo] = useState(null);
-  const [aumento, setAumento] = useState(0);
+  const [ajustePorcentaje, setAjustePorcentaje] = useState(0);
+  const [modoAjuste, setModoAjuste] = useState("subir"); // subir | bajar
+  const [porcentaje, setPorcentaje] = useState(0);
+
   const { confirm } = Modal;
   const [venta, setVenta] = useState({
     articulos: [],
@@ -168,11 +170,9 @@ const VentaDetalles = () => {
       onOk: async () => {
         try {
           for (const art of venta.articulos) {
-            console.log("articulo", art);
             await axios.post("http://localhost:3001/editarVenta", {
               articulo_id: art.id,
               cantidad: art.quantity,
-              // si extendés el backend:
               precio_monotributista: parseFloat(art.precio_monotributista),
               isGift: !!art.isGift,
               venta_id: ventaInfo.venta_id,
@@ -378,16 +378,19 @@ const VentaDetalles = () => {
       const response = await axios.get(
         `http://localhost:3001/detalleVenta/${detalleId}`
       );
+
       setDetalleVenta(response.data);
-      setPrecio(response.data.precio_monotributista);
-      setCantidad(response.data.cantidad);
+      setPrecio(Number(response.data.precio_monotributista) || 0);
+      setCantidad(Number(response.data.cantidad) || 1);
+      setAjustePorcentaje(0); // arranca en 0%
       setOpenDrawer(true);
+      setModoAjuste("subir");
+      setPorcentaje(0);
     } catch (error) {
       console.error("Error fetching detalle de venta:", error);
     }
   };
   const handleDelete = (detalleId) => {
-    console.log("Detalle ID a eliminar:", detalleId);
     confirm({
       title: "Confirmar eliminación",
       icon: <ExclamationCircleOutlined />,
@@ -427,10 +430,8 @@ const VentaDetalles = () => {
         try {
           const payload = {
             ID: detalleVenta.id,
-            new_precio_monotributista: precio,
+            new_precio_monotributista: precio, // precio ya ajustado
             cantidad,
-            aumento_porcentaje: modoEdicion === "porcentaje" ? aumento : null,
-            modoEdicion,
             venta_id: ventaInfo.venta_id,
           };
 
@@ -680,75 +681,81 @@ const VentaDetalles = () => {
         </Button>
       </Drawer>
 
-      {/* Drawer para editar precio y cantidad */}
+      {/* Drawer para AJUSTE PORCENTUAL de precio */}
       <Drawer
-        title="Modificar Precio y Cantidad"
+        title="Ajustar Precio y Cantidad"
         placement="right"
         onClose={() => setOpenDrawer(false)}
         open={openDrawer}
         width={350}
       >
-        {/* SWITCH ENTRE MODOS */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ marginRight: 8 }}>Aumento:</label>
+        {/* Precio base */}
+        <div style={{ marginBottom: 12 }}>
+          <strong>Precio actual:</strong>{" "}
+          {detalleVenta?.precio_monotributista
+            ? `$${detalleVenta.precio_monotributista}`
+            : "-"}
+        </div>
+
+        {/* SWITCH SUBIR / BAJAR */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ marginRight: 8 }}>Modo:</label>
           <Switch
-            checkedChildren="MANUAL"
-            unCheckedChildren="PORCENTAJE"
-            checked={modoEdicion === "manual"}
+            checkedChildren="AUM."
+            unCheckedChildren="BAJ."
+            checked={modoAjuste === "subir"}
             onChange={(checked) => {
-              if (checked) {
-                setModoEdicion("manual");
-                setAumento(null); // limpiar % si cambia a manual
-                setPrecio(detalleVenta.precio_monotributista); // valor base
+              const nuevoModo = checked ? "subir" : "bajar";
+              setModoAjuste(nuevoModo);
+
+              const base = Number(detalleVenta.precio_monotributista) || 0;
+
+              if (nuevoModo === "subir") {
+                const nuevo = base * (1 + porcentaje / 100);
+                setPrecio(Number(nuevo.toFixed(2)));
               } else {
-                setModoEdicion("porcentaje");
-                setPrecio(detalleVenta.precio_monotributista);
-                setAumento(0); // reiniciar %
+                const nuevo = base * (1 - porcentaje / 100);
+                setPrecio(Number(nuevo.toFixed(2)));
               }
             }}
           />
         </div>
 
-        {/* MODO MANUAL */}
-        {modoEdicion === "manual" && (
-          <div style={{ marginBottom: "16px" }}>
-            <label>Precio Manual:</label>
-            <InputNumber
-              style={{ width: "100%" }}
-              min={0}
-              value={precio}
-              onChange={(value) => {
-                setAumento(null);
-                setPrecio(value);
-              }}
-            />
-          </div>
-        )}
+        {/* Porcentaje */}
+        <div style={{ marginBottom: 16 }}>
+          <label>Porcentaje:</label>
+          <InputNumber
+            style={{ width: "100%" }}
+            min={0}
+            max={100}
+            value={porcentaje}
+            formatter={(v) => `${v}%`}
+            parser={(v) => v.replace("%", "")}
+            onChange={(value) => {
+              const porc = Number(value) || 0;
+              setPorcentaje(porc);
 
-        {/* MODO POR PORCENTAJE */}
-        {modoEdicion === "porcentaje" && (
-          <div style={{ marginBottom: "16px" }}>
-            <label>Aumentar por %:</label>
-            <InputNumber
-              style={{ width: "100%" }}
-              min={0} // no permitimos bajar
-              max={500}
-              value={aumento}
-              formatter={(value) => `${value}%`}
-              parser={(value) => value.replace("%", "")}
-              onChange={(value) => {
-                setAumento(value);
+              const base = Number(detalleVenta.precio_monotributista) || 0;
 
-                const base = Number(detalleVenta.precio_monotributista);
-                const nuevoPrecio = base * (1 + value / 100);
-                setPrecio(Number(nuevoPrecio.toFixed(2)));
-              }}
-            />
-          </div>
-        )}
+              if (modoAjuste === "subir") {
+                const nuevo = base * (1 + porc / 100);
+                setPrecio(Number(nuevo.toFixed(2)));
+              } else {
+                const nuevo = base * (1 - porc / 100);
+                setPrecio(Number(nuevo.toFixed(2)));
+              }
+            }}
+          />
+        </div>
 
-        {/* CANTIDAD */}
-        <div style={{ marginBottom: "16px" }}>
+        {/* Precio final */}
+        <div style={{ marginBottom: 16 }}>
+          <label>Precio final:</label>
+          <InputNumber style={{ width: "100%" }} value={precio} readOnly />
+        </div>
+
+        {/* Cantidad */}
+        <div style={{ marginBottom: 16 }}>
           <label>Cantidad:</label>
           <InputNumber
             style={{ width: "100%" }}

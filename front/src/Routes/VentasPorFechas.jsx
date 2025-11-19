@@ -103,6 +103,12 @@ export default function ResumenVentasPorFecha() {
     },
   ];
 
+  // 🔢 Total de ventas (sin depender de una fila "TOTAL")
+  const totalVentas = datos.reduce(
+    (acc, d) => acc + parseMonto(d.total_con_descuento),
+    0
+  );
+
   // PDF de ventas
   const handlePrint = () => {
     const doc = new jsPDF();
@@ -117,16 +123,14 @@ export default function ResumenVentasPorFecha() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
-    const tableData = datos
-      .filter((d) => d.farmacia !== "TOTAL")
-      .map((d) => [
-        d.fecha_venta ? dayjs(d.fecha_venta).format("DD-MM-YYYY") : "",
-        d.nroVenta || "",
-        `$${formatMonto(d.total_con_descuento)}`,
-        `${d.farmacia || ""} - ${d.nombre_cliente || ""} ${
-          d.apellido_cliente || ""
-        }`,
-      ]);
+    const tableData = datos.map((d) => [
+      d.fecha_venta ? dayjs(d.fecha_venta).format("DD-MM-YYYY") : "",
+      d.nroVenta || "",
+      `$${formatMonto(d.total_con_descuento)}`,
+      `${d.farmacia || ""} - ${d.nombre_cliente || ""} ${
+        d.apellido_cliente || ""
+      }`,
+    ]);
 
     doc.autoTable({
       startY: 45,
@@ -135,29 +139,17 @@ export default function ResumenVentasPorFecha() {
     });
 
     let finalY = doc.lastAutoTable.finalY + 10;
-    const totalRow = datos.find((d) => d.farmacia === "TOTAL");
 
-    if (totalRow) {
-      doc.setFontSize(12);
-      doc.text(
-        `TOTAL VENTAS: $${formatMonto(totalRow.total_con_descuento)}`,
-        14,
-        finalY
-      );
-    }
+    // 👉 Total al final del PDF
+    doc.setFontSize(12);
+    doc.text(`TOTAL VENTAS: $${formatMonto(totalVentas)}`, 14, finalY);
 
     doc.save("resumen_ventas.pdf");
   };
 
-  const totalVentas = datos.find((d) => d.farmacia === "TOTAL");
-
-  // Paginación manual para poder usar tu CustomPagination
-  const ventasSinTotal = datos.filter((d) => d.farmacia !== "TOTAL");
+  // Paginación manual
   const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedData = ventasSinTotal.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
+  const paginatedData = datos.slice(startIndex, startIndex + rowsPerPage);
 
   return (
     <MenuLayout>
@@ -189,21 +181,22 @@ export default function ResumenVentasPorFecha() {
             record.venta_id || `${record.nroVenta}-${record.fecha_venta}`
           }
           loading={loading}
-          pagination={false} // 👈 usamos CustomPagination, no el de AntD
+          pagination={false}
           bordered
           style={{ backgroundColor: "#f9f9f9" }}
         />
 
         <CustomPagination
           rowsPerPage={rowsPerPage}
-          rowCount={ventasSinTotal.length}
+          rowCount={datos.length}
           currentPage={currentPage}
           onChangePage={setCurrentPage}
         />
 
-        {totalVentas && (
+        {/* 👉 Total en la pantalla */}
+        {datos.length > 0 && (
           <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
-            <p>Total Ventas: ${formatMonto(totalVentas.monto)}</p>
+            <p>Total Ventas: ${formatMonto(totalVentas)}</p>
           </div>
         )}
       </div>

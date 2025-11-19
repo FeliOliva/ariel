@@ -16,43 +16,45 @@ const addVenta = async (req, res) => {
       nroVenta,
       zona_id,
       descuento,
-      tipoDescuento,
+      tipoDescuento, // 0 = descuento | 1 = aumento
       detalles,
     } = req.body;
 
     const lineas = (await ventasModel.getLineasStock()).map((l) => l.linea_id);
 
-    // 👇 Si es aumento, seteamos descuento a 0 para la DB
+    // Si es aumento → descuento en DB = 0
     const descuentoDB = tipoDescuento === 1 ? 0 : descuento;
-    // Crear la venta
+
+    // Crear venta
     const ventaId = await ventasModel.addVenta(
       cliente_id,
       nroVenta,
       zona_id,
       descuentoDB
     );
+
     let totalVenta = 0;
-    let sub_total = 0;
-    // Agregar detalles de la venta y sumar subtotales
+
+    // Procesar detalles
     for (const detalle of detalles) {
       if (lineas.includes(detalle.linea_id)) {
-        // // Descontar el stock del artículo
         await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
       }
-      // ✅ calcular precio final del artículo si es aumento
-      let precioUnitario = detalle.precio_monotributista;
+
+      let precioUnitario = Number(detalle.precio_monotributista);
+
+      // 🔹 AUMENTO → aplicar y redondear normal
       if (tipoDescuento === 1) {
-        precioUnitario = Math.round(precioUnitario * (1 + descuento / 100)); // aplicar aumento
-      }
-      if (detalle.isGift === true) {
-        sub_total = 0;
-      } else {
-        sub_total = Math.round(detalle.cantidad * precioUnitario);
+        precioUnitario = Math.round(precioUnitario * (1 + descuento / 100));
       }
 
-      totalVenta = Math.round(totalVenta + sub_total);
+      let sub_total = detalle.isGift ? 0 : detalle.cantidad * precioUnitario;
 
-      // Agregar el detalle de la venta
+      // 🔹 Siempre entero
+      sub_total = Math.round(sub_total);
+
+      totalVenta += sub_total;
+
       await ventasModel.addDetalleVenta(
         ventaId,
         detalle.articulo_id,
@@ -63,7 +65,6 @@ const addVenta = async (req, res) => {
         tipoDescuento === 1 ? descuento : 0
       );
 
-      // Registrar el cambio en el log de stock
       await ventasModel.updateLogVenta(
         cliente_id,
         detalle.articulo_id,
@@ -71,13 +72,28 @@ const addVenta = async (req, res) => {
       );
     }
 
-    const totalConDescuento =
-      tipoDescuento === 0
-        ? (totalVenta - totalVenta * (descuento / 100)).toFixed(3)
-        : totalVenta.toFixed(3);
+    // ===============================
+    // 🔥 CÁLCULO DE TOTAL CON DESCUENTO
+    // ===============================
 
-    // Actualizar la venta con el total y el total con descuento
+    let totalConDescuento = totalVenta;
+
+    if (tipoDescuento === 0) {
+      const descuentoMonto = totalVenta * (descuento / 100);
+
+      // 🔹 REDONDEAR SIEMPRE HACIA ARRIBA
+      const descuentoAplicado = Math.ceil(descuentoMonto);
+
+      totalConDescuento = totalVenta - descuentoAplicado;
+    }
+
+    // 🔹 Evitar decimales ocultos
+    totalConDescuento = Math.round(totalConDescuento);
+    totalVenta = Math.round(totalVenta);
+
+    // Guardar totales
     await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
+
     res.status(201).json({ message: "Venta agregada con éxito" });
   } catch (error) {
     console.error("Error al agregar la venta:", error);

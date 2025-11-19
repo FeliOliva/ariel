@@ -10,7 +10,7 @@ import "../style/style.css";
 import {
   customHeaderStyles,
   customCellsStyles,
-} from "../style/dataTableStyles"; // Importa los estilos reutilizables
+} from "../style/dataTableStyles";
 import CustomPagination from "../components/CustomPagination";
 
 const { RangePicker } = DatePicker;
@@ -22,14 +22,15 @@ export default function ResumenPagosPorVendedor() {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+
   const handleVendedorChange = (id, option) => {
     console.log("id", id, "option", option);
     setVendedorSeleccionado({ id, nombre: option.label });
   };
+
   const parseMonto = (valor) => {
     if (valor === null || valor === undefined || valor === "") return 0;
 
-    // Si viene como string "1.234,56"
     if (typeof valor === "string") {
       if (valor.includes(",")) {
         const normalizado = valor.replace(/\./g, "").replace(",", ".");
@@ -38,7 +39,6 @@ export default function ResumenPagosPorVendedor() {
       return parseFloat(valor);
     }
 
-    // Si ya es number
     return Number(valor);
   };
 
@@ -62,19 +62,63 @@ export default function ResumenPagosPorVendedor() {
     setLoading(true);
 
     try {
-      const response = await axios.get(
-        `http://localhost:3001/pagosPorVendedor`,
-        {
-          params: {
-            vendedor_id: vendedorSeleccionado.id,
-            fecha_inicio: fechaInicio,
-            fecha_fin: fechaFin,
-          },
-        }
+      // 🔹 Si es un solo vendedor
+      if (vendedorSeleccionado.id !== "ALL") {
+        const response = await axios.get(
+          `http://localhost:3001/pagosPorVendedor`,
+          {
+            params: {
+              vendedor_id: vendedorSeleccionado.id,
+              fecha_inicio: fechaInicio,
+              fecha_fin: fechaFin,
+            },
+          }
+        );
+
+        const datosOrdenados = response.data
+          // por las dudas, filtramos la fila TOTAL si viene del backend
+          .filter((d) => d.pago_id !== null)
+          .sort((a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago));
+
+        setDatos(datosOrdenados);
+        setCurrentPage(1);
+        return;
+      }
+
+      // 🔹 Si se eligieron "Ambos vendedores" (o todos)
+      // 1) Traer lista de vendedores
+      const respVendedores = await axios.get(
+        "http://localhost:3001/vendedores"
       );
-      const datosOrdenados = response.data.sort(
+      const vendedores = respVendedores.data || [];
+
+      // 2) Pedir pagos por cada vendedor
+      const allResults = [];
+      for (const vend of vendedores) {
+        const respPagos = await axios.get(
+          "http://localhost:3001/pagosPorVendedor",
+          {
+            params: {
+              vendedor_id: vend.id,
+              fecha_inicio: fechaInicio,
+              fecha_fin: fechaFin,
+            },
+          }
+        );
+
+        // Filtramos la fila TOTAL de ese vendedor
+        const pagosLimpios = (respPagos.data || []).filter(
+          (d) => d.pago_id !== null
+        );
+
+        allResults.push(...pagosLimpios);
+      }
+
+      // 3) Ordenar todos por fecha descendente
+      const datosOrdenados = allResults.sort(
         (a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago)
       );
+
       setDatos(datosOrdenados);
       setCurrentPage(1);
     } catch (error) {
@@ -102,6 +146,7 @@ export default function ResumenPagosPorVendedor() {
       title: "Método de Pago",
       dataIndex: "metodo_pago",
       key: "metodo_pago",
+      render: (text) => (text ? text.toUpperCase() : ""),
     },
     {
       title: "Cliente",
@@ -109,14 +154,36 @@ export default function ResumenPagosPorVendedor() {
       render: (record) =>
         `${record.cliente_farmacia} - ${record.cliente_nombre} ${record.cliente_apellido}`,
     },
+    {
+      title: "Vendedor",
+      dataIndex: "vendedor_nombre",
+      key: "vendedor_nombre",
+      render: (text) => text || "",
+    },
   ];
+
+  // 🔹 Total de pagos (para 1 vendedor o para todos)
+  const totalPagosNumero = datos
+    .filter((d) => d.pago_id !== null)
+    .reduce((sum, d) => sum + parseMonto(d.monto), 0);
+
+  // 🔹 Paginación manual con CustomPagination
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedData = datos
+    .filter((d) => d.pago_id !== null)
+    .slice(startIndex, startIndex + rowsPerPage);
 
   // Generar PDF
   const handlePrint = () => {
     const doc = new jsPDF();
 
+    const titulo =
+      vendedorSeleccionado?.id === "ALL"
+        ? "Pagos de todos los vendedores"
+        : `Pagos de ${vendedorSeleccionado?.nombre || ""}`;
+
     doc.setFontSize(18);
-    doc.text(`Pagos de ${vendedorSeleccionado?.nombre || ""}`, 14, 20);
+    doc.text(titulo, 14, 20);
 
     const rangoInfo =
       rangoFechas.length === 2
@@ -126,38 +193,42 @@ export default function ResumenPagosPorVendedor() {
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
     const tableData = datos
-      .filter((d) => d.pago_id !== null) // excluye la fila TOTAL en detalle
+      .filter((d) => d.pago_id !== null)
       .map((d) => [
         d.fecha_pago ? dayjs(d.fecha_pago).format("DD-MM-YYYY") : "",
         `$${formatMonto(d.monto)}`,
-        d.metodo_pago,
+        d.metodo_pago ? d.metodo_pago.toUpperCase() : "",
         `${d.cliente_farmacia} - ${d.cliente_nombre} ${d.cliente_apellido}`,
+        d.vendedor_nombre || "",
       ]);
 
     doc.autoTable({
       startY: 45,
-      head: [["Fecha", "Monto", "Método", "Cliente"]],
+      head: [["Fecha", "Monto", "Método", "Cliente", "Vendedor"]],
       body: tableData,
     });
 
     let finalY = doc.lastAutoTable.finalY + 10;
-    const totalRow = datos.find((d) => d.cliente_farmacia === "TOTAL");
 
-    if (totalRow) {
+    if (totalPagosNumero > 0) {
       doc.setFontSize(12);
-      doc.text(`TOTAL PAGOS: $${formatMonto(totalRow.monto)}`, 14, finalY);
+      doc.text(`TOTAL PAGOS: $${formatMonto(totalPagosNumero)}`, 14, finalY);
     }
 
     doc.save("resumen_pagos_vendedor.pdf");
   };
 
-  const totalPagos = datos.find((d) => d.cliente_farmacia === "TOTAL");
-
   return (
     <MenuLayout>
       <div>
         <h2>Resumen de Pagos por Vendedor</h2>
-        <VendedoresInput onChange={handleVendedorChange} />
+
+        {/* 🔹 Ahora con includeAllOption para mostrar "Ambos vendedores" */}
+        <VendedoresInput
+          onChange={handleVendedorChange}
+          includeAllOption={true}
+        />
+
         <Space style={{ margin: "20px 0" }}>
           <RangePicker
             onChange={(dates, dateStrings) => setRangoFechas(dateStrings)}
@@ -178,33 +249,25 @@ export default function ResumenPagosPorVendedor() {
         </Space>
 
         <Table
-          dataSource={datos.filter((d) => d.cliente_farmacia !== "TOTAL")}
+          dataSource={paginatedData}
           columns={columns}
           rowKey={(record) => record.pago_id}
           loading={loading}
-          pagination={true}
-          paginationComponent={CustomPagination}
+          pagination={false} // usamos CustomPagination
           bordered
           style={{ backgroundColor: "#f9f9f9" }}
-          customStyles={{
-            rows: {
-              style: {
-                fontSize: "12px", // Reducir aún más el tamaño del texto
-                padding: "0px 0px", // Reducir padding al mínimo
-              },
-            },
-            headCells: {
-              style: customHeaderStyles,
-            },
-            cells: {
-              style: customCellsStyles,
-            },
-          }}
         />
 
-        {totalPagos && (
+        <CustomPagination
+          rowsPerPage={rowsPerPage}
+          rowCount={datos.filter((d) => d.pago_id !== null).length}
+          currentPage={currentPage}
+          onChangePage={setCurrentPage}
+        />
+
+        {totalPagosNumero > 0 && (
           <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
-            <p>Total Pagos: ${formatMonto(totalPagos.monto)}</p>
+            <p>Total Pagos: ${formatMonto(totalPagosNumero)}</p>
           </div>
         )}
       </div>
