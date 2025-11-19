@@ -62,7 +62,7 @@ export default function ResumenPagosPorVendedor() {
     setLoading(true);
 
     try {
-      // 🔹 Si es un solo vendedor
+      // 🔹 Un solo vendedor
       if (vendedorSeleccionado.id !== "ALL") {
         const response = await axios.get(
           `http://localhost:3001/pagosPorVendedor`,
@@ -76,7 +76,6 @@ export default function ResumenPagosPorVendedor() {
         );
 
         const datosOrdenados = response.data
-          // por las dudas, filtramos la fila TOTAL si viene del backend
           .filter((d) => d.pago_id !== null)
           .sort((a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago));
 
@@ -85,14 +84,12 @@ export default function ResumenPagosPorVendedor() {
         return;
       }
 
-      // 🔹 Si se eligieron "Ambos vendedores" (o todos)
-      // 1) Traer lista de vendedores
+      // 🔹 Todos los vendedores
       const respVendedores = await axios.get(
         "http://localhost:3001/vendedores"
       );
       const vendedores = respVendedores.data || [];
 
-      // 2) Pedir pagos por cada vendedor
       const allResults = [];
       for (const vend of vendedores) {
         const respPagos = await axios.get(
@@ -105,16 +102,12 @@ export default function ResumenPagosPorVendedor() {
             },
           }
         );
-
-        // Filtramos la fila TOTAL de ese vendedor
         const pagosLimpios = (respPagos.data || []).filter(
           (d) => d.pago_id !== null
         );
-
         allResults.push(...pagosLimpios);
       }
 
-      // 3) Ordenar todos por fecha descendente
       const datosOrdenados = allResults.sort(
         (a, b) => new Date(b.fecha_pago) - new Date(a.fecha_pago)
       );
@@ -162,16 +155,21 @@ export default function ResumenPagosPorVendedor() {
     },
   ];
 
-  // 🔹 Total de pagos (para 1 vendedor o para todos)
-  const totalPagosNumero = datos
-    .filter((d) => d.pago_id !== null)
-    .reduce((sum, d) => sum + parseMonto(d.monto), 0);
+  // 🔹 Filtramos solo pagos reales (por si algún día vuelven a meter fila TOTAL)
+  const pagosReales = datos.filter((d) => d.pago_id !== null);
 
-  // 🔹 Paginación manual con CustomPagination
+  // 🔹 Total de pagos
+  const totalPagosNumero = pagosReales.reduce(
+    (sum, d) => sum + parseMonto(d.monto),
+    0
+  );
+
+  // 🔹 Cantidad de pagos
+  const cantidadPagos = pagosReales.length;
+
+  // 🔹 Paginación manual
   const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedData = datos
-    .filter((d) => d.pago_id !== null)
-    .slice(startIndex, startIndex + rowsPerPage);
+  const paginatedData = pagosReales.slice(startIndex, startIndex + rowsPerPage);
 
   // Generar PDF
   const handlePrint = () => {
@@ -192,15 +190,13 @@ export default function ResumenPagosPorVendedor() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
-    const tableData = datos
-      .filter((d) => d.pago_id !== null)
-      .map((d) => [
-        d.fecha_pago ? dayjs(d.fecha_pago).format("DD-MM-YYYY") : "",
-        `$${formatMonto(d.monto)}`,
-        d.metodo_pago ? d.metodo_pago.toUpperCase() : "",
-        `${d.cliente_farmacia} - ${d.cliente_nombre} ${d.cliente_apellido}`,
-        d.vendedor_nombre || "",
-      ]);
+    const tableData = pagosReales.map((d) => [
+      d.fecha_pago ? dayjs(d.fecha_pago).format("DD-MM-YYYY") : "",
+      `$${formatMonto(d.monto)}`,
+      d.metodo_pago ? d.metodo_pago.toUpperCase() : "",
+      `${d.cliente_farmacia} - ${d.cliente_nombre} ${d.cliente_apellido}`,
+      d.vendedor_nombre || "",
+    ]);
 
     doc.autoTable({
       startY: 45,
@@ -213,7 +209,10 @@ export default function ResumenPagosPorVendedor() {
     if (totalPagosNumero > 0) {
       doc.setFontSize(12);
       doc.text(`TOTAL PAGOS: $${formatMonto(totalPagosNumero)}`, 14, finalY);
+      finalY += 8;
     }
+
+    doc.text(`CANTIDAD DE PAGOS: ${cantidadPagos}`, 14, finalY);
 
     doc.save("resumen_pagos_vendedor.pdf");
   };
@@ -223,7 +222,6 @@ export default function ResumenPagosPorVendedor() {
       <div>
         <h2>Resumen de Pagos por Vendedor</h2>
 
-        {/* 🔹 Ahora con includeAllOption para mostrar "Ambos vendedores" */}
         <VendedoresInput
           onChange={handleVendedorChange}
           includeAllOption={true}
@@ -253,17 +251,24 @@ export default function ResumenPagosPorVendedor() {
           columns={columns}
           rowKey={(record) => record.pago_id}
           loading={loading}
-          pagination={false} // usamos CustomPagination
+          pagination={false}
           bordered
           style={{ backgroundColor: "#f9f9f9" }}
         />
 
         <CustomPagination
           rowsPerPage={rowsPerPage}
-          rowCount={datos.filter((d) => d.pago_id !== null).length}
+          rowCount={pagosReales.length}
           currentPage={currentPage}
           onChangePage={setCurrentPage}
         />
+
+        {/* 👉 Cantidad de pagos */}
+        <div style={{ marginTop: 10, fontSize: "14px" }}>
+          <p>
+            Cantidad de pagos: <strong>{cantidadPagos}</strong>
+          </p>
+        </div>
 
         {totalPagosNumero > 0 && (
           <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>

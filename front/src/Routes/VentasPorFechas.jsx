@@ -103,11 +103,14 @@ export default function ResumenVentasPorFecha() {
     },
   ];
 
-  // 🔢 Total de ventas (sin depender de una fila "TOTAL")
+  // 🔢 Total de ventas (sumando todo lo que devolvió el backend)
   const totalVentas = datos.reduce(
     (acc, d) => acc + parseMonto(d.total_con_descuento),
     0
   );
+
+  // 🔢 Cantidad de ventas
+  const cantidadVentas = datos.length;
 
   // PDF de ventas
   const handlePrint = () => {
@@ -140,9 +143,11 @@ export default function ResumenVentasPorFecha() {
 
     let finalY = doc.lastAutoTable.finalY + 10;
 
-    // 👉 Total al final del PDF
+    // 👉 Total y cantidad en el PDF
     doc.setFontSize(12);
     doc.text(`TOTAL VENTAS: $${formatMonto(totalVentas)}`, 14, finalY);
+    finalY += 8;
+    doc.text(`CANTIDAD DE VENTAS: ${cantidadVentas}`, 14, finalY);
 
     doc.save("resumen_ventas.pdf");
   };
@@ -192,6 +197,11 @@ export default function ResumenVentasPorFecha() {
           currentPage={currentPage}
           onChangePage={setCurrentPage}
         />
+
+        {/* 👉 Cantidad de ventas */}
+        <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
+          <p>Cantidad de ventas: {cantidadVentas}</p>
+        </div>
 
         {/* 👉 Total en la pantalla */}
         {datos.length > 0 && (
