@@ -139,7 +139,8 @@ const getVentasByZona = async (req, res) => {
   try {
     const { ID: zona_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query;
-
+    console.log("ID", zona_id);
+    console.log("fechas", fecha_inicio, fecha_fin);
     if (!zona_id) {
       return res.status(400).json({ error: "ID de zona no proporcionado" });
     }

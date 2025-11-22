@@ -1,31 +1,31 @@
 module.exports = {
-  getAllNotascreditoByClienteId: `
-    SELECT 
-    nc.id AS notacredito_id,
-    nc.nroNC,
-    c.nombre AS cliente_nombre,
-    c.apellido AS cliente_apellido, 
-    c.farmacia AS cliente_farmacia,   
-    nc.fecha AS notaCredito_fecha,
-    nc.estado,
-    SUM(dnc.subTotal) OVER(PARTITION BY nc.id) AS totalNC, -- Total de la nota de crédito
-    dnc.id AS detalle_id,
-    a.id AS articulo_id,
-    a.nombre AS articulo_nombre,
-    a.codigo_producto AS cod_articulo,
-    l.nombre AS nombre_linea,
-    sl.nombre AS nombre_sublinea,
-    dnc.cantidad,
-    dnc.fecha AS detalle_fecha,
-    dnc.precio,
-    dnc.subTotal
-FROM notascredito nc
-JOIN cliente c ON nc.cliente_id = c.id
-JOIN detallenotacredito dnc ON nc.id = dnc.notacredito_id
-JOIN articulo a ON dnc.articulo_id = a.id
-JOIN linea l ON a.linea_id = l.id
-JOIN sublinea sl ON a.sublinea_id = sl.id
-WHERE nc.cliente_id = ?;
+  getAllNotasCreditoByClienteId: `
+  SELECT 
+      nc.id AS notaCredito_id,
+      nc.nroNC,
+      c.nombre   AS cliente_nombre,
+      c.apellido AS cliente_apellido, 
+      c.farmacia AS cliente_farmacia,   
+      nc.fecha   AS notaCredito_fecha,
+      nc.estado,
+      SUM(dnc.subTotal) OVER (PARTITION BY nc.id) AS totalNC,
+      dnc.id     AS detalle_id,
+      a.id       AS articulo_id,
+      a.nombre   AS articulo_nombre,
+      a.codigo_producto AS cod_articulo,
+      l.nombre   AS nombre_linea,
+      sl.nombre  AS nombre_sublinea,
+      dnc.cantidad,
+      dnc.fecha  AS detalle_fecha,
+      dnc.precio,
+      dnc.subTotal
+  FROM notascredito nc
+  JOIN cliente c          ON nc.cliente_id     = c.id
+  JOIN detallenotacredito dnc ON nc.id         = dnc.notacredito_id
+  JOIN articulo a         ON dnc.articulo_id   = a.id
+  JOIN linea l            ON a.linea_id        = l.id
+  JOIN sublinea sl        ON a.sublinea_id     = sl.id
+  WHERE nc.cliente_id = ?;
 `,
   addNotaCredito: "INSERT INTO notascredito (cliente_id) VALUES (?)",
   getDetallesNotaCredito: `SELECT 
@@ -52,7 +52,7 @@ WHERE dnc.notacredito_id = ?;`,
   dropNotaCredito: "DELETE FROM notascredito WHERE id = ?",
   dropDetallesNotaCredito:
     "DELETE FROM detallenotacredito WHERE notacredito_id = ?",
-  getNotascreditoByZona: `SELECT 
+  getNotasCreditoByZona: `SELECT 
     c.id AS cliente_id,
     c.nombre AS cliente_nombre,
     c.apellido AS cliente_apellido,

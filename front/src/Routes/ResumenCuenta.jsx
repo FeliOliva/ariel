@@ -564,7 +564,6 @@ const ResumenCuenta = () => {
     }
 
     const notaSeleccionadaId = notasCreditoSeleccionadas[0].id;
-    console.log("notas seleccionadas", notasCreditoSeleccionadas);
 
     try {
       const response = await axios.get(
@@ -577,7 +576,7 @@ const ResumenCuenta = () => {
       const nota = notasCredito.find(
         (nc) => Number(nc.notaCredito_id) === Number(notaSeleccionadaId)
       );
-
+      console.log("nota", nota);
       if (!nota) {
         return notification.warning({
           message: "Nota no encontrada",
