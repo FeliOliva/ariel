@@ -147,8 +147,21 @@ export default function ResumenCuentaXZona() {
   const handlePrint = () => {
     const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text(`Resumen de cuentas en la ${zonaSeleccionada.nombreZona}`, 14, 20);
+    let titulo = `Resumen de cuentas en la ${zonaSeleccionada.nombreZona}`;
+
+    let fontSize = 18;
+    doc.setFontSize(fontSize);
+
+    // Si el texto supera el ancho permitido, bajamos la fuente
+    if (doc.getTextWidth(titulo) > 180) {
+      fontSize = 14;
+      doc.setFontSize(fontSize);
+    }
+
+    // Split automático para evitar cortes
+    const tituloPartes = doc.splitTextToSize(titulo, 180);
+
+    doc.text(tituloPartes, 14, 20);
 
     const rangoInfo =
       rangoFechas.length === 2
