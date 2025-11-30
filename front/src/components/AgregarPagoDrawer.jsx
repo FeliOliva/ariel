@@ -51,22 +51,22 @@ const AgregarPagoDrawer = ({
         return;
       }
 
-      // 👇 Validación contra saldo restante (solo si es positivo)
-      if (
-        saldoRestante != null &&
-        saldoRestante > 0 &&
-        montoNumero > saldoRestante
-      ) {
-        notification.warning({
-          message: "Monto excede el saldo",
-          description: `El saldo restante del cliente es $${saldoRestante.toLocaleString(
-            "es-AR",
-            { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-          )}. No puede registrar un pago mayor.`,
-          duration: 3,
-        });
-        return; // 👉 No seguimos, no se abre el confirm
-      }
+      // // 👇 Validación contra saldo restante (solo si es positivo)
+      // if (
+      //   saldoRestante != null &&
+      //   saldoRestante > 0 &&
+      //   montoNumero > saldoRestante
+      // ) {
+      //   notification.warning({
+      //     message: "Monto excede el saldo",
+      //     description: `El saldo restante del cliente es $${saldoRestante.toLocaleString(
+      //       "es-AR",
+      //       { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      //     )}. No puede registrar un pago mayor.`,
+      //     duration: 3,
+      //   });
+      //   return; // 👉 No seguimos, no se abre el confirm
+      // }
 
       confirm({
         title: "Confirmar pago",
