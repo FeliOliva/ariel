@@ -11,7 +11,6 @@ import {
   customCellsStyles,
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
 import "../style/style.css";
-import { Toll } from "@mui/icons-material";
 
 const SubLinea = () => {
   const { id } = useParams();

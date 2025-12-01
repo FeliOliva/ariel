@@ -1,28 +1,26 @@
 import React from "react";
-import { List, ListItem, ListItemText, IconButton, Box } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { List, Button } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 const DynamicListPedido = ({ items, onDelete }) => {
   return (
-    <List>
-      {items.map((item) => (
-        <ListItem key={item.uniqueId}>
-          <ListItemText
-            primary={item.label}
-            secondary={<>{`Cantidad: ${item.quantity} `}</>}
+    <List
+      dataSource={items}
+      renderItem={(item) => (
+        <List.Item key={item.uniqueId}>
+          <List.Item.Meta
+            title={item.label}
+            description={`Cantidad: ${item.quantity}`}
           />
-          <Box display="flex" alignItems="center" gap={1}>
-            <IconButton
-              edge="end"
-              aria-label="delete"
-              onClick={() => onDelete(item.uniqueId)} // Cambiar a uniqueId
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        </ListItem>
-      ))}
-    </List>
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => onDelete(item.uniqueId)}
+          />
+        </List.Item>
+      )}
+    />
   );
 };
 

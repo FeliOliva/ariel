@@ -1,15 +1,6 @@
 import React, { useState } from "react";
-import {
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  TextField,
-  Box,
-} from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
+import { List, Input, Button, Space } from "antd";
+import { DeleteOutlined, EditOutlined, SaveOutlined } from "@ant-design/icons";
 
 const DynamicList = ({ items, onDelete, onEdit }) => {
   const [editingItemId, setEditingItemId] = useState(null);
@@ -17,7 +8,7 @@ const DynamicList = ({ items, onDelete, onEdit }) => {
 
   // Función para manejar el clic en editar
   const handleEditClick = (item) => {
-    setEditingItemId(item.uniqueId); // Cambiar a uniqueId
+    setEditingItemId(item.uniqueId);
     setEditedPrice(item.price);
   };
 
@@ -31,20 +22,22 @@ const DynamicList = ({ items, onDelete, onEdit }) => {
   };
 
   return (
-    <List>
-      {items.map((item) => (
-        <ListItem key={item.uniqueId}>
-          <ListItemText
-            primary={item.label}
-            secondary={
+    <List
+      dataSource={items}
+      renderItem={(item) => (
+        <List.Item key={item.uniqueId}>
+          <List.Item.Meta
+            title={item.label}
+            description={
               <>
                 {`Cantidad: ${item.quantity} `}
-                {editingItemId === item.uniqueId ? ( // Cambiar a uniqueId
-                  <TextField
+                {editingItemId === item.uniqueId ? (
+                  <Input
                     value={editedPrice}
                     onChange={(e) => setEditedPrice(e.target.value)}
                     type="number"
-                    label="Precio"
+                    placeholder="Precio"
+                    style={{ width: 100 }}
                   />
                 ) : (
                   `Precio: $${item.price}`
@@ -52,35 +45,30 @@ const DynamicList = ({ items, onDelete, onEdit }) => {
               </>
             }
           />
-          <Box display="flex" alignItems="center" gap={1}>
-            <IconButton
-              edge="end"
-              aria-label="delete"
-              onClick={() => onDelete(item.uniqueId)} // Cambiar a uniqueId
-            >
-              <DeleteIcon />
-            </IconButton>
-            {editingItemId === item.uniqueId ? ( // Cambiar a uniqueId
-              <IconButton
-                edge="end"
-                aria-label="save"
-                onClick={() => handleSaveClick(item.uniqueId)} // Cambiar a uniqueId
-              >
-                <SaveIcon />
-              </IconButton>
+          <Space>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => onDelete(item.uniqueId)}
+            />
+            {editingItemId === item.uniqueId ? (
+              <Button
+                type="text"
+                icon={<SaveOutlined />}
+                onClick={() => handleSaveClick(item.uniqueId)}
+              />
             ) : (
-              <IconButton
-                edge="end"
-                aria-label="edit"
+              <Button
+                type="text"
+                icon={<EditOutlined />}
                 onClick={() => handleEditClick(item)}
-              >
-                <EditIcon />
-              </IconButton>
+              />
             )}
-          </Box>
-        </ListItem>
-      ))}
-    </List>
+          </Space>
+        </List.Item>
+      )}
+    />
   );
 };
 

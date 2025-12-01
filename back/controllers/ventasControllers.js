@@ -1,8 +1,28 @@
 const ventasModel = require("../models/ventasModel");
+const NodeCache = require("node-cache");
+
+// Caché con TTL de 5 minutos (300 segundos)
+const ventasCache = new NodeCache({ stdTTL: 300 });
+
+// Función para invalidar caché
+const invalidateVentasCache = () => {
+  ventasCache.del("allVentas");
+};
 
 const getAllVentas = async (req, res) => {
   try {
+    // Intentar obtener del caché
+    const cachedVentas = ventasCache.get("allVentas");
+    if (cachedVentas) {
+      return res.json(cachedVentas);
+    }
+
+    // Si no hay caché, traer de la BD
     const ventas = await ventasModel.getAllVentas();
+
+    // Guardar en caché
+    ventasCache.set("allVentas", ventas);
+
     res.json(ventas);
   } catch (error) {
     console.error("Error al obtener todas las ventas:", error);
@@ -94,6 +114,9 @@ const addVenta = async (req, res) => {
     // Guardar totales
     await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
 
+    // Invalidar caché de ventas
+    invalidateVentasCache();
+
     res.status(201).json({ message: "Venta agregada con éxito" });
   } catch (error) {
     console.error("Error al agregar la venta:", error);
@@ -105,6 +128,10 @@ const dropVenta = async (req, res) => {
   try {
     const ID = req.params.ID;
     await ventasModel.dropVenta(ID);
+
+    // Invalidar caché de ventas
+    invalidateVentasCache();
+
     res
       .status(200)
       .json({ message: "Venta deshabilitada con éxito y stock actualizado" });
@@ -127,6 +154,9 @@ const updateVentas = async (req, res) => {
       total_con_descuento,
       ID
     );
+
+    // Invalidar caché de ventas
+    invalidateVentasCache();
 
     res.status(200).json({ message: "Venta actualizada correctamente" });
   } catch (error) {
@@ -358,6 +388,9 @@ const editarVenta = async (req, res) => {
       Boolean(isGift)
     );
 
+    // Invalidar caché de ventas
+    invalidateVentasCache();
+
     res.status(200).json({
       message: "Venta editada correctamente",
       data: result,
@@ -382,6 +415,9 @@ const eliminarDetalleVenta = async (req, res) => {
     }
 
     const result = await ventasModel.eliminarDetalleVenta(detalle_venta_id);
+
+    // Invalidar caché de ventas
+    invalidateVentasCache();
 
     res.status(200).json({
       message: "Detalle eliminado y venta recalculada correctamente",

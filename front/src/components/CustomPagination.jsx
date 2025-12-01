@@ -1,20 +1,6 @@
 import React, { useState } from "react";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
-import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-import { blue, red } from "@mui/material/colors";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: blue[500],
-    },
-    secondary: {
-      main: red[500],
-    },
-  },
-});
+import { Button, Space } from "antd";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 const CustomPagination = ({
   rowsPerPage,
@@ -58,50 +44,44 @@ const CustomPagination = ({
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <div
-        style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}
-      >
-        <ButtonGroup variant="outlined" color="primary">
-          <Button
-            onClick={handlePrev}
-            disabled={visibleRange[0] === 1}
-            startIcon={<ArrowBackIos />}
-          >
-            Prev
-          </Button>
-          <Button onClick={handlePrevPage} disabled={currentPage === 1}>
-            {"<"}
-          </Button>
-          {Array.from(
-            { length: visibleRange[1] - visibleRange[0] + 1 },
-            (_, i) => {
-              const page = visibleRange[0] + i;
-              return (
-                <Button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  variant={currentPage === page ? "contained" : "outlined"}
-                  color={currentPage === page ? "primary" : "inherit"}
-                >
-                  {page}
-                </Button>
-              );
-            }
-          )}
-          <Button onClick={handleNextPage} disabled={currentPage === pageCount}>
-            {">"}
-          </Button>
-          <Button
-            onClick={handleNext}
-            disabled={visibleRange[1] === pageCount}
-            endIcon={<ArrowForwardIos />}
-          >
-            Next
-          </Button>
-        </ButtonGroup>
-      </div>
-    </ThemeProvider>
+    <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+      <Space.Compact>
+        <Button
+          onClick={handlePrev}
+          disabled={visibleRange[0] === 1}
+          icon={<LeftOutlined />}
+        >
+          Prev
+        </Button>
+        <Button onClick={handlePrevPage} disabled={currentPage === 1}>
+          {"<"}
+        </Button>
+        {Array.from(
+          { length: visibleRange[1] - visibleRange[0] + 1 },
+          (_, i) => {
+            const page = visibleRange[0] + i;
+            return (
+              <Button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                type={currentPage === page ? "primary" : "default"}
+              >
+                {page}
+              </Button>
+            );
+          }
+        )}
+        <Button onClick={handleNextPage} disabled={currentPage === pageCount}>
+          {">"}
+        </Button>
+        <Button
+          onClick={handleNext}
+          disabled={visibleRange[1] === pageCount}
+        >
+          Next <RightOutlined />
+        </Button>
+      </Space.Compact>
+    </div>
   );
 };
 

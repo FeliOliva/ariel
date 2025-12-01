@@ -1,4 +1,6 @@
 module.exports = {
+  // Query optimizada: sin LEFT JOIN con detalle_venta ni GROUP BY
+  // Esto mejora significativamente el rendimiento con muchos registros
   getAllVentas: `SELECT 
   v.id,
   v.estado, 
@@ -8,29 +10,16 @@ module.exports = {
   c.id AS cliente_id,
   v.nroVenta,
   z.nombre AS nombre_zona,
-   v.descuento,  -- Sin FORMAT para mantener el valor numérico real
-  v.total_con_descuento,  -- Sin FORMAT
-  v.total,  -- Sin FORMAT
-  v.fecha_venta,
-  COALESCE(SUM(d.costo * d.cantidad), 0) AS total_costo
+  v.descuento,
+  v.total_con_descuento,
+  v.total,
+  v.fecha_venta
 FROM 
   venta v
 INNER JOIN 
   cliente c ON v.cliente_id = c.id
 INNER JOIN 
   zona z ON v.zona_id = z.id
-LEFT JOIN 
-  detalle_venta d ON v.id = d.venta_id
-GROUP BY 
-  v.id, 
-  v.estado, 
-  c.nombre, 
-  c.apellido, 
-  v.nroVenta, 
-  z.nombre, 
-  v.descuento, 
-  v.total_con_descuento, 
-  v.fecha_venta 
 ORDER BY 
   v.id DESC;
     `,

@@ -81,6 +81,14 @@ export default function ResumenZonas() {
       key: "total_notas_credito",
       render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
     },
+    {
+      title: "Saldo",
+      key: "saldo",
+      render: (_, record) => {
+        const saldo = parseFloat(record.total_ventas) - parseFloat(record.total_pagos) - parseFloat(record.total_notas_credito);
+        return `$${Math.round(saldo).toLocaleString("es-ES")}`;
+      },
+    },
   ];
 
   const handlePrint = () => {
@@ -97,16 +105,20 @@ export default function ResumenZonas() {
 
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
-    const tableData = datos.map((d) => [
-      d.nombre_zona,
-      `$${Math.round(d.total_ventas).toLocaleString("es-ES")}`,
-      `$${Math.round(d.total_pagos).toLocaleString("es-ES")}`,
-      `$${Math.round(d.total_notas_credito).toLocaleString("es-ES")}`,
-    ]);
+    const tableData = datos.map((d) => {
+      const saldo = parseFloat(d.total_ventas) - parseFloat(d.total_pagos) - parseFloat(d.total_notas_credito);
+      return [
+        d.nombre_zona,
+        `$${Math.round(d.total_ventas).toLocaleString("es-ES")}`,
+        `$${Math.round(d.total_pagos).toLocaleString("es-ES")}`,
+        `$${Math.round(d.total_notas_credito).toLocaleString("es-ES")}`,
+        `$${Math.round(saldo).toLocaleString("es-ES")}`,
+      ];
+    });
 
     doc.autoTable({
       startY: 45,
-      head: [["Zona", "Total Ventas", "Total Pagos", "Total Notas de Crédito"]],
+      head: [["Zona", "Total Ventas", "Total Pagos", "Total Notas de Crédito", "Saldo"]],
       body: tableData,
     });
 
