@@ -35,6 +35,7 @@ import {
   PlusCircleOutlined,
   FilePdfOutlined,
   FileTextOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import "../style/style.css";
 import { jsPDF } from "jspdf";
@@ -67,6 +68,16 @@ const ResumenCuenta = () => {
   const [notasCreditoSeleccionadas, setNotasCreditoSeleccionadas] = useState(
     []
   );
+  const [cierreCuenta, setCierreCuenta] = useState(null);
+  const [loadingCierre, setLoadingCierre] = useState(false);
+  const [drawerCierreVisible, setDrawerCierreVisible] = useState(false);
+  const [saldosClientes, setSaldosClientes] = useState([]);
+  const [loadingSaldos, setLoadingSaldos] = useState(false);
+  const [cierreYaExiste, setCierreYaExiste] = useState(false);
+  const [cantidadCierres, setCantidadCierres] = useState(0);
+
+  // Fecha de corte para el cierre de cuentas (1 de enero de 2026)
+  const FECHA_CORTE = "2026-01-01";
 
   const { confirm } = Modal;
   const parseMonto = (valor) => {
@@ -90,14 +101,49 @@ const ResumenCuenta = () => {
     }).format(numero);
   };
 
+  // Función para verificar si la fecha es posterior o igual al 1 de enero de 2026
+  const esFechaPosteriorAlCorte = (fecha) => {
+    return new Date(fecha) >= new Date(FECHA_CORTE);
+  };
+
+  // Función para obtener el cierre de cuenta de un cliente
+  const fetchCierreCuenta = async (clienteId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/cierre-cuenta/${clienteId}`,
+        { params: { fecha_corte: FECHA_CORTE } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener cierre de cuenta:", error);
+      return null;
+    }
+  };
+
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
+      // Verificar si la fecha de inicio es posterior al corte
+      const usarCierre = esFechaPosteriorAlCorte(fechaInicio);
+      let saldoInicial = 0;
+      let cierreData = null;
+
+      // Si la fecha es posterior al corte, buscar el cierre de cuenta
+      if (usarCierre) {
+        cierreData = await fetchCierreCuenta(clienteId);
+        setCierreCuenta(cierreData);
+        if (cierreData) {
+          saldoInicial = parseFloat(cierreData.saldo_cierre) || 0;
+        }
+      } else {
+        setCierreCuenta(null);
+      }
+
       const response = await axios.get(
         `http://localhost:3001/resumenCliente/${clienteId}`,
         { params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin } }
       );
 
-      let saldoAcumulado = 0; // Saldo inicial
+      let saldoAcumulado = saldoInicial; // Usar saldo inicial del cierre si corresponde
 
       const filteredData = response.data
         .map((item, index) => ({
@@ -141,7 +187,32 @@ const ResumenCuenta = () => {
         })
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-      setData(filteredData);
+      // Si hay cierre de cuenta, agregar una fila de "Saldo Inicial" al final (que será la primera cronológicamente)
+      let dataConSaldoInicial = filteredData;
+      if (usarCierre && cierreData) {
+        const filaSaldoInicial = {
+          id: `cierre-${cierreData.id}`,
+          tipo: "Saldo Inicial",
+          tipoPlano: "Saldo Inicial",
+          uniqueKey: `saldo-inicial-${cierreData.id}`,
+          fecha: cierreData.fecha_corte,
+          numero: "-",
+          estado: 1,
+          total_con_descuento: null,
+          monto: null,
+          metodo_pago: null,
+          vendedor_nombre: null,
+          montoNumerico: saldoInicial,
+          saldoRestante: saldoInicial,
+          montoFormateado: formatMonto(saldoInicial),
+          totalFormateado: formatMonto(saldoInicial),
+          esSaldoInicial: true, // Marca especial para identificar esta fila
+        };
+        // Agregar al final del array (aparecerá al final de la tabla, que es el más antiguo)
+        dataConSaldoInicial = [...filteredData, filaSaldoInicial];
+      }
+
+      setData(dataConSaldoInicial);
     } catch (error) {
       console.error("Error al obtener los datos:", error);
       message.error("No se pudo cargar la información del cliente");
@@ -266,8 +337,15 @@ const ResumenCuenta = () => {
           title={row.tipo}
           className={row.estado === 0 ? "strikethrough" : ""}
         >
-          <span>
-            <span>{row.tipo ? row.tipo.toUpperCase() : ""}</span>
+          <span style={row.esSaldoInicial ? { 
+            color: "#1890ff", 
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px"
+          } : {}}>
+            {row.esSaldoInicial && <LockOutlined />}
+            {row.tipo ? row.tipo.toUpperCase() : ""}
           </span>
         </Tooltip>
       ),
@@ -352,25 +430,30 @@ const ResumenCuenta = () => {
     {
       name: "Acciones",
       cell: (row) => (
-        <div style={{ display: "flex", gap: "8px" }}>
-          {/* Mostrar el botón de editar solo si el tipo es "pago" */}
-          <Button
-            className="custom-button"
-            onClick={() => handleDetallesNC(row.id, row.tipo)}
-            icon={<EyeOutlined />}
-          />
-          <Button
-            className="custom-button"
-            onClick={() => handleOpenEditDrawer(row.id, row.tipo)}
-            icon={<EditOutlined />}
-          />
-          <Button
-            className="custom-button"
-            onClick={() => handleDelete(row.id, row.tipo)}
-          >
-            {<DeleteOutlined />}
-          </Button>
-        </div>
+        // No mostrar acciones para la fila de Saldo Inicial
+        row.esSaldoInicial ? (
+          <span style={{ color: "#999", fontSize: "12px" }}>-</span>
+        ) : (
+          <div style={{ display: "flex", gap: "8px" }}>
+            {/* Mostrar el botón de editar solo si el tipo es "pago" */}
+            <Button
+              className="custom-button"
+              onClick={() => handleDetallesNC(row.id, row.tipo)}
+              icon={<EyeOutlined />}
+            />
+            <Button
+              className="custom-button"
+              onClick={() => handleOpenEditDrawer(row.id, row.tipo)}
+              icon={<EditOutlined />}
+            />
+            <Button
+              className="custom-button"
+              onClick={() => handleDelete(row.id, row.tipo)}
+            >
+              {<DeleteOutlined />}
+            </Button>
+          </div>
+        )
       ),
     },
   ];
@@ -415,6 +498,10 @@ const ResumenCuenta = () => {
   };
 
   const calcularSaldoRestante = (data) => {
+    // Considerar el saldo inicial del cierre si existe y la fecha es posterior al corte
+    const usarCierre = rangoFechas.length === 2 && esFechaPosteriorAlCorte(rangoFechas[0]);
+    const saldoInicial = usarCierre && cierreCuenta ? parseFloat(cierreCuenta.saldo_cierre) || 0 : 0;
+
     return data
       .filter((item) => item.estado === 1)
       .reduce((saldo, item) => {
@@ -429,10 +516,135 @@ const ResumenCuenta = () => {
         }
 
         return saldo;
-      }, 0);
+      }, saldoInicial);
   };
 
   const saldoRestante = calcularSaldoRestante(data);
+
+  // Función para abrir el drawer de cierre masivo y cargar la vista previa
+  const handleOpenCierreMasivo = async () => {
+    setDrawerCierreVisible(true);
+    setLoadingSaldos(true);
+    try {
+      // Verificar si ya existe un cierre masivo
+      const countResponse = await axios.get(
+        `http://localhost:3001/cierre-masivo/count`,
+        { params: { fecha_corte: FECHA_CORTE } }
+      );
+      const count = countResponse.data.count || 0;
+      setCantidadCierres(count);
+      setCierreYaExiste(count > 0);
+
+      // Cargar vista previa de saldos
+      const response = await axios.get(
+        `http://localhost:3001/cierre-masivo/preview`,
+        { params: { fecha_corte: FECHA_CORTE } }
+      );
+      setSaldosClientes(response.data);
+    } catch (error) {
+      console.error("Error al obtener vista previa de saldos:", error);
+      message.error("No se pudo cargar la vista previa de saldos");
+    } finally {
+      setLoadingSaldos(false);
+    }
+  };
+
+  // Función para ejecutar el cierre masivo
+  const handleEjecutarCierreMasivo = async () => {
+    confirm({
+      title: "Confirmar Cierre Masivo de Cuentas",
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>¿Está seguro de ejecutar el cierre masivo de todas las cuentas corrientes?</p>
+          <p><strong>Total de clientes:</strong> {saldosClientes.length}</p>
+          <p><strong>Fecha de corte:</strong> {FECHA_CORTE}</p>
+          <p style={{ color: "#ff4d4f", marginTop: "10px" }}>
+            Este proceso guardará el saldo actual de cada cliente como saldo inicial para consultas desde el 1 de enero de 2026.
+          </p>
+        </div>
+      ),
+      okText: "Sí, ejecutar cierre masivo",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        setLoadingCierre(true);
+        try {
+          const response = await axios.post("http://localhost:3001/cierre-masivo", {
+            fecha_corte: FECHA_CORTE,
+            observaciones: `Cierre masivo ejecutado el ${dayjs().format("DD/MM/YYYY HH:mm")}`,
+          });
+
+          notification.success({
+            message: "Cierre masivo exitoso",
+            description: `Se procesaron ${response.data.data.total_clientes} clientes. Nuevos: ${response.data.data.nuevos}, Actualizados: ${response.data.data.actualizados}`,
+            duration: 5,
+          });
+
+          setDrawerCierreVisible(false);
+          
+          // Si hay un cliente seleccionado, recargar sus datos
+          if (selectedCliente && rangoFechas.length === 2) {
+            await fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
+          }
+        } catch (error) {
+          console.error("Error en cierre masivo:", error);
+          notification.error({
+            message: "Error",
+            description: "No se pudo ejecutar el cierre masivo.",
+            duration: 3,
+          });
+        } finally {
+          setLoadingCierre(false);
+        }
+      },
+    });
+  };
+
+  // Columnas para la tabla de vista previa del cierre masivo
+  const columnsCierre = [
+    {
+      name: "Cliente",
+      selector: (row) => `${row.farmacia || ""} - ${row.nombre} ${row.apellido}`,
+      sortable: true,
+      grow: 2,
+    },
+    {
+      name: "Zona",
+      selector: (row) => row.zona_nombre || "N/A",
+      sortable: true,
+    },
+    {
+      name: "Total Ventas",
+      selector: (row) => `$${formatMonto(row.total_ventas)}`,
+      sortable: true,
+      right: true,
+    },
+    {
+      name: "Total Pagos",
+      selector: (row) => `$${formatMonto(row.total_pagos)}`,
+      sortable: true,
+      right: true,
+    },
+    {
+      name: "Total NC",
+      selector: (row) => `$${formatMonto(row.total_nc)}`,
+      sortable: true,
+      right: true,
+    },
+    {
+      name: "Saldo",
+      selector: (row) => (
+        <span style={{ 
+          color: row.saldo > 0 ? "#cf1322" : row.saldo < 0 ? "#389e0d" : "#000",
+          fontWeight: "bold"
+        }}>
+          ${formatMonto(row.saldo)}
+        </span>
+      ),
+      sortable: true,
+      right: true,
+    },
+  ];
 
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
@@ -656,8 +868,6 @@ const ResumenCuenta = () => {
       .filter((row) => row.estado === 1)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    let saldoAcumulado = 0;
-
     doc.setFontSize(16);
     doc.text("Resumen de Cuenta", 80, 20);
 
@@ -673,6 +883,9 @@ const ResumenCuenta = () => {
     let yPos = 60;
 
     if (filteredData.length > 0) {
+      // Calcular saldo acumulado correctamente considerando el saldo inicial
+      let saldoAcumulado = 0;
+      
       doc.autoTable({
         startY: yPos,
         head: [
@@ -688,21 +901,33 @@ const ResumenCuenta = () => {
         body: filteredData.map((row) => {
           const monto = row.montoNumerico ?? 0;
 
-          if (row.tipo === "Venta") saldoAcumulado += monto;
-          else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito")
+          // Para Saldo Inicial, el saldo acumulado es el monto mismo
+          if (row.esSaldoInicial) {
+            saldoAcumulado = monto;
+          } else if (row.tipo === "Venta") {
+            saldoAcumulado += monto;
+          } else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito") {
             saldoAcumulado -= monto;
+          }
 
           return [
             new Date(row.fecha).toLocaleDateString("es-AR"),
             row.tipo,
             `$${formatMonto(monto)}`,
-            row.numero,
+            row.numero || "-",
             row.metodo_pago ? row.metodo_pago : "N/A",
             `$${formatMonto(saldoAcumulado)}`,
           ];
         }),
         theme: "grid",
         styles: { fontSize: 10 },
+        // Resaltar la fila de Saldo Inicial
+        didParseCell: function(data) {
+          if (data.row.raw && data.row.raw[1] === "Saldo Inicial") {
+            data.cell.styles.fillColor = [230, 247, 255];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
       });
 
       yPos = doc.lastAutoTable.finalY + 10;
@@ -717,8 +942,18 @@ const ResumenCuenta = () => {
       yPos += 10;
     }
 
+    // Calcular el saldo final real
+    const saldoFinal = filteredData.length > 0 
+      ? filteredData.filter(r => !r.esSaldoInicial).reduce((acc, row) => {
+          const monto = row.montoNumerico ?? 0;
+          if (row.tipo === "Venta") return acc + monto;
+          if (row.tipo === "Pago" || row.tipo === "Nota de Crédito") return acc - monto;
+          return acc;
+        }, filteredData.find(r => r.esSaldoInicial)?.montoNumerico || 0)
+      : 0;
+
     doc.setFontSize(14);
-    doc.text(`Saldo Restante Final: $${formatMonto(saldoAcumulado)}`, 14, yPos);
+    doc.text(`Saldo Restante Final: $${formatMonto(saldoFinal)}`, 14, yPos);
 
     doc.save(`ResumenCuenta_${selectedCliente.nombre}.pdf`);
   };
@@ -920,6 +1155,17 @@ const ResumenCuenta = () => {
               </Space>
             </a>
           </Dropdown>
+          <Tooltip title="Cierre Masivo - Guardar saldos de todas las cuentas para 2026">
+            <Button
+              type="default"
+              danger
+              icon={<LockOutlined />}
+              onClick={handleOpenCierreMasivo}
+              loading={loadingCierre}
+            >
+              Cierre Masivo de Cuentas
+            </Button>
+          </Tooltip>
         </div>
 
         {loading && (
@@ -1148,6 +1394,92 @@ const ResumenCuenta = () => {
             setDrawerVisible(false);
           }}
         />
+
+        {/* Drawer para Cierre Masivo de Cuentas */}
+        <Drawer
+          title={
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <LockOutlined style={{ color: "#ff4d4f" }} />
+              <span>Cierre Masivo de Cuentas Corrientes</span>
+            </div>
+          }
+          open={drawerCierreVisible}
+          onClose={() => setDrawerCierreVisible(false)}
+          width={900}
+          footer={
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <strong>Total clientes: </strong>{saldosClientes.length}
+                <span style={{ marginLeft: "20px" }}>
+                  <strong>Saldo total: </strong>
+                  ${formatMonto(saldosClientes.reduce((acc, c) => acc + (parseFloat(c.saldo) || 0), 0))}
+                </span>
+              </div>
+              <Space>
+                <Button onClick={() => setDrawerCierreVisible(false)}>
+                  {cierreYaExiste ? "Cerrar" : "Cancelar"}
+                </Button>
+                {!cierreYaExiste && (
+                  <Button
+                    type="primary"
+                    danger
+                    icon={<LockOutlined />}
+                    onClick={handleEjecutarCierreMasivo}
+                    loading={loadingCierre}
+                    disabled={saldosClientes.length === 0}
+                  >
+                    Ejecutar Cierre Masivo
+                  </Button>
+                )}
+              </Space>
+            </div>
+          }
+        >
+          {cierreYaExiste ? (
+            <div style={{ marginBottom: "15px", padding: "15px", backgroundColor: "#f6ffed", border: "1px solid #b7eb8f", borderRadius: "6px" }}>
+              <p style={{ margin: 0, color: "#52c41a", fontWeight: "bold", fontSize: "14px" }}>
+                ✓ Cierre masivo ya realizado
+              </p>
+              <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: "#333" }}>
+                Ya existe un cierre de cuentas para la fecha de corte <strong>{FECHA_CORTE}</strong>.
+              </p>
+              <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
+                Se encontraron <strong>{cantidadCierres}</strong> cierres registrados. 
+                Los saldos mostrados abajo son los que se guardaron en el cierre.
+              </p>
+            </div>
+          ) : (
+            <div style={{ marginBottom: "15px", padding: "10px", backgroundColor: "#fff7e6", border: "1px solid #ffd591", borderRadius: "6px" }}>
+              <p style={{ margin: 0 }}>
+                <strong>Fecha de corte:</strong> {FECHA_CORTE}
+              </p>
+              <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
+                Este proceso guardará el saldo actual de cada cliente. Las consultas de resumen de cuenta 
+                desde el 1 de enero de 2026 usarán estos saldos como punto de partida.
+              </p>
+            </div>
+          )}
+
+          {loadingSaldos ? (
+            <div style={{ textAlign: "center", padding: "50px" }}>
+              <span>Cargando saldos de clientes...</span>
+            </div>
+          ) : (
+            <DataTable
+              columns={columnsCierre}
+              data={saldosClientes}
+              pagination
+              paginationPerPage={15}
+              paginationRowsPerPageOptions={[15, 30, 50, 100]}
+              customStyles={{
+                headCells: { style: customHeaderStyles },
+                cells: { style: customCellsStyles },
+              }}
+              highlightOnHover
+              striped
+            />
+          )}
+        </Drawer>
       </div>
     </MenuLayout>
   );

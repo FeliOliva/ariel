@@ -29,6 +29,7 @@ const RoutesNotasCredito = require("./routes/notasCreditoRoutes");
 const RoutesPedidos = require("./routes/pedidosRoutes");
 const RoutesEstadisticas = require("./routes/estadisticasRoutes");
 const RoutesVendedores = require("./routes/vendedoresRoutes");
+const RoutesCierreCuenta = require("./routes/cierreCuentaRoutes");
 app.use(
   "/",
   RoutesArticulos,
@@ -49,7 +50,8 @@ app.use(
   RoutesNotasCredito,
   RoutesPedidos,
   RoutesEstadisticas,
-  RoutesVendedores
+  RoutesVendedores,
+  RoutesCierreCuenta
 );
 
 app.listen(PORT, () => {

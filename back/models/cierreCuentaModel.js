@@ -1,0 +1,187 @@
+const db = require("../database");
+const queriesCierreCuenta = require("../querys/queriesCierreCuenta");
+
+// Obtener cierre de cuenta por cliente y fecha de corte
+const getCierreCuentaByCliente = async (cliente_id, fecha_corte) => {
+  try {
+    const [rows] = await db.query(queriesCierreCuenta.getCierreCuentaByCliente, [
+      cliente_id,
+      fecha_corte,
+    ]);
+    return rows.length > 0 ? rows[0] : null;
+  } catch (err) {
+    console.error("Error en getCierreCuentaByCliente:", err);
+    throw err;
+  }
+};
+
+// Obtener todos los cierres de un cliente
+const getAllCierresByCliente = async (cliente_id) => {
+  try {
+    const [rows] = await db.query(
+      queriesCierreCuenta.getAllCierresByCliente,
+      [cliente_id]
+    );
+    return rows;
+  } catch (err) {
+    console.error("Error en getAllCierresByCliente:", err);
+    throw err;
+  }
+};
+
+// Agregar o actualizar cierre de cuenta
+const addCierreCuenta = async (cliente_id, saldo_cierre, fecha_corte, observaciones = null) => {
+  try {
+    const [result] = await db.query(queriesCierreCuenta.addCierreCuenta, [
+      cliente_id,
+      saldo_cierre,
+      fecha_corte,
+      observaciones,
+    ]);
+    return result;
+  } catch (err) {
+    console.error("Error en addCierreCuenta:", err);
+    throw err;
+  }
+};
+
+// Actualizar cierre de cuenta existente
+const updateCierreCuenta = async (id, saldo_cierre, observaciones) => {
+  try {
+    const [result] = await db.query(queriesCierreCuenta.updateCierreCuenta, [
+      saldo_cierre,
+      observaciones,
+      id,
+    ]);
+    return result;
+  } catch (err) {
+    console.error("Error en updateCierreCuenta:", err);
+    throw err;
+  }
+};
+
+// Eliminar cierre de cuenta
+const deleteCierreCuenta = async (id) => {
+  try {
+    const [result] = await db.query(queriesCierreCuenta.deleteCierreCuenta, [id]);
+    return result;
+  } catch (err) {
+    console.error("Error en deleteCierreCuenta:", err);
+    throw err;
+  }
+};
+
+// Obtener todos los últimos cierres por fecha de corte
+const getAllUltimosCierres = async (fecha_corte) => {
+  try {
+    const [rows] = await db.query(queriesCierreCuenta.getAllUltimosCierres, [
+      fecha_corte,
+    ]);
+    return rows;
+  } catch (err) {
+    console.error("Error en getAllUltimosCierres:", err);
+    throw err;
+  }
+};
+
+// Verificar si existe un cierre
+const existeCierre = async (cliente_id, fecha_corte) => {
+  try {
+    const [rows] = await db.query(queriesCierreCuenta.existeCierre, [
+      cliente_id,
+      fecha_corte,
+    ]);
+    return rows[0].count > 0;
+  } catch (err) {
+    console.error("Error en existeCierre:", err);
+    throw err;
+  }
+};
+
+// Obtener saldo de todos los clientes para cierre masivo
+const getSaldosTodosClientes = async (fecha_corte) => {
+  try {
+    const [rows] = await db.query(queriesCierreCuenta.getSaldosTodosClientes, [
+      fecha_corte,
+      fecha_corte,
+      fecha_corte,
+    ]);
+    return rows;
+  } catch (err) {
+    console.error("Error en getSaldosTodosClientes:", err);
+    throw err;
+  }
+};
+
+// Cierre masivo de todas las cuentas
+const cierreMasivo = async (fecha_corte, observaciones = null) => {
+  try {
+    // Obtener saldos de todos los clientes
+    const saldos = await getSaldosTodosClientes(fecha_corte);
+    
+    let insertados = 0;
+    let actualizados = 0;
+    const resultados = [];
+
+    for (const cliente of saldos) {
+      // Solo guardar si el saldo no es 0 o si queremos guardar todos
+      const result = await addCierreCuenta(
+        cliente.cliente_id,
+        cliente.saldo,
+        fecha_corte,
+        observaciones
+      );
+      
+      if (result.insertId) {
+        insertados++;
+      } else {
+        actualizados++;
+      }
+
+      resultados.push({
+        cliente_id: cliente.cliente_id,
+        farmacia: cliente.farmacia,
+        nombre: cliente.nombre,
+        apellido: cliente.apellido,
+        saldo: cliente.saldo,
+      });
+    }
+
+    return {
+      total: saldos.length,
+      insertados,
+      actualizados,
+      resultados,
+    };
+  } catch (err) {
+    console.error("Error en cierreMasivo:", err);
+    throw err;
+  }
+};
+
+// Contar cierres por fecha
+const contarCierresPorFecha = async (fecha_corte) => {
+  try {
+    const [rows] = await db.query(queriesCierreCuenta.contarCierresPorFecha, [
+      fecha_corte,
+    ]);
+    return rows[0].count;
+  } catch (err) {
+    console.error("Error en contarCierresPorFecha:", err);
+    throw err;
+  }
+};
+
+module.exports = {
+  getCierreCuentaByCliente,
+  getAllCierresByCliente,
+  addCierreCuenta,
+  updateCierreCuenta,
+  deleteCierreCuenta,
+  getAllUltimosCierres,
+  existeCierre,
+  getSaldosTodosClientes,
+  cierreMasivo,
+  contarCierresPorFecha,
+};
+
