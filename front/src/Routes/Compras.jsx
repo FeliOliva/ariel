@@ -23,8 +23,6 @@ import { format } from "date-fns";
 import { WarningOutlined } from "@ant-design/icons";
 import {
   ExclamationCircleOutlined,
-  CloseOutlined,
-  SearchOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
@@ -185,7 +183,7 @@ function Compras() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          const response = await axios.post(
+          await axios.post(
             "http://localhost:3001/addCompra",
             payload
           );

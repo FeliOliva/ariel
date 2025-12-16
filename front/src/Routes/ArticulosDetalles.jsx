@@ -180,7 +180,7 @@ const ArticulosDetalles = () => {
             addHeader(pdf, false);
           },
           willDrawCell: (data) => {
-            const { row, column, section } = data;
+            const { row, section } = data;
             if (section === "body") {
               if (row.index % 2 === 0) {
                 pdf.setFillColor(240, 240, 240);
@@ -249,7 +249,6 @@ const ArticulosDetalles = () => {
     const pageWidth = pdf.internal.pageSize.width;
     const marginTop = 40;
     const titleHeight = 10;
-    const rowHeight = 7;
     const logoWidth = 30;
     const logoHeight = 30;
     const phone = "Teléfono: +54 9 3518 16-8151";

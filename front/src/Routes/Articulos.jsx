@@ -16,7 +16,6 @@ import {
   CloseOutlined,
   ExclamationCircleOutlined,
   EditOutlined,
-  FileTextOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
   PlusCircleOutlined,
@@ -25,7 +24,7 @@ import MenuLayout from "../components/MenuLayout";
 import ProveedorInput from "../components/ProveedoresInput";
 import LineaInput from "../components/LineaInput";
 import SubLineaInput from "../components/SubLineaInput";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../style/style.css";
 import {
   customHeaderStyles,
@@ -35,7 +34,7 @@ import CustomPagination from "../components/CustomPagination";
 
 function Articulos() {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState([]); // Artículos filtrados por la búsqueda
   const [searchValue, setSearchValue] = useState(""); // Valor del input de búsqueda
   const [searchType, setSearchType] = useState("linea"); // "linea" o "articulo"
@@ -559,6 +558,7 @@ function Articulos() {
   // Actualizar datos filtrados según la búsqueda
   useEffect(() => {
     filterData(searchValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, searchValue, searchType]);
 
   // Filtrar los datos según el valor de búsqueda

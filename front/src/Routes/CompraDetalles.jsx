@@ -12,7 +12,6 @@ import {
   Modal,
 } from "antd";
 import {
-  ArrowUpOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";

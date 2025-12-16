@@ -6,7 +6,6 @@ import MenuLayout from "../components/MenuLayout";
 import {
   Button,
   Drawer,
-  Tooltip,
   InputNumber,
   notification,
   Modal,
@@ -25,7 +24,6 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import ArticulosInput from "../components/ArticulosInput";
-import warning from "antd/es/_util/warning";
 import DynamicList from "../components/DynamicList";
 const VentaDetalles = () => {
   const { id } = useParams();
@@ -50,7 +48,6 @@ const VentaDetalles = () => {
   const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState("");
   const [selectedArticulo, setSelectedArticulo] = useState(null);
-  const [ajustePorcentaje, setAjustePorcentaje] = useState(0);
   const [modoAjuste, setModoAjuste] = useState("subir"); // subir | bajar
   const [porcentaje, setPorcentaje] = useState(0);
 
@@ -382,7 +379,6 @@ const VentaDetalles = () => {
       setDetalleVenta(response.data);
       setPrecio(Number(response.data.precio_monotributista) || 0);
       setCantidad(Number(response.data.cantidad) || 1);
-      setAjustePorcentaje(0); // arranca en 0%
       setOpenDrawer(true);
       setModoAjuste("subir");
       setPorcentaje(0);

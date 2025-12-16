@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Button,
   DatePicker,
-  Table,
   message,
   Tooltip,
   Drawer,
@@ -29,7 +28,6 @@ import DynamicListNC from "../components/DynamicListNC";
 import {
   ExclamationCircleOutlined,
   DeleteOutlined,
-  CheckCircleOutlined,
   DownOutlined,
   EditOutlined,
   EyeOutlined,
@@ -57,7 +55,7 @@ const ResumenCuenta = () => {
   const [notaCredito, setNotaCredito] = useState({
     articulos: [],
   });
-  const [nextNroPago, setNextNroPago] = useState("00001");
+  const [nextNroPago] = useState("00001");
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [pagoData, setPagoData] = useState(null);
   const [ventaData, setVentaData] = useState(null);
@@ -739,7 +737,7 @@ const ResumenCuenta = () => {
   const items = [
     {
       label: (
-        <a target="_blank" onClick={goToResumenZona}>
+        <a href="#resumen-zonas" onClick={goToResumenZona}>
           Resumen Total por zonas
         </a>
       ),
@@ -747,7 +745,7 @@ const ResumenCuenta = () => {
     },
     {
       label: (
-        <a target="_blank" onClick={goToResumenCuentaXZona}>
+        <a href="#resumen-clientes-zona" onClick={goToResumenCuentaXZona}>
           Resumen de clientes por zona
         </a>
       ),
@@ -755,17 +753,17 @@ const ResumenCuenta = () => {
     },
     {
       label: (
-        <a target="_blank" onClick={goToResumenCuentaXVendedor}>
+        <a href="#resumen-vendedor" onClick={goToResumenCuentaXVendedor}>
           Resumen por vendendor
         </a>
       ),
-      key: "1",
+      key: "2",
     },
   ];
   const pdfItems = [
     {
       label: (
-        <a onClick={generateNotaCreditoPDF}>
+        <a href="#generar-nc" onClick={generateNotaCreditoPDF}>
           <FilePdfOutlined /> Generar Nota de Crédito PDF
         </a>
       ),
@@ -773,7 +771,7 @@ const ResumenCuenta = () => {
     },
     {
       label: (
-        <a onClick={generateResumenCuentaPDF}>
+        <a href="#generar-resumen" onClick={generateResumenCuentaPDF}>
           <FileTextOutlined /> Generar Resumen de Cuenta PDF
         </a>
       ),
@@ -904,6 +902,7 @@ const ResumenCuenta = () => {
             }}
           >
             <a
+              href="#resumenes"
               style={{
                 display: "flex",
                 alignItems: "center",

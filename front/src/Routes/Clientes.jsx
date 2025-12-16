@@ -47,7 +47,7 @@ const Clientes = () => {
   const [openEditZonaDrawer, setOpenEditZonaDrawer] = useState(false);
   const [openEditTipoDrawer, setOpenEditTipoDrawer] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [zonaSeleccionada, setZonaSeleccionada] = useState(null);
+  const [, setZonaSeleccionada] = useState(null);
   const [clientesPorZona, setClientesPorZona] = useState([]);
   const [openClientesPorZona, setOpenClientesPorZona] = useState(false);
   const navigate = useNavigate();

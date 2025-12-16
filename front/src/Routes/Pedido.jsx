@@ -10,7 +10,7 @@ import {
   notification,
 } from "antd";
 import ArticulosInput from "../components/ArticulosInput";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../style/style.css";
 import {
   customHeaderStyles,
@@ -18,7 +18,7 @@ import {
 } from "../style/dataTableStyles";
 import CustomPagination from "../components/CustomPagination";
 import DataTable from "react-data-table-component";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import {
   ExclamationCircleOutlined,
   DeleteOutlined,
@@ -27,7 +27,7 @@ import {
 import DynamicListPedido from "../components/DynamicListPedido";
 const Pedido = () => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [articuloValue, setArticuloValue] = useState("");
   const [selectedArticulo, setSelectedArticulo] = useState(null);
@@ -202,7 +202,7 @@ const Pedido = () => {
         cancelText: "No",
         onOk: async () => {
           try {
-            const response = await axios.post(
+            await axios.post(
               "http://localhost:3001/pedidos",
               pedidoData
             );

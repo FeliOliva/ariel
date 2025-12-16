@@ -7,10 +7,6 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import dayjs from "dayjs";
 import "../style/style.css";
-import {
-  customHeaderStyles,
-  customCellsStyles,
-} from "../style/dataTableStyles";
 import CustomPagination from "../components/CustomPagination";
 
 const { RangePicker } = DatePicker;

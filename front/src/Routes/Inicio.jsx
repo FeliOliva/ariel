@@ -78,6 +78,7 @@ const Inicio = () => {
 
   useEffect(() => {
     fetchTotales();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangoFechas]);
 
   const comprasYGastos = totalCompras + totalGastos;

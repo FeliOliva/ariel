@@ -173,14 +173,6 @@ export default function ResumenCuentaXZona() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
 
-    // Función para limpiar valores y convertirlos a enteros (la mantuve)
-    const toInt = (valor) => {
-      if (typeof valor === "string") {
-        return parseInt(valor.replace(/[^0-9-]+/g, ""), 10) || 0;
-      }
-      return Number.isInteger(valor) ? valor : 0;
-    };
-
     const totalVentasGlobal = datos.reduce((sum, d) => sum + d.totalVentas, 0);
     const totalPagosGlobal = datos.reduce((sum, d) => sum + d.totalPagos, 0);
     const totalNotasCreditoGlobal = datos.reduce(

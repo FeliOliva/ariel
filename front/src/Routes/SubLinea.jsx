@@ -36,6 +36,7 @@ const SubLinea = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handleToggleState = async (id, currentState) => {
     try {

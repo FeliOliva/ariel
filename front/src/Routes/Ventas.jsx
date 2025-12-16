@@ -15,7 +15,7 @@ import {
   Switch,
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import ArticulosInput from "../components/ArticulosInput";
 import ClienteInput from "../components/ClienteInput";
 import DynamicList from "../components/DynamicList";
@@ -24,13 +24,10 @@ import {
   customHeaderStyles,
   customCellsStyles,
 } from "../style/dataTableStyles"; // Importa los estilos reutilizables
-import OfertasInput from "../components/OfertasInput";
 import {
   ExclamationCircleOutlined,
   CloseOutlined,
-  SearchOutlined,
   DeleteOutlined,
-  CheckCircleOutlined,
   EditOutlined,
 } from "@ant-design/icons";
 import "../style/style.css";
@@ -50,8 +47,6 @@ function Ventas() {
   const [cantidad, setCantidad] = useState(0);
   const [articuloValue, setArticuloValue] = useState(""); // Estado para el valor del input del artículo
   const [clienteValue, setClienteValue] = useState(""); // Estado para el valor del input del cliente
-  const [ofertaValue, setOfertaValue] = useState(""); // Estado para el valor del input de la oferta
-  const [selectedOferta, setSelectedOferta] = useState(""); // Estado para el valor del input de la oferta
   const { confirm } = Modal;
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
@@ -213,6 +208,7 @@ function Ventas() {
   useEffect(() => {
     // siempre que cambien artículos, descuento o modo, recalculamos
     setTotalVenta(calculateTotal());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venta.articulos, venta.descuento, modoDescuento]);
 
   // Función para alternar el modo
@@ -527,6 +523,7 @@ function Ventas() {
     );
     setVenta((prevVenta) => ({ ...prevVenta, articulos: updatedArticulos }));
   };
+  // eslint-disable-next-line no-unused-vars
   const fetchVentasByClient = async (cliente) => {
     try {
       const response = await axios.get(
@@ -539,19 +536,6 @@ function Ventas() {
   };
   const handleClietChange = (cliente) => {
     setClient(cliente);
-  };
-  const handleSelectedClient = () => {
-    if (!client) {
-      Modal.warning({
-        title: "Advertencia",
-        content: "Por favor, selecciona un cliente.",
-        icon: <ExclamationCircleOutlined />,
-        timer: 1500,
-      });
-    } else {
-      fetchVentasByClient(client);
-      // setHasSearched(true); // Activar después de hacer clic en Buscar
-    }
   };
   const handleUpdateVenta = async (id) => {
     try {
@@ -785,23 +769,6 @@ function Ventas() {
       </div>
     );
   }
-  const handleBuscar = () => {
-    if (searchNroVenta.trim() !== "") {
-      const filtered = data.filter((venta) =>
-        venta.nroVenta.toLowerCase().includes(searchNroVenta.toLowerCase())
-      );
-      setFilteredData(filtered);
-    } else if (client) {
-      fetchVentasByClient(client);
-    } else {
-      Modal.warning({
-        title: "Advertencia",
-        content:
-          "Por favor, ingresa un número de venta o selecciona un cliente.",
-        icon: <ExclamationCircleOutlined />,
-      });
-    }
-  };
 
   return (
     <MenuLayout>

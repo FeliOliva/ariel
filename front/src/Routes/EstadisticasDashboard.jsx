@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   DatePicker,
   Button,
@@ -16,7 +16,6 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import LineaInput from "../components/LineaInput"; // Ajusta la ruta según tu estructura
 import MenuLayout from "../components/MenuLayout";
-import dayjs from "dayjs";
 import imageUrl from "../logoRenacer.png";
 
 const { RangePicker } = DatePicker;
@@ -50,7 +49,7 @@ export default function EstadisticasDashboard() {
         `http://localhost:3001/getArticulosVendidosPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
       );
 
-      const { productos, totalGeneral } = response.data;
+      const { productos } = response.data;
       setEstadisticas(productos);
       message.success("Estadísticas cargadas correctamente");
     } catch (error) {

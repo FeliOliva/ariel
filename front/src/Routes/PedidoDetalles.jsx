@@ -121,7 +121,7 @@ const PedidoDetalles = () => {
       cancelText: "No",
       onOk: async () => {
         try {
-          const response = await axios.put(
+          await axios.put(
             "http://localhost:3001/pedido/detalle",
             {
               detalleId: detallePedido.detalle_pedido_id,
