@@ -3,12 +3,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   ContactsOutlined,
   ShoppingCartOutlined,
-  SkinOutlined,
-  SisternodeOutlined,
+  AppstoreOutlined,
   HomeOutlined,
-  SubnodeOutlined,
+  AccountBookOutlined,
+  InboxOutlined,
+  ApartmentOutlined,
+  DollarOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
   ShoppingOutlined,
-  DropboxOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, theme } from "antd";
 
@@ -117,7 +120,7 @@ const MenuLayout = ({ children }) => {
             },
             {
               key: "3",
-              icon: <SkinOutlined />,
+              icon: <AppstoreOutlined />,
               label: "Articulos",
             },
             {
@@ -137,32 +140,32 @@ const MenuLayout = ({ children }) => {
             // },
             {
               key: "7",
-              icon: <SubnodeOutlined />,
+              icon: <AccountBookOutlined />,
               label: "Resumen de cuentas",
             },
             {
               key: "8",
-              icon: <DropboxOutlined />,
+              icon: <InboxOutlined />,
               label: "Pedidos",
             },
             {
               key: "9",
-              icon: <SisternodeOutlined />,
+              icon: <ApartmentOutlined />,
               label: "Linea",
             },
             {
               key: "10",
-              icon: <SisternodeOutlined />,
+              icon: <DollarOutlined />,
               label: "Gastos",
             },
             {
               key: "11",
-              icon: <SisternodeOutlined />,
+              icon: <FileTextOutlined />,
               label: "Cheques",
             },
             {
               key: "12",
-              icon: <SisternodeOutlined />,
+              icon: <BarChartOutlined />,
               label: "Estadisticas",
             },
           ]}

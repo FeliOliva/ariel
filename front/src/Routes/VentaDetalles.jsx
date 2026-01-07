@@ -480,7 +480,7 @@ const VentaDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
-          ${row.precio_monotributista}
+          ${Math.ceil(parseFloat(row.precio_monotributista) || 0)}
         </div>
       ),
     },

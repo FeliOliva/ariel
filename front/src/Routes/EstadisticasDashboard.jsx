@@ -9,11 +9,22 @@ import {
   Table,
   message,
   Spin,
+  Select,
 } from "antd";
 import { FilePdfOutlined, BarChartOutlined } from "@ant-design/icons";
 import axios from "axios";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import LineaInput from "../components/LineaInput"; // Ajusta la ruta según tu estructura
 import MenuLayout from "../components/MenuLayout";
 import imageUrl from "../logoRenacer.png";
@@ -24,6 +35,8 @@ export default function EstadisticasDashboard() {
   const [selectedLinea, setSelectedLinea] = useState(null);
   const [dateRange, setDateRange] = useState([]);
   const [estadisticas, setEstadisticas] = useState([]);
+  const [evolucionData, setEvolucionData] = useState([]);
+  const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleChangeLinea = (linea) => {
@@ -45,12 +58,21 @@ export default function EstadisticasDashboard() {
       const fechaInicio = dateRange[0].format("YYYY-MM-DD");
       const fechaFin = dateRange[1].format("YYYY-MM-DD");
 
-      const response = await axios.get(
-        `http://localhost:3001/getArticulosVendidosPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
-      );
+      const [productosRes, evolucionRes] = await Promise.all([
+        axios.get(
+          `http://localhost:3001/getArticulosVendidosPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+        ),
+        axios.get(
+          `http://localhost:3001/getEvolucionGananciaPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+        ),
+      ]);
 
-      const { productos } = response.data;
+      const { productos } = productosRes.data;
       setEstadisticas(productos);
+      
+      const { evolucion } = evolucionRes.data;
+      setEvolucionData(evolucion);
+      
       message.success("Estadísticas cargadas correctamente");
     } catch (error) {
       console.error("Error fetching estadísticas:", error);
@@ -67,6 +89,7 @@ export default function EstadisticasDashboard() {
         totalVendido: 0,
         totalCantidad: 0,
         promedioVenta: 0,
+        totalGanancia: 0,
       };
     }
 
@@ -79,6 +102,10 @@ export default function EstadisticasDashboard() {
       (sum, item) => sum + (parseInt(item.unidades_vendidas) || 0),
       0
     );
+    const totalGananciaRaw = estadisticas.reduce(
+      (sum, item) => sum + (parseFloat(item.ganancia) || 0),
+      0
+    );
     const promedioVentaRaw =
       totalArticulos > 0 ? totalVendidoRaw / totalArticulos : 0;
 
@@ -87,6 +114,7 @@ export default function EstadisticasDashboard() {
       totalVendido: Math.ceil(totalVendidoRaw),
       totalCantidad,
       promedioVenta: Math.ceil(promedioVentaRaw),
+      totalGanancia: Math.ceil(totalGananciaRaw),
     };
   };
 
@@ -154,6 +182,12 @@ export default function EstadisticasDashboard() {
       105,
       currentY
     );
+    currentY += 7;
+    pdf.text(
+      `Ganancia Total: $${totals.totalGanancia.toLocaleString("es-ES")}`,
+      10,
+      currentY
+    );
     currentY += 15;
 
     // Ordenar los datos por total vendido (descendente)
@@ -161,17 +195,22 @@ export default function EstadisticasDashboard() {
       (a, b) => parseFloat(b.total_vendido) - parseFloat(a.total_vendido)
     );
 
-    const tableData = sortedData.map((row) => [
-      row.codigo_articulo || "",
-      row.nombre_completo || "",
-      parseInt(row.stock) || 0,
-      parseInt(row.unidades_vendidas) || 0,
-      "$" + Math.ceil(parseFloat(row.subtotal)).toLocaleString("es-ES"),
-      "$" +
-        Math.ceil(parseFloat(row.precio_monotributista || 0)).toLocaleString(
-          "es-ES"
-        ),
-    ]);
+    const tableData = sortedData.map((row) => {
+      const costo = parseFloat(row.costo || 0);
+      const precio = parseFloat(row.precio_monotributista || 0);
+      const diferencia = precio - costo;
+      return [
+        row.codigo_articulo || "",
+        row.nombre_completo || "",
+        parseInt(row.stock) || 0,
+        parseInt(row.unidades_vendidas) || 0,
+        "$" + Math.ceil(parseFloat(row.subtotal)).toLocaleString("es-ES"),
+        "$" + Math.ceil(costo).toLocaleString("es-ES"),
+        "$" + Math.ceil(precio).toLocaleString("es-ES"),
+        "$" + Math.ceil(diferencia).toLocaleString("es-ES"),
+        "$" + Math.ceil(parseFloat(row.ganancia || 0)).toLocaleString("es-ES"),
+      ];
+    });
 
     pdf.autoTable({
       startY: currentY,
@@ -182,7 +221,10 @@ export default function EstadisticasDashboard() {
           "Stock",
           "Cantidad Vendida",
           "Total Vendido",
+          "Costo",
           "Precio Monotributista",
+          "Diferencia",
+          "Ganancia",
         ],
       ],
       body: tableData,
@@ -197,12 +239,15 @@ export default function EstadisticasDashboard() {
       margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
       tableWidth: pageWidth - 10,
       columnStyles: {
-        0: { cellWidth: 25 }, // Código
+        0: { cellWidth: 18 }, // Código
         1: { cellWidth: "auto" }, // Artículo
-        3: { cellWidth: 25, halign: "center" }, // Stock
-        2: { cellWidth: 25, halign: "center" }, // Cantidad Vendida
-        4: { cellWidth: 30, halign: "right" }, // Total Vendido
-        5: { cellWidth: 30, halign: "right" }, // Precio Promedio
+        2: { cellWidth: 18, halign: "center" }, // Stock
+        3: { cellWidth: 18, halign: "center" }, // Cantidad Vendida
+        4: { cellWidth: 22, halign: "right" }, // Total Vendido
+        5: { cellWidth: 20, halign: "right" }, // Costo
+        6: { cellWidth: 22, halign: "right" }, // Precio Monotributista
+        7: { cellWidth: 20, halign: "right" }, // Diferencia
+        8: { cellWidth: 22, halign: "right" }, // Ganancia
       },
       didDrawPage: (data) => {
         addHeader(pdf, false);
@@ -255,6 +300,15 @@ export default function EstadisticasDashboard() {
         Math.ceil(parseFloat(record.subtotal || 0)).toLocaleString("es-ES"),
     },
     {
+      title: "Costo",
+      dataIndex: "costo",
+      key: "costo",
+      align: "right",
+      render: (_, record) =>
+        "$" +
+        Math.ceil(parseFloat(record.costo || 0)).toLocaleString("es-ES"),
+    },
+    {
       title: "Precio Monotributista",
       dataIndex: "precio_monotributista",
       key: "precio_monotributista",
@@ -265,12 +319,48 @@ export default function EstadisticasDashboard() {
           "es-ES"
         ),
     },
+    {
+      title: "Diferencia",
+      key: "diferencia",
+      align: "right",
+      render: (_, record) => {
+        const costo = parseFloat(record.costo || 0);
+        const precio = parseFloat(record.precio_monotributista || 0);
+        const diferencia = precio - costo;
+        return "$" + Math.ceil(diferencia).toLocaleString("es-ES");
+      },
+    },
+    {
+      title: "Ganancia",
+      dataIndex: "ganancia",
+      key: "ganancia",
+      align: "right",
+      render: (_, record) =>
+        "$" +
+        Math.ceil(parseFloat(record.ganancia || 0)).toLocaleString("es-ES"),
+    },
   ];
 
   const totals = calculateTotals();
 
   return (
     <MenuLayout>
+      <style>
+        {`
+          .selected-row {
+            background-color: #e6f7ff !important;
+          }
+          .selected-row:hover {
+            background-color: #bae7ff !important;
+          }
+          .ant-table-tbody > tr:hover {
+            background-color: #f0f0f0;
+          }
+          .ant-table-tbody > tr.selected-row:hover {
+            background-color: #bae7ff !important;
+          }
+        `}
+      </style>
       <div style={{ padding: "20px" }}>
         <Card
           title={
@@ -325,8 +415,8 @@ export default function EstadisticasDashboard() {
           {/* Estadísticas Generales */}
           {estadisticas && estadisticas.length > 0 && (
             <>
-              <Row gutter={16} style={{ marginBottom: "20px" }}>
-                <Col xs={12} sm={6}>
+              <Row gutter={[16, 16]} justify="center" style={{ marginBottom: "20px" }}>
+                <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
                       title="Total Artículos"
@@ -335,7 +425,7 @@ export default function EstadisticasDashboard() {
                     />
                   </Card>
                 </Col>
-                <Col xs={12} sm={6}>
+                <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
                       title="Cantidad Vendida"
@@ -344,29 +434,241 @@ export default function EstadisticasDashboard() {
                     />
                   </Card>
                 </Col>
-                <Col xs={12} sm={6}>
+                <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
                       title="Total Vendido"
                       value={totals.totalVendido}
-                      precision={0} // ← sin decimales
+                      precision={0}
                       prefix="$"
                       valueStyle={{ color: "#f5222d" }}
                     />
                   </Card>
                 </Col>
-                <Col xs={12} sm={6}>
+                <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
                       title="Promedio por Artículo"
                       value={totals.promedioVenta}
-                      precision={0} // ← sin decimales
+                      precision={0}
                       prefix="$"
                       valueStyle={{ color: "#722ed1" }}
                     />
                   </Card>
                 </Col>
+                <Col xs={24} sm={12} md={8} lg={6} xl={4}>
+                  <Card>
+                    <Statistic
+                      title="Ganancia"
+                      value={totals.totalGanancia}
+                      precision={0}
+                      prefix="$"
+                      valueStyle={{ color: "#fa8c16" }}
+                    />
+                  </Card>
+                </Col>
               </Row>
+
+              {/* Gráfico de Evolución Temporal */}
+              {evolucionData && evolucionData.length > 0 && (
+                <Card 
+                  title="Evolución de Ganancia y Precios en el Tiempo"
+                  style={{ marginBottom: "20px" }}
+                >
+                  <Row gutter={16} style={{ marginBottom: "16px" }}>
+                    <Col span={24}>
+                      <Select
+                        placeholder="Selecciona un producto para ver su evolución (o deja vacío para ver todos). También puedes hacer clic en una fila de la tabla."
+                        style={{ width: "100%" }}
+                        allowClear
+                        showSearch
+                        optionFilterProp="children"
+                        onChange={(value) => setSelectedArticulo(value)}
+                        value={selectedArticulo}
+                      >
+                        {estadisticas.map((art) => (
+                          <Select.Option key={art.codigo_articulo} value={art.codigo_articulo}>
+                            {art.nombre_completo}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                      {selectedArticulo && (
+                        <div style={{ marginTop: "8px", color: "#1890ff" }}>
+                          Mostrando evolución de: {estadisticas.find(a => a.codigo_articulo === selectedArticulo)?.nombre_completo}
+                        </div>
+                      )}
+                    </Col>
+                  </Row>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart
+                      data={(() => {
+                        // Filtrar por artículo si está seleccionado
+                        let datosFiltrados = evolucionData;
+                        if (selectedArticulo) {
+                          datosFiltrados = evolucionData.filter(
+                            (d) => d.codigo_articulo === selectedArticulo
+                          );
+                        }
+
+                        // Si hay un artículo seleccionado, mostrar datos individuales por fecha
+                        // Si no, agrupar todos los artículos por fecha
+                        if (selectedArticulo) {
+                          // Para un artículo específico: agrupar solo sus ventas por fecha
+                          const datosPorFecha = {};
+                          datosFiltrados.forEach((item) => {
+                            const fecha = item.fecha;
+                            if (!datosPorFecha[fecha]) {
+                              datosPorFecha[fecha] = {
+                                fecha: fecha,
+                                ganancia: 0,
+                                total_vendido: 0,
+                                diferencia_promedio: 0,
+                                precio_promedio: 0,
+                                costo_promedio: 0,
+                                cantidad_vendida: 0,
+                              };
+                            }
+                            datosPorFecha[fecha].ganancia += parseFloat(item.ganancia || 0);
+                            datosPorFecha[fecha].total_vendido += parseFloat(item.total_vendido || 0);
+                            datosPorFecha[fecha].diferencia_promedio += parseFloat(item.diferencia_promedio || 0);
+                            datosPorFecha[fecha].precio_promedio += parseFloat(item.precio_promedio || 0);
+                            datosPorFecha[fecha].costo_promedio += parseFloat(item.costo_promedio || 0);
+                            datosPorFecha[fecha].cantidad_vendida += parseFloat(item.cantidad_vendida || 0);
+                          });
+                          return Object.values(datosPorFecha).sort((a, b) => 
+                            new Date(a.fecha) - new Date(b.fecha)
+                          );
+                        } else {
+                          // Para todos los artículos: agrupar por fecha sumando todos
+                          const datosPorFecha = {};
+                          datosFiltrados.forEach((item) => {
+                            const fecha = item.fecha;
+                            if (!datosPorFecha[fecha]) {
+                              datosPorFecha[fecha] = {
+                                fecha: fecha,
+                                ganancia: 0,
+                                total_vendido: 0,
+                                diferencia_promedio: 0,
+                                precio_promedio: 0,
+                                costo_promedio: 0,
+                                cantidad_vendida: 0,
+                              };
+                            }
+                            datosPorFecha[fecha].ganancia += parseFloat(item.ganancia || 0);
+                            datosPorFecha[fecha].total_vendido += parseFloat(item.total_vendido || 0);
+                            datosPorFecha[fecha].diferencia_promedio += parseFloat(item.diferencia_promedio || 0);
+                            datosPorFecha[fecha].precio_promedio += parseFloat(item.precio_promedio || 0);
+                            datosPorFecha[fecha].costo_promedio += parseFloat(item.costo_promedio || 0);
+                            datosPorFecha[fecha].cantidad_vendida += parseFloat(item.cantidad_vendida || 0);
+                          });
+                          return Object.values(datosPorFecha).sort((a, b) => 
+                            new Date(a.fecha) - new Date(b.fecha)
+                          );
+                        }
+                      })()}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="fecha" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return date.toLocaleDateString('es-ES', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric' 
+                          });
+                        }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) => `$${value.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+                      />
+                      <YAxis 
+                        yAxisId="right" 
+                        orientation="right"
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => {
+                          if (name === 'cantidad_vendida') {
+                            return [value, 'Cantidad Vendida'];
+                          }
+                          return [`$${parseFloat(value).toLocaleString('es-ES', { maximumFractionDigits: 0 })}`, name];
+                        }}
+                        labelFormatter={(label) => {
+                          const date = new Date(label);
+                          return `Fecha: ${date.toLocaleDateString('es-ES', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric' 
+                          })}`;
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="ganancia"
+                        stroke="#fa8c16"
+                        strokeWidth={2}
+                        name="Ganancia"
+                        dot={{ r: 4 }}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="total_vendido"
+                        stroke="#f5222d"
+                        strokeWidth={2}
+                        name="Total Vendido"
+                        dot={{ r: 4 }}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="diferencia_promedio"
+                        stroke="#52c41a"
+                        strokeWidth={2}
+                        name="Diferencia Promedio (Precio - Costo)"
+                        dot={{ r: 4 }}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="precio_promedio"
+                        stroke="#1890ff"
+                        strokeWidth={2}
+                        name="Precio Promedio"
+                        dot={{ r: 4 }}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="costo_promedio"
+                        stroke="#722ed1"
+                        strokeWidth={2}
+                        name="Costo Promedio"
+                        dot={{ r: 4 }}
+                      />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="cantidad_vendida"
+                        stroke="#13c2c2"
+                        strokeWidth={2}
+                        name="Cantidad Vendida"
+                        dot={{ r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Card>
+              )}
 
               {/* Tabla de Datos */}
               <Card title="Detalle de Ventas">
@@ -381,6 +683,18 @@ export default function EstadisticasDashboard() {
                     showTotal: (total, range) =>
                       `${range[0]}-${range[1]} de ${total} artículos`,
                   }}
+                  onRow={(record) => ({
+                    onClick: () => {
+                      setSelectedArticulo(record.codigo_articulo);
+                    },
+                    style: {
+                      cursor: 'pointer',
+                      backgroundColor: selectedArticulo === record.codigo_articulo ? '#e6f7ff' : 'transparent',
+                    },
+                  })}
+                  rowClassName={(record) => 
+                    selectedArticulo === record.codigo_articulo ? 'selected-row' : ''
+                  }
                 />
               </Card>
             </>

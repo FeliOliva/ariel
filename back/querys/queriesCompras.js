@@ -6,14 +6,24 @@ module.exports = {
   compra.nro_compra,
   compra.total,
   compra.fecha_compra, 
-  compra.estado
+  compra.estado,
+  compra.porcentaje_aumento_global,
+  compra.porcentaje_aumento_costo_global,
+  compra.porcentaje_aumento_precio_global,
+  COALESCE(MAX(dc.porcentaje_aumento), NULL) AS porcentaje_aumento_max,
+  COALESCE(MIN(dc.porcentaje_aumento), NULL) AS porcentaje_aumento_min,
+  COUNT(DISTINCT dc.porcentaje_aumento) AS porcentaje_aumento_distintos,
+  COALESCE(AVG(CASE WHEN dc.porcentaje_aumento IS NOT NULL THEN dc.porcentaje_aumento END), NULL) AS porcentaje_aumento_promedio
 FROM 
   compra
 INNER JOIN 
   proveedor ON compra.proveedor_id = proveedor.id
+LEFT JOIN
+  detalle_compra dc ON compra.id = dc.compra_id
+GROUP BY compra.id, compra.proveedor_id, proveedor.nombre, compra.nro_compra, compra.total, compra.fecha_compra, compra.estado, compra.porcentaje_aumento_global, compra.porcentaje_aumento_costo_global, compra.porcentaje_aumento_precio_global
 ORDER BY compra.id DESC;
 `,
-  addCompra: `INSERT INTO Compra (proveedor_id, nro_compra, total) VALUES (?, ?, ?);`,
+  addCompra: `INSERT INTO Compra (proveedor_id, nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global) VALUES (?, ?, ?, ?, ?, ?);`,
   getCompraByID: `
   SELECT 
     dc.id AS detalle_compra_id,
@@ -26,6 +36,8 @@ ORDER BY compra.id DESC;
     dc.costo, 
     dc.precio_monotributista,
     dc.cantidad, 
+    dc.porcentaje_aumento_costo,
+    dc.porcentaje_aumento_precio,
     (dc.costo * dc.cantidad) AS subtotal, 
     c.nro_compra, 
     c.fecha_compra, 
@@ -45,14 +57,16 @@ LEFT JOIN detalle_compra d ON c.id = d.compra_id
 LEFT JOIN articulo a ON d.articulo_id = a.id
 WHERE c.proveedor_id = ?;
 `,
-  addDetalleCompra: `INSERT INTO detalle_compra (compra_id, articulo_id, cantidad, costo, precio_monotributista, sub_total) VALUES (?, ?, ?, ?, ?, ?);`,
+  addDetalleCompra: `INSERT INTO detalle_compra (compra_id, articulo_id, cantidad, costo, precio_monotributista, sub_total, porcentaje_aumento, porcentaje_aumento_costo, porcentaje_aumento_precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
   updateStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
   updateDetalleCompra: `
       UPDATE detalle_compra
       SET costo = ?,
       precio_monotributista = ?,
       cantidad = ?,
-      sub_total = ?
+      sub_total = ?,
+      porcentaje_aumento_costo = ?,
+      porcentaje_aumento_precio = ?
       WHERE id = ?;
     `,
   updateCostoArticulo: `UPDATE articulo SET costo = ?, precio_monotributista = ? WHERE id = ?;`,
@@ -61,10 +75,15 @@ WHERE c.proveedor_id = ?;
       SET total = ?
       WHERE id = ?;
     `,
-  getDetalleCompra: "SELECT * FROM detalle_compra WHERE compra_id = ?;",
+  getDetalleCompra: `SELECT dc.*, a.linea_id 
+    FROM detalle_compra dc
+    INNER JOIN articulo a ON dc.articulo_id = a.id
+    WHERE dc.compra_id = ?;`,
   getDetalleCompraById: `
-    select id, costo, cantidad, articulo_id, precio_monotributista from detalle_compra where ID = ?;
+    select id, costo, cantidad, articulo_id, precio_monotributista, porcentaje_aumento_costo, porcentaje_aumento_precio from detalle_compra where ID = ?;
   `,
   dropCompra: `UPDATE compra set estado = 0 WHERE id = ?;`,
   upCompra: `UPDATE compra set estado = 1 WHERE id = ?;`,
+  deleteDetalleCompra: `DELETE FROM detalle_compra WHERE compra_id = ?;`,
+  deleteCompra: `DELETE FROM compra WHERE id = ?;`,
 };

@@ -31,6 +31,10 @@ const CompraDetalles = () => {
   const [newCosto, setNewCosto] = useState(0);
   const [newPrecioMonotributista, setNewPrecioMonotributista] = useState(0);
   const [cantidad, setCantidad] = useState(0);
+  const [porcentajeAumentoCosto, setPorcentajeAumentoCosto] = useState(0);
+  const [porcentajeAumentoPrecio, setPorcentajeAumentoPrecio] = useState(0);
+  const [costoOriginal, setCostoOriginal] = useState(0);
+  const [precioOriginal, setPrecioOriginal] = useState(0);
   const { confirm } = Modal;
 
   useEffect(() => {
@@ -80,23 +84,71 @@ const CompraDetalles = () => {
     );
     console.log("response.data");
     console.log(response.data);
-    setNewCosto(response.data.costo);
-    setNewPrecioMonotributista(response.data.precio_monotributista);
+    const costo = parseFloat(response.data.costo) || 0;
+    const precio = parseFloat(response.data.precio_monotributista) || 0;
+    const porcentajeCosto = parseFloat(response.data.porcentaje_aumento_costo) || 0;
+    const porcentajePrecio = parseFloat(response.data.porcentaje_aumento_precio) || 0;
+    
+    setNewCosto(costo);
+    setNewPrecioMonotributista(precio);
     setCantidad(response.data.cantidad);
+    setPorcentajeAumentoCosto(porcentajeCosto);
+    setPorcentajeAumentoPrecio(porcentajePrecio);
+    
+    // Calcular valores originales (antes del aumento)
+    // Usamos una aproximación ya que el redondeo hacia arriba hace que la inversa no sea exacta
+    let costoOriginal = costo;
+    let precioOriginal = precio;
+    
+    if (porcentajeCosto > 0) {
+      // Aproximación: dividir por el factor (puede no ser exacto por el redondeo)
+      costoOriginal = costo / (1 + porcentajeCosto / 100);
+    }
+    
+    if (porcentajePrecio > 0) {
+      precioOriginal = precio / (1 + porcentajePrecio / 100);
+    }
+    
+    setCostoOriginal(costoOriginal);
+    setPrecioOriginal(precioOriginal);
+    
     setDetalleCompra({
       id: response.data.id,
-      costo: response.data.costo,
-      precio_monotributista: response.data.precio_monotributista,
+      costo: costo,
+      precio_monotributista: precio,
       cantidad: response.data.cantidad,
       articulo_id: response.data.articulo_id,
     });
     setOpenUp(true);
   };
   const handleAplyUpFilter = async () => {
-    if (newCosto < 0) {
+    // Aplicar porcentajes antes de guardar
+    let costoFinal = newCosto;
+    let precioFinal = newPrecioMonotributista;
+    
+    if (porcentajeAumentoCosto > 0) {
+      const factorCosto = 1 + porcentajeAumentoCosto / 100;
+      costoFinal = Math.ceil(costoOriginal * factorCosto * 100) / 100;
+    }
+    
+    if (porcentajeAumentoPrecio > 0) {
+      const factorPrecio = 1 + porcentajeAumentoPrecio / 100;
+      precioFinal = Math.ceil(precioOriginal * factorPrecio * 100) / 100;
+    }
+    
+    // Si se aplicaron porcentajes, actualizar los valores
+    if (porcentajeAumentoCosto > 0 || porcentajeAumentoPrecio > 0) {
+      setNewCosto(costoFinal);
+      setNewPrecioMonotributista(precioFinal);
+    }
+    // Usar los valores finales (con porcentajes aplicados si corresponde)
+    const costoAGuardar = porcentajeAumentoCosto > 0 ? costoFinal : newCosto;
+    const precioAGuardar = porcentajeAumentoPrecio > 0 ? precioFinal : newPrecioMonotributista;
+    
+    if (costoAGuardar < 0 || precioAGuardar < 0) {
       Modal.warning({
         title: "Advertencia",
-        content: "El nuevo costo debe ser mayor o igual a 0",
+        content: "Los valores deben ser mayores o iguales a 0",
         icon: <ExclamationCircleOutlined />,
       });
       return;
@@ -104,11 +156,13 @@ const CompraDetalles = () => {
     try {
       const newData = {
         ID: detalleCompra.id,
-        new_costo: newCosto,
-        new_precio_monotributista: newPrecioMonotributista,
+        new_costo: costoAGuardar,
+        new_precio_monotributista: precioAGuardar,
         cantidad: cantidad,
         compra_id: compraInfo.compra_id,
         articulo_id: detalleCompra.articulo_id,
+        porcentaje_aumento_costo: porcentajeAumentoCosto > 0 ? porcentajeAumentoCosto : null,
+        porcentaje_aumento_precio: porcentajeAumentoPrecio > 0 ? porcentajeAumentoPrecio : null,
       };
       console.log(newData);
       confirm({
@@ -121,7 +175,7 @@ const CompraDetalles = () => {
           setOpenUp(false);
           notification.success({
             message: "Operación exitosa",
-            description: "Costo actualizado correctamente",
+            description: "Detalle actualizado correctamente",
             duration: 2,
           });
           setTimeout(() => {
@@ -159,7 +213,7 @@ const CompraDetalles = () => {
       cell: (row) => (
         <Tooltip title={row.costo}>
           <div style={{ padding: "5px", fontSize: "16px" }}>
-            {parseFloat(row.costo).toLocaleString("es-ES", {
+            {Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}
@@ -174,7 +228,7 @@ const CompraDetalles = () => {
       cell: (row) => (
         <Tooltip title={row.precio_monotributista}>
           <div style={{ padding: "5px", fontSize: "16px" }}>
-            {parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+            {Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}
@@ -193,6 +247,30 @@ const CompraDetalles = () => {
             maximumFractionDigits: 0,
           })}
         </div>
+      ),
+    },
+    {
+      name: "Aumento Costo %",
+      selector: (row) => row.porcentaje_aumento_costo,
+      sortable: true,
+      cell: (row) => (
+        <Tooltip title={row.porcentaje_aumento_costo ? `Aumento aplicado al costo: ${row.porcentaje_aumento_costo}%` : "Sin aumento"}>
+          <div style={{ padding: "5px", fontSize: "16px" }}>
+            {row.porcentaje_aumento_costo ? `${Math.round(row.porcentaje_aumento_costo)}%` : "-"}
+          </div>
+        </Tooltip>
+      ),
+    },
+    {
+      name: "Aumento Precio %",
+      selector: (row) => row.porcentaje_aumento_precio,
+      sortable: true,
+      cell: (row) => (
+        <Tooltip title={row.porcentaje_aumento_precio ? `Aumento aplicado al precio: ${row.porcentaje_aumento_precio}%` : "Sin aumento"}>
+          <div style={{ padding: "5px", fontSize: "16px" }}>
+            {row.porcentaje_aumento_precio ? `${Math.round(row.porcentaje_aumento_precio)}%` : "-"}
+          </div>
+        </Tooltip>
       ),
     },
     {
@@ -266,36 +344,109 @@ const CompraDetalles = () => {
       <Drawer
         open={openUp}
         onClose={() => setOpenUp(false)}
-        title="Cambiar Precio"
+        title="Modificar Detalle de Compra"
+        width={400}
       >
-        <Tooltip>
-          <strong>Costo</strong>
-        </Tooltip>
-        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
-          <InputNumber
-            value={newCosto}
-            onChange={(value) => setNewCosto(value)}
-          />
-        </div>
-        <Tooltip>
-          <strong>Precio Monotributista</strong>
-        </Tooltip>
-        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
-          <InputNumber
-            value={newPrecioMonotributista}
-            onChange={(value) => setNewPrecioMonotributista(value)}
-          />
-        </div>
-        <Tooltip>
+        <div style={{ marginBottom: "16px" }}>
           <strong>Cantidad</strong>
-        </Tooltip>
-        <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
-          <InputNumber
-            value={cantidad}
-            onChange={(value) => setCantidad(value)}
-          />
+          <div style={{ marginTop: "8px" }}>
+            <InputNumber
+              value={cantidad}
+              onChange={(value) => setCantidad(value)}
+              min={0}
+              style={{ width: "100%" }}
+            />
+          </div>
         </div>
-        <Button onClick={handleAplyUpFilter}>Aplicar</Button>
+
+        <div style={{ marginBottom: "16px", padding: "12px", backgroundColor: "#f5f5f5", borderRadius: "4px" }}>
+          <strong style={{ marginBottom: "8px", display: "block" }}>Aumento por Porcentaje:</strong>
+          <div style={{ marginBottom: "12px" }}>
+            <div style={{ marginBottom: "4px" }}>
+              <strong style={{ fontSize: "12px" }}>Aumento Costo %:</strong>
+            </div>
+            <InputNumber
+              value={porcentajeAumentoCosto}
+              onChange={(value) => {
+                setPorcentajeAumentoCosto(value || 0);
+              }}
+              min={0}
+              max={1000}
+              formatter={(value) => value ? `${value}%` : ''}
+              parser={(value) => value.replace('%', '').replace(/\s/g, '')}
+              style={{ width: "100%" }}
+              placeholder="%"
+            />
+          </div>
+          <div style={{ marginBottom: "12px" }}>
+            <div style={{ marginBottom: "4px" }}>
+              <strong style={{ fontSize: "12px" }}>Aumento Precio %:</strong>
+            </div>
+            <InputNumber
+              value={porcentajeAumentoPrecio}
+              onChange={(value) => {
+                setPorcentajeAumentoPrecio(value || 0);
+              }}
+              min={0}
+              max={1000}
+              formatter={(value) => value ? `${value}%` : ''}
+              parser={(value) => value.replace('%', '').replace(/\s/g, '')}
+              style={{ width: "100%" }}
+              placeholder="%"
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "16px" }}>
+          <strong>Costo</strong>
+          <div style={{ marginTop: "8px" }}>
+            <InputNumber
+              value={newCosto}
+              onChange={(value) => setNewCosto(value)}
+              min={0}
+              style={{ width: "100%" }}
+              formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+              parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+              precision={2}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "16px" }}>
+          <strong>Precio Monotributista</strong>
+          <div style={{ marginTop: "8px" }}>
+            <InputNumber
+              value={newPrecioMonotributista}
+              onChange={(value) => setNewPrecioMonotributista(value)}
+              min={0}
+              style={{ width: "100%" }}
+              formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+              parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+              precision={2}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: "20px", padding: "12px", backgroundColor: "#e6f7ff", borderRadius: "4px" }}>
+          <strong>Subtotal: </strong>
+          <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+            ${(newCosto * cantidad).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </span>
+        </div>
+
+        <div style={{ marginTop: "16px" }}>
+          <Button 
+            type="primary" 
+            onClick={handleAplyUpFilter}
+            style={{ width: "100%" }}
+            size="large"
+          >
+            Guardar Cambios
+          </Button>
+        </div>
       </Drawer>
     </MenuLayout>
   );

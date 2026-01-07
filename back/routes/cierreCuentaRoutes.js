@@ -20,6 +20,9 @@ router.get("/cierre-masivo/preview", cierreCuentaControllers.getSaldosTodosClien
 // Contar cierres existentes por fecha
 router.get("/cierre-masivo/count", cierreCuentaControllers.contarCierresPorFecha);
 
+// Obtener saldo total del cierre masivo
+router.get("/cierre-masivo/saldo-total", cierreCuentaControllers.getSaldoTotalCierreMasivo);
+
 // Ejecutar cierre masivo de todas las cuentas
 router.post("/cierre-masivo", cierreCuentaControllers.ejecutarCierreMasivo);
 

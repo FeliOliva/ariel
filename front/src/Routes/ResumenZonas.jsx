@@ -13,7 +13,7 @@ export default function ResumenZonas() {
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    const inicio = dayjs("2025-01-01");
+    const inicio = dayjs("2026-01-01");
     const fin = dayjs();
     setRangoFechas([inicio, fin]);
   }, []);

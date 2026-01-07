@@ -12,6 +12,7 @@ router.get("/getCompraByID/:ID", comprasControllers.getCompraByID);
 router.get("/detalleCompra/:id", comprasControllers.getDetalleCompraById);
 router.put("/updateDetalleCompra", comprasControllers.updateDetalleCompra);
 router.put("/dropCompra/:ID", comprasControllers.dropCompra);
+router.delete("/deleteCompra/:ID", comprasControllers.deleteCompra);
 router.put("/upCompra/:ID", comprasControllers.upCompra);
 
 module.exports = router;

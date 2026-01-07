@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Select } from "antd";
 import axios from "axios";
 
-export default function ProveedoresInput({ onChangeProveedor }) {
+export default function ProveedoresInput({ onChangeProveedor, value }) {
   const [proveedor, setProveedor] = useState([]);
 
   useEffect(() => {
@@ -44,6 +44,7 @@ export default function ProveedoresInput({ onChangeProveedor }) {
       onChange={handleChangeProveedor}
       onSearch={handleSearchProveedor}
       options={options}
+      value={value}
       style={{ width: "70%" }}
     />
   );

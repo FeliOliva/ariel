@@ -148,7 +148,7 @@ function Articulos() {
       name: "Costo",
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.costo}
+          {Math.ceil(parseFloat(row.costo) || 0)}
         </span>
       ),
       sortable: true,
@@ -161,7 +161,7 @@ function Articulos() {
       name: "Precio monotributista",
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {row.precio_monotributista}
+          {Math.ceil(parseFloat(row.precio_monotributista) || 0)}
         </span>
       ),
       sortable: true,
@@ -965,7 +965,8 @@ function Articulos() {
             <Button
               onClick={() => setOpenEditLineaDrawer(true)}
               title="Editar Linea"
-              style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
+              style={{ marginTop: 10 }}
+              type="primary"
             >
               Cambiar linea
             </Button>
@@ -980,7 +981,8 @@ function Articulos() {
             <Button
               onClick={() => setOpenEditSubLineaDrawer(true)}
               title="Editar subLinea"
-              style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
+              style={{ marginTop: 10 }}
+              type="primary"
             >
               Cambiar Sublinea
             </Button>
@@ -995,7 +997,8 @@ function Articulos() {
             <Button
               onClick={() => setOpenEditProveedorDrawer(true)}
               title="Editar proveedor"
-              style={{ marginTop: 10, backgroundColor: "ActiveBorder" }}
+              style={{ marginTop: 10 }}
+              type="primary"
             >
               Cambiar proveedor
             </Button>

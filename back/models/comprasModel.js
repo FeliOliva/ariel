@@ -10,10 +10,10 @@ const getAllCompras = async () => {
     throw err;
   }
 };
-const addCompra = async (proveedor_id, nro_compra, total) => {
+const addCompra = async (proveedor_id, nro_compra, total, porcentaje_aumento_global = null, porcentaje_aumento_costo_global = null, porcentaje_aumento_precio_global = null) => {
   try {
     const query = queriesCompras.addCompra;
-    const [result] = await db.query(query, [proveedor_id, nro_compra, total]);
+    const [result] = await db.query(query, [proveedor_id, nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global]);
     return result.insertId; // Devuelve el ID de la compra recién insertada
   } catch (err) {
     throw err;
@@ -26,7 +26,10 @@ const addDetalleCompra = async (
   cantidad,
   costo,
   precio_monotributista,
-  sub_total
+  sub_total,
+  porcentaje_aumento = null,
+  porcentaje_aumento_costo = null,
+  porcentaje_aumento_precio = null
 ) => {
   try {
     const query = queriesCompras.addDetalleCompra;
@@ -37,6 +40,9 @@ const addDetalleCompra = async (
       costo,
       precio_monotributista,
       sub_total,
+      porcentaje_aumento,
+      porcentaje_aumento_costo,
+      porcentaje_aumento_precio,
     ]);
   } catch (err) {
     throw err;
@@ -83,16 +89,20 @@ const updateDetalleCompra = async (
   new_costo,
   new_precio_monotributista,
   cantidad,
-  sub_total
+  sub_total,
+  porcentaje_aumento_costo = null,
+  porcentaje_aumento_precio = null
 ) => {
   try {
-    console.log(new_costo, new_precio_monotributista, sub_total, cantidad, ID);
+    console.log(new_costo, new_precio_monotributista, sub_total, cantidad, ID, porcentaje_aumento_costo, porcentaje_aumento_precio);
     const query = queriesCompras.updateDetalleCompra;
     await db.query(query, [
       new_costo,
       new_precio_monotributista,
       cantidad,
       sub_total,
+      porcentaje_aumento_costo,
+      porcentaje_aumento_precio,
       ID,
     ]);
   } catch (err) {
@@ -137,6 +147,52 @@ const dropCompra = async (compra_id) => {
     throw err;
   }
 };
+
+const deleteCompra = async (compra_id) => {
+  try {
+    // Primero obtener los detalles para revertir el stock si es necesario
+    const detalles = await getDetalleCompra(compra_id);
+    console.log("Detalles obtenidos para eliminar:", detalles);
+    
+    if (detalles.length > 0) {
+      // Obtener las líneas que controlan stock
+      const lineasStock = await getLineasStock();
+      const lineas = lineasStock.map(l => Number(l.linea_id));
+      console.log("Líneas que controlan stock:", lineas);
+      
+      // Revertir el stock si es necesario
+      for (const detalle of detalles) {
+        const lineaId = Number(detalle.linea_id);
+        const articuloId = Number(detalle.articulo_id);
+        const cantidad = Number(detalle.cantidad);
+        
+        console.log(`Procesando detalle - Artículo ID: ${articuloId}, Línea ID: ${lineaId}, Cantidad: ${cantidad}`);
+        
+        // Verificar si la línea del artículo controla stock (convertir a número para comparación)
+        if (lineaId && lineas.includes(lineaId)) {
+          // Restar el stock (pasar cantidad negativa para que la query stock = stock + (-cantidad) reste)
+          await updateStock(articuloId, -cantidad);
+          console.log(`✓ Stock revertido: Artículo ${articuloId}, cantidad restada: ${cantidad}`);
+        } else {
+          console.log(`✗ Stock NO revertido: Línea ${lineaId} no controla stock o no está en la lista`);
+        }
+      }
+    }
+    
+    // Eliminar los detalles de compra
+    const deleteDetalleQuery = queriesCompras.deleteDetalleCompra;
+    await db.query(deleteDetalleQuery, [compra_id]);
+    console.log("Detalles de compra eliminados");
+    
+    // Eliminar la compra
+    const deleteCompraQuery = queriesCompras.deleteCompra;
+    await db.query(deleteCompraQuery, [compra_id]);
+    console.log("Compra eliminada");
+  } catch (err) {
+    console.error("Error en deleteCompra:", err);
+    throw err;
+  }
+};
 const upCompra = async (compra_id) => {
   try {
     const query = queriesCompras.upCompra;
@@ -167,6 +223,7 @@ module.exports = {
   getDetalleCompra,
   getDetalleCompraById,
   dropCompra,
+  deleteCompra,
   upCompra,
   getLineasStock
 };

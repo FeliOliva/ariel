@@ -220,7 +220,7 @@ const ResumenCuenta = () => {
   };
 
   useEffect(() => {
-    const inicio = dayjs("2025-01-01").format("YYYY-MM-DD");
+    const inicio = dayjs("2026-01-01").format("YYYY-MM-DD");
     const fin = dayjs().format("YYYY-MM-DD");
     setRangoFechas([inicio, fin]);
   }, []);
@@ -1086,7 +1086,7 @@ const ResumenCuenta = () => {
           title={row.precio_monotributista}
           className={row.estado === 0 ? "strikethrough" : ""}
         >
-          <span>{row.precio_monotributista}</span>
+          <span>{Math.ceil(parseFloat(row.precio_monotributista) || 0)}</span>
         </Tooltip>
       ),
       width: "15%", // Reduce el espacio

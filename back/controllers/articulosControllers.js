@@ -291,6 +291,53 @@ const getArticulosVendidosPorLinea = async (req, res) => {
   }
 };
 
+const getEvolucionGananciaPorLinea = async (req, res) => {
+  try {
+    const { linea_id, fecha_inicio, fecha_fin } = req.query;
+
+    if (!linea_id || !fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Faltan parámetros: linea_id, fecha_inicio o fecha_fin",
+      });
+    }
+
+    const evolucion = await articuloModel.getEvolucionGananciaPorLinea({
+      linea_id,
+      fecha_inicio,
+      fecha_fin,
+    });
+
+    res.json({ evolucion });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getVentasConGananciaFiltradas = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin, articulo_id, linea_id, sublinea_id, proveedor_id } = req.query;
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Faltan parámetros: fecha_inicio y fecha_fin son requeridos",
+      });
+    }
+
+    const ventas = await articuloModel.getVentasConGananciaFiltradas({
+      fecha_inicio,
+      fecha_fin,
+      articulo_id: articulo_id || null,
+      linea_id: linea_id || null,
+      sublinea_id: sublinea_id || null,
+      proveedor_id: proveedor_id || null,
+    });
+
+    res.json({ ventas });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -310,4 +357,6 @@ module.exports = {
   decreasePrices,
   getArticulosVendidosPorLinea,
   decreasePrice,
+  getEvolucionGananciaPorLinea,
+  getVentasConGananciaFiltradas,
 };

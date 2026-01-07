@@ -9,6 +9,8 @@ router.get("/totalCompras", filterControllers.totalCompras);
 router.get("/filterComprasByFecha", filterControllers.filterComprasByFecha);
 router.get("/totalPagos", filterControllers.totalPagos);
 router.get("/totalClientes", filterControllers.totalClientes);
+router.get("/totalNotasCredito", filterControllers.totalNotasCredito);
+router.get("/totalGanancia", filterControllers.totalGanancia);
 
 
 module.exports = router;

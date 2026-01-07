@@ -19,7 +19,7 @@ export default function ResumenCuentaXZona() {
     setZonaSeleccionada(zona);
   };
   useEffect(() => {
-    const inicio = dayjs("2025-01-01");
+    const inicio = dayjs("2026-01-01");
     const fin = dayjs();
     setRangoFechas([inicio, fin]);
   }, []);

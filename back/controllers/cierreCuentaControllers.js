@@ -218,6 +218,20 @@ const contarCierresPorFecha = async (req, res) => {
   }
 };
 
+// Obtener el saldo total del cierre masivo
+const getSaldoTotalCierreMasivo = async (req, res) => {
+  try {
+    const { fecha_corte } = req.query;
+    const fechaCorte = fecha_corte || FECHA_CORTE_DEFAULT;
+
+    const saldoTotal = await cierreCuentaModel.getSaldoTotalCierreMasivo(fechaCorte);
+    res.json({ saldo_total: saldoTotal, fecha_corte: fechaCorte });
+  } catch (error) {
+    console.error("Error en getSaldoTotalCierreMasivo:", error);
+    res.status(500).json({ error: "Error al obtener el saldo total del cierre masivo" });
+  }
+};
+
 module.exports = {
   getCierreCuentaByCliente,
   getAllCierresByCliente,
@@ -229,5 +243,6 @@ module.exports = {
   getSaldosTodosClientes,
   ejecutarCierreMasivo,
   contarCierresPorFecha,
+  getSaldoTotalCierreMasivo,
 };
 

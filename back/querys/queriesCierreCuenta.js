@@ -97,6 +97,13 @@ module.exports = {
   // Contar cuántos cierres existen para una fecha de corte
   contarCierresPorFecha: `
     SELECT COUNT(*) as count FROM cierre_cuenta WHERE fecha_corte = ?
+  `,
+
+  // Obtener el saldo total del cierre masivo para una fecha de corte
+  getSaldoTotalCierreMasivo: `
+    SELECT COALESCE(SUM(saldo_cierre), 0) AS saldo_total
+    FROM cierre_cuenta
+    WHERE fecha_corte = ?
   `
 };
 

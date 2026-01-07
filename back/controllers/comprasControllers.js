@@ -10,16 +10,27 @@ const getAllCompras = async (req, res) => {
 };
 const addCompra = async (req, res) => {
   try {
-    const { proveedor_id, nro_compra, detalles } = req.body;
+    const { 
+      proveedor_id, 
+      nro_compra, 
+      detalles, 
+      porcentaje_aumento_global,
+      porcentaje_aumento_costo_global,
+      porcentaje_aumento_precio_global
+    } = req.body;
     let total = 0;
     let sub_total = 0;
     const compra_id = await comprasModel.addCompra(
       proveedor_id,
       nro_compra,
-      total
+      total,
+      porcentaje_aumento_global || null,
+      porcentaje_aumento_costo_global || null,
+      porcentaje_aumento_precio_global || null
     );
-    const lineas = (await comprasModel.getLineasStock()).map(l => l.linea_id);
-    console.log("lineas", lineas)
+    const lineasStock = await comprasModel.getLineasStock();
+    const lineas = lineasStock.map(l => Number(l.linea_id));
+    console.log("Líneas que controlan stock:", lineas);
 
     for (const detalle of detalles) {
       sub_total = Math.round(detalle.cantidad * detalle.costo);
@@ -30,11 +41,29 @@ const addCompra = async (req, res) => {
         detalle.cantidad,
         detalle.costo,
         detalle.precio_monotributista,
-        sub_total
+        sub_total,
+        detalle.porcentaje_aumento || null,
+        detalle.porcentaje_aumento_costo || null,
+        detalle.porcentaje_aumento_precio || null
       );
-      if (lineas.includes(detalle.linea_id)) {
+      
+      // Actualizar el costo y precio_monotributista del artículo con los nuevos valores
+      await comprasModel.updateCostoArticulo(
+        detalle.articulo_id,
+        detalle.costo,
+        detalle.precio_monotributista
+      );
+      console.log(`✓ Precios actualizados: Artículo ${detalle.articulo_id}, Costo: ${detalle.costo}, Precio Monotributista: ${detalle.precio_monotributista}`);
+      
+      // Verificar si la línea del artículo controla stock (convertir a número para comparación)
+      const lineaId = Number(detalle.linea_id);
+      if (lineaId && lineas.includes(lineaId)) {
         await comprasModel.updateStock(detalle.articulo_id, detalle.cantidad); // Actualiza el stock sumando la cantidad
+        console.log(`✓ Stock actualizado: Artículo ${detalle.articulo_id}, cantidad agregada: ${detalle.cantidad}`);
+      } else {
+        console.log(`✗ Stock NO actualizado: Línea ${lineaId} no controla stock o no está en la lista`);
       }
+      
       await comprasModel.updateTotalCompra(compra_id, total);
     }
 
@@ -82,6 +111,8 @@ const getCompraByID = async (req, res) => {
           precio_monotributista: detalle.precio_monotributista,
           cantidad: detalle.cantidad,
           subtotal: detalle.subtotal,
+          porcentaje_aumento_costo: detalle.porcentaje_aumento_costo || null,
+          porcentaje_aumento_precio: detalle.porcentaje_aumento_precio || null,
         })),
       };
       res.json(data);
@@ -111,6 +142,8 @@ const updateDetalleCompra = async (req, res) => {
       cantidad,
       compra_id,
       articulo_id,
+      porcentaje_aumento_costo,
+      porcentaje_aumento_precio,
     } = req.body;
     const sub_total = new_costo * cantidad;
 
@@ -120,15 +153,17 @@ const updateDetalleCompra = async (req, res) => {
       new_costo,
       new_precio_monotributista,
       cantidad,
-      sub_total
+      sub_total,
+      porcentaje_aumento_costo || null,
+      porcentaje_aumento_precio || null
     );
 
-    // // Actualizamos el costo del artículo en la tabla articulo
-    // await comprasModel.updateCostoArticulo(
-    //   articulo_id,
-    //   new_costo,
-    //   new_precio_monotributista
-    // );
+    // Actualizamos el costo y precio del artículo en la tabla articulo
+    await comprasModel.updateCostoArticulo(
+      articulo_id,
+      new_costo,
+      new_precio_monotributista
+    );
 
     // Recalculamos los totales de la compra
     await recalcularTotalesCompra(compra_id);
@@ -171,6 +206,17 @@ const dropCompra = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar la compra" });
   }
 };
+
+const deleteCompra = async (req, res) => {
+  try {
+    const compra_id = req.params.ID;
+    await comprasModel.deleteCompra(compra_id);
+    res.json({ message: "Compra eliminada permanentemente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar la compra" });
+  }
+};
 const upCompra = async (req, res) => {
   try {
     const compra_id = req.params.ID;
@@ -189,5 +235,6 @@ module.exports = {
   updateDetalleCompra,
   getDetalleCompraById,
   dropCompra,
+  deleteCompra,
   upCompra,
 };

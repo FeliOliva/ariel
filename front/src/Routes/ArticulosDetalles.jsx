@@ -127,7 +127,7 @@ const ArticulosDetalles = () => {
             sublinea: row.sublinea_nombre,
             precio:
               "$" +
-              parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+              Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               }),
@@ -217,10 +217,10 @@ const ArticulosDetalles = () => {
     {
       name: "Precio",
       selector: (row) =>
-        parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+        Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }), // Aplicar formato de precio
+        }), // Aplicar formato de precio redondeado hacia arriba
       sortable: true,
     },
   ];
@@ -295,7 +295,7 @@ const ArticulosDetalles = () => {
         row.articulo_nombre + " " + medicion,
         row.sublinea_nombre,
         "$" +
-          parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+          Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           }),
@@ -374,7 +374,7 @@ const ArticulosDetalles = () => {
         row.articulo_nombre + " " + medicion,
         row.sublinea_nombre,
         "$" +
-          parseFloat(row.precio_monotributista).toLocaleString("es-ES", {
+          Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           }),

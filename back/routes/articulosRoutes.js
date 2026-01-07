@@ -21,6 +21,14 @@ router.get(
   articulosControllers.getArticulosVendidosPorLinea
 );
 router.get(
+  "/getEvolucionGananciaPorLinea",
+  articulosControllers.getEvolucionGananciaPorLinea
+);
+router.get(
+  "/getVentasConGananciaFiltradas",
+  articulosControllers.getVentasConGananciaFiltradas
+);
+router.get(
   "/getArticulosBySubLineaID/:subLineaID",
   articulosControllers.getArticulosBySubLineaID
 );

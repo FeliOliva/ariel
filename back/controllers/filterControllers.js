@@ -95,6 +95,35 @@ const totalClientes = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+const totalNotasCredito = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    const notasCredito = await filterModel.getTotalNotasCredito(startDate, endDate);
+    res.json(notasCredito);
+  } catch (error) {
+    console.error("Error fetching total notas de crédito:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+const totalGanancia = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Missing parameters" });
+    }
+    const ganancia = await filterModel.getTotalGanancia(startDate, endDate);
+    res.json(ganancia);
+  } catch (error) {
+    console.error("Error fetching total ganancia:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 module.exports = {
   filterVentasByCliente,
   totalVentas,
@@ -103,4 +132,6 @@ module.exports = {
   totalPagos,
   totalClientes,
   filterComprasByFecha,
+  totalNotasCredito,
+  totalGanancia,
 };

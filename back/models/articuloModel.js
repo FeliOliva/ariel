@@ -245,6 +245,56 @@ const getArticulosVendidosPorLinea = async ({
   }
 };
 
+const getEvolucionGananciaPorLinea = async ({
+  linea_id,
+  fecha_inicio,
+  fecha_fin,
+}) => {
+  try {
+    const query = queriesArticulos.getEvolucionGananciaPorLinea;
+    const [results] = await db.query(query, [
+      linea_id,
+      fecha_inicio,
+      fecha_fin,
+    ]);
+    return results;
+  } catch (error) {
+    throw new Error(
+      "Error al obtener evolución de ganancia por línea: " + error.message
+    );
+  }
+};
+
+const getVentasConGananciaFiltradas = async ({
+  fecha_inicio,
+  fecha_fin,
+  articulo_id,
+  linea_id,
+  sublinea_id,
+  proveedor_id,
+}) => {
+  try {
+    const query = queriesArticulos.getVentasConGananciaFiltradas;
+    const [results] = await db.query(query, [
+      fecha_inicio,
+      fecha_fin,
+      articulo_id || null,
+      articulo_id || null,
+      linea_id || null,
+      linea_id || null,
+      sublinea_id || null,
+      sublinea_id || null,
+      proveedor_id || null,
+      proveedor_id || null,
+    ]);
+    return results;
+  } catch (error) {
+    throw new Error(
+      "Error al obtener ventas con ganancia filtradas: " + error.message
+    );
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -264,4 +314,6 @@ module.exports = {
   decreasePrices,
   getArticulosVendidosPorLinea,
   decreasePrice,
+  getEvolucionGananciaPorLinea,
+  getVentasConGananciaFiltradas,
 };

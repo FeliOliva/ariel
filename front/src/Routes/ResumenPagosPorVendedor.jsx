@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Button, Space, message, DatePicker } from "antd";
 import axios from "axios";
 import VendedoresInput from "../components/VendedoresInput";
@@ -18,6 +18,12 @@ export default function ResumenPagosPorVendedor() {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+
+  useEffect(() => {
+    const inicio = dayjs("2026-01-01").format("YYYY-MM-DD");
+    const fin = dayjs().format("YYYY-MM-DD");
+    setRangoFechas([inicio, fin]);
+  }, []);
 
   const handleVendedorChange = (id, option) => {
     console.log("id", id, "option", option);
@@ -225,6 +231,11 @@ export default function ResumenPagosPorVendedor() {
 
         <Space style={{ margin: "20px 0" }}>
           <RangePicker
+            value={
+              rangoFechas.length === 2
+                ? [dayjs(rangoFechas[0]), dayjs(rangoFechas[1])]
+                : null
+            }
             onChange={(dates, dateStrings) => setRangoFechas(dateStrings)}
           />
           <Button type="primary" onClick={fetchData} loading={loading}>

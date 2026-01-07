@@ -187,15 +187,65 @@ SELECT
   a.codigo_producto AS codigo_articulo,
   CONCAT(a.nombre, ' - ', sl.nombre, ' - ', a.mediciones) AS nombre_completo,
   a.stock,
-  ROUND(a.precio_monotributista, 2) AS precio_monotributista,
+  ROUND(COALESCE(AVG(dv.precio_monotributista), a.precio_monotributista), 2) AS precio_monotributista,
+  ROUND(COALESCE(AVG(dv.costo), a.costo), 2) AS costo,
   COALESCE(SUM(dv.cantidad), 0) AS unidades_vendidas,
-  ROUND(COALESCE(SUM(dv.precio_monotributista * dv.cantidad), 0), 2) AS subtotal
+  ROUND(COALESCE(SUM(dv.precio_monotributista * dv.cantidad), 0), 2) AS subtotal,
+  ROUND(COALESCE(SUM((dv.precio_monotributista - dv.costo) * dv.cantidad), 0), 2) AS ganancia
 FROM articulo a
 LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
 LEFT JOIN detalle_venta dv ON a.id = dv.articulo_id
   AND dv.fecha BETWEEN ? AND ?
 WHERE a.linea_id = ? AND a.estado = 1 AND sl.estado = 1
-GROUP BY a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones, a.stock, a.precio_monotributista
+GROUP BY a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones, a.stock, a.precio_monotributista, a.costo
 ORDER BY unidades_vendidas DESC;
+`,
+  getEvolucionGananciaPorLinea: `
+SELECT 
+  DATE(dv.fecha) AS fecha,
+  a.id AS articulo_id,
+  a.codigo_producto AS codigo_articulo,
+  CONCAT(a.nombre, ' - ', sl.nombre, ' - ', a.mediciones) AS nombre_completo,
+  ROUND(AVG(dv.precio_monotributista), 2) AS precio_promedio,
+  ROUND(AVG(dv.costo), 2) AS costo_promedio,
+  ROUND(AVG(dv.precio_monotributista - dv.costo), 2) AS diferencia_promedio,
+  SUM(dv.cantidad) AS cantidad_vendida,
+  ROUND(SUM(dv.precio_monotributista * dv.cantidad), 2) AS total_vendido,
+  ROUND(SUM((dv.precio_monotributista - dv.costo) * dv.cantidad), 2) AS ganancia
+FROM articulo a
+LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
+INNER JOIN detalle_venta dv ON a.id = dv.articulo_id
+WHERE a.linea_id = ? 
+  AND a.estado = 1 
+  AND sl.estado = 1
+  AND DATE(dv.fecha) BETWEEN ? AND ?
+GROUP BY DATE(dv.fecha), a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones
+ORDER BY fecha ASC, nombre_completo ASC;
+`,
+  getVentasConGananciaFiltradas: `
+SELECT 
+  DATE(dv.fecha) AS fecha,
+  SUM(dv.cantidad) AS cantidad_vendida,
+  ROUND(SUM(dv.precio_monotributista * dv.cantidad), 2) AS total_vendido,
+  ROUND(SUM((dv.precio_monotributista - dv.costo) * dv.cantidad), 2) AS ganancia,
+  ROUND(AVG(dv.precio_monotributista), 2) AS precio_promedio,
+  ROUND(AVG(dv.costo), 2) AS costo_promedio,
+  ROUND(AVG(dv.precio_monotributista - dv.costo), 2) AS diferencia_promedio
+FROM detalle_venta dv
+INNER JOIN articulo a ON dv.articulo_id = a.id
+INNER JOIN venta v ON dv.venta_id = v.id
+INNER JOIN cliente c ON v.cliente_id = c.id
+LEFT JOIN linea l ON a.linea_id = l.id
+LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
+LEFT JOIN proveedor p ON a.proveedor_id = p.id
+WHERE v.estado = 1
+  AND c.estado = 1
+  AND DATE(dv.fecha) BETWEEN ? AND ?
+  AND (? IS NULL OR a.id = ?)
+  AND (? IS NULL OR a.linea_id = ?)
+  AND (? IS NULL OR a.subLinea_id = ?)
+  AND (? IS NULL OR a.proveedor_id = ?)
+GROUP BY DATE(dv.fecha)
+ORDER BY fecha ASC;
 `,
 };
