@@ -14,6 +14,9 @@ router.get("/cierre-cuenta-existe/:cliente_id", cierreCuentaControllers.existeCi
 // Obtener todos los últimos cierres
 router.get("/cierres-cuenta", cierreCuentaControllers.getAllUltimosCierres);
 
+// Obtener cierres por zona
+router.get("/cierres-cuenta-zona", cierreCuentaControllers.getCierresByZona);
+
 // Vista previa de saldos de todos los clientes
 router.get("/cierre-masivo/preview", cierreCuentaControllers.getSaldosTodosClientes);
 

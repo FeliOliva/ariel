@@ -60,10 +60,10 @@ const dropNotaCredito = async (ID) => {
     throw err;
   }
 };
-const getNotasCreditoByZona = async (zona_id) => {
+const getNotasCreditoByZona = async (zona_id, fecha_inicio, fecha_fin) => {
   try {
     const query = queriesNotasCredito.getNotasCreditoByZona;
-    const [rows] = await db.query(query, [zona_id]);
+    const [rows] = await db.query(query, [zona_id, fecha_inicio, fecha_fin]);
     return rows;
   } catch (err) {
     throw err;

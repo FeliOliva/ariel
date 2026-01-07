@@ -84,6 +84,20 @@ const getAllUltimosCierres = async (fecha_corte) => {
   }
 };
 
+// Obtener cierres por zona
+const getCierresByZona = async (fecha_corte, zona_id) => {
+  try {
+    const [rows] = await db.query(queriesCierreCuenta.getCierresByZona, [
+      fecha_corte,
+      zona_id,
+    ]);
+    return rows;
+  } catch (err) {
+    console.error("Error en getCierresByZona:", err);
+    throw err;
+  }
+};
+
 // Verificar si existe un cierre
 const existeCierre = async (cliente_id, fecha_corte) => {
   try {
@@ -188,6 +202,7 @@ const getSaldoTotalCierreMasivo = async (fecha_corte) => {
 module.exports = {
   getCierreCuentaByCliente,
   getAllCierresByCliente,
+  getCierresByZona,
   addCierreCuenta,
   updateCierreCuenta,
   deleteCierreCuenta,

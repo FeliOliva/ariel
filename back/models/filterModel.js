@@ -35,24 +35,18 @@ const filterComprasByFecha = async (startDate, endDate) => {
 };
 
 const getTotalVentas = async (startDate, endDate) => {
-  // Si la fecha final es 2025-12-31, usar < 2026-01-01 para coincidir con el cierre
-  // De lo contrario, usar BETWEEN para incluir ambas fechas
+  // Usar BETWEEN para filtrar correctamente por el rango de fechas seleccionado
   // También excluir clientes inactivos para coincidir con el cierre
-  const useStrictLessThan = endDate === '2025-12-31';
-  const dateCondition = useStrictLessThan 
-    ? `v.fecha_venta < '2026-01-01'`
-    : `DATE(v.fecha_venta) BETWEEN ? AND ?`;
-  
   const query = `
     SELECT 
       COALESCE(FORMAT(SUM(v.total_con_descuento), 2), '0.00') AS suma_total
     FROM venta v
     INNER JOIN cliente c ON v.cliente_id = c.id
-    WHERE ${dateCondition}
+    WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
       AND v.estado = 1
       AND c.estado = 1
   `;
-  const values = useStrictLessThan ? [] : [startDate, endDate];
+  const values = [startDate, endDate];
   const [result] = await db.query(query, values);
   return result.length > 0 ? result[0] : { suma_total: '0.00' };
 };
@@ -81,23 +75,18 @@ const getTotalCompras = async () => {
 };
 
 const getTotalPagos = async (startDate, endDate) => {
-  // Si la fecha final es 2025-12-31, usar < 2026-01-01 para coincidir con el cierre
+  // Usar BETWEEN para filtrar correctamente por el rango de fechas seleccionado
   // También excluir clientes inactivos para coincidir con el cierre
-  const useStrictLessThan = endDate === '2025-12-31';
-  const dateCondition = useStrictLessThan 
-    ? `p.fecha_pago < '2026-01-01'`
-    : `DATE(p.fecha_pago) BETWEEN ? AND ?`;
-  
   const query = `
     SELECT 
       COALESCE(FORMAT(SUM(p.monto), 2), '0.00') AS suma_total
     FROM pagos p
     INNER JOIN cliente c ON p.cliente_id = c.id
-    WHERE ${dateCondition}
+    WHERE DATE(p.fecha_pago) BETWEEN ? AND ?
       AND p.estado = 1
       AND c.estado = 1
   `;
-  const values = useStrictLessThan ? [] : [startDate, endDate];
+  const values = [startDate, endDate];
   const [result] = await db.query(query, values);
   return result.length > 0 ? result[0] : { suma_total: '0.00' };
 };
@@ -113,36 +102,26 @@ const getTotalClientes = async () => {
 };
 
 const getTotalNotasCredito = async (startDate, endDate) => {
-  // Si la fecha final es 2025-12-31, usar < 2026-01-01 para coincidir con el cierre
+  // Usar BETWEEN para filtrar correctamente por el rango de fechas seleccionado
   // También excluir clientes inactivos para coincidir con el cierre
-  const useStrictLessThan = endDate === '2025-12-31';
-  const dateCondition = useStrictLessThan 
-    ? `nc.fecha < '2026-01-01'`
-    : `DATE(nc.fecha) BETWEEN ? AND ?`;
-  
   const query = `
     SELECT 
       COALESCE(FORMAT(SUM(dnc.subTotal), 2), '0.00') AS suma_total
     FROM notascredito nc
     JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
     INNER JOIN cliente c ON nc.cliente_id = c.id
-    WHERE ${dateCondition}
+    WHERE DATE(nc.fecha) BETWEEN ? AND ?
       AND nc.estado = 1
       AND c.estado = 1
   `;
-  const values = useStrictLessThan ? [] : [startDate, endDate];
+  const values = [startDate, endDate];
   const [result] = await db.query(query, values);
   return result.length > 0 ? result[0] : { suma_total: '0.00' };
 };
 
 const getTotalGanancia = async (startDate, endDate) => {
-  // Si la fecha final es 2025-12-31, usar < 2026-01-01 para coincidir con el cierre
+  // Usar BETWEEN para filtrar correctamente por el rango de fechas seleccionado
   // También excluir clientes inactivos para coincidir con el cierre
-  const useStrictLessThan = endDate === '2025-12-31';
-  const dateCondition = useStrictLessThan 
-    ? `v.fecha_venta < '2026-01-01'`
-    : `DATE(v.fecha_venta) BETWEEN ? AND ?`;
-  
   // Ganancia = (precio_monotributista - costo) * cantidad para cada detalle de venta
   const query = `
     SELECT 
@@ -150,11 +129,11 @@ const getTotalGanancia = async (startDate, endDate) => {
     FROM detalle_venta dv
     INNER JOIN venta v ON dv.venta_id = v.id
     INNER JOIN cliente c ON v.cliente_id = c.id
-    WHERE ${dateCondition}
+    WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
       AND v.estado = 1
       AND c.estado = 1
   `;
-  const values = useStrictLessThan ? [] : [startDate, endDate];
+  const values = [startDate, endDate];
   const [result] = await db.query(query, values);
   return result.length > 0 ? result[0] : { ganancia_total: '0.00' };
 };

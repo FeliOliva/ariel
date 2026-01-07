@@ -12,6 +12,7 @@ export default function ResumenZonas() {
   const [rangoFechas, setRangoFechas] = useState([]);
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [saldoInicial, setSaldoInicial] = useState(0);
   useEffect(() => {
     const inicio = dayjs("2026-01-01");
     const fin = dayjs();
@@ -30,11 +31,17 @@ export default function ResumenZonas() {
     setLoading(true);
 
     try {
-      const response = await axios.get("http://localhost:3001/resumenZonas", {
-        params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
-      });
+      const [response, saldoInicialRes] = await Promise.all([
+        axios.get("http://localhost:3001/resumenZonas", {
+          params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+        }),
+        axios.get(`http://localhost:3001/cierre-masivo/saldo-total`, {
+          params: { fecha_corte: "2026-01-01" }
+        }),
+      ]);
 
       setDatos(response.data);
+      setSaldoInicial(parseFloat(saldoInicialRes.data.saldo_total || 0));
     } catch (error) {
       console.error("Error al obtener datos:", error);
       message.error("Hubo un error al cargar los datos.");
@@ -55,7 +62,14 @@ export default function ResumenZonas() {
     (sum, d) => sum + parseFloat(d.total_notas_credito),
     0
   );
-  const saldoGlobal = totalVentas - totalPagos - totalNotasCredito;
+  // Si la fecha de inicio es >= 2026-01-01, sumar el saldo inicial por zona al saldo global
+  const fechaInicio = rangoFechas?.[0];
+  const usarSaldoInicial = fechaInicio && dayjs(fechaInicio).isAfter(dayjs("2025-12-31"));
+  const totalSaldoInicialPorZona = datos.reduce(
+    (sum, d) => sum + parseFloat(d.saldo_inicial || 0),
+    0
+  );
+  const saldoGlobal = totalVentas - totalPagos - totalNotasCredito + (usarSaldoInicial ? totalSaldoInicialPorZona : 0);
 
   const columns = [
     {
@@ -82,10 +96,20 @@ export default function ResumenZonas() {
       render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
     },
     {
+      title: "Saldo Inicial",
+      dataIndex: "saldo_inicial",
+      key: "saldo_inicial",
+      render: (text) => {
+        const saldoInicialZona = parseFloat(text || 0);
+        return usarSaldoInicial ? `$${Math.round(saldoInicialZona).toLocaleString("es-ES")}` : "$0";
+      },
+    },
+    {
       title: "Saldo",
       key: "saldo",
       render: (_, record) => {
-        const saldo = parseFloat(record.total_ventas) - parseFloat(record.total_pagos) - parseFloat(record.total_notas_credito);
+        const saldoInicialZona = parseFloat(record.saldo_inicial || 0);
+        const saldo = parseFloat(record.total_ventas) - parseFloat(record.total_pagos) - parseFloat(record.total_notas_credito) + (usarSaldoInicial ? saldoInicialZona : 0);
         return `$${Math.round(saldo).toLocaleString("es-ES")}`;
       },
     },
@@ -106,19 +130,21 @@ export default function ResumenZonas() {
     doc.setFontSize(12);
     doc.text(`Rango de fechas: ${rangoInfo}`, 14, 30);
     const tableData = datos.map((d) => {
-      const saldo = parseFloat(d.total_ventas) - parseFloat(d.total_pagos) - parseFloat(d.total_notas_credito);
+      const saldoInicialZona = parseFloat(d.saldo_inicial || 0);
+      const saldo = parseFloat(d.total_ventas) - parseFloat(d.total_pagos) - parseFloat(d.total_notas_credito) + (usarSaldoInicial ? saldoInicialZona : 0);
       return [
         d.nombre_zona,
         `$${Math.round(d.total_ventas).toLocaleString("es-ES")}`,
         `$${Math.round(d.total_pagos).toLocaleString("es-ES")}`,
         `$${Math.round(d.total_notas_credito).toLocaleString("es-ES")}`,
+        usarSaldoInicial ? `$${Math.round(saldoInicialZona).toLocaleString("es-ES")}` : "$0",
         `$${Math.round(saldo).toLocaleString("es-ES")}`,
       ];
     });
 
     doc.autoTable({
       startY: 45,
-      head: [["Zona", "Total Ventas", "Total Pagos", "Total Notas de Crédito", "Saldo"]],
+      head: [["Zona", "Total Ventas", "Total Pagos", "Total Notas de Crédito", "Saldo Inicial", "Saldo"]],
       body: tableData,
     });
 
@@ -141,11 +167,24 @@ export default function ResumenZonas() {
       14,
       finalY + 14
     );
-    doc.text(
-      `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
-      14,
-      finalY + 21
-    );
+    if (usarSaldoInicial) {
+      doc.text(
+        `Total Saldo Inicial: $${Math.round(totalSaldoInicialPorZona).toLocaleString("es-ES")}`,
+        14,
+        finalY + 21
+      );
+      doc.text(
+        `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
+        14,
+        finalY + 28
+      );
+    } else {
+      doc.text(
+        `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
+        14,
+        finalY + 21
+      );
+    }
 
     doc.save("resumen_zonas.pdf");
   };
@@ -185,6 +224,11 @@ export default function ResumenZonas() {
             Total Notas de Crédito: $
             {Math.round(totalNotasCredito).toLocaleString("es-ES")}
           </p>
+          {usarSaldoInicial && (
+            <p>
+              Total Saldo Inicial: ${Math.round(totalSaldoInicialPorZona).toLocaleString("es-ES")}
+            </p>
+          )}
           <p>
             Saldo Global: ${Math.round(saldoGlobal).toLocaleString("es-ES")}
           </p>

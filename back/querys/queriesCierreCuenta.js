@@ -43,11 +43,27 @@ module.exports = {
       c.nombre,
       c.apellido,
       c.farmacia,
+      c.zona_id,
       z.nombre AS zona_nombre
     FROM cierre_cuenta cc
     INNER JOIN cliente c ON cc.cliente_id = c.id
     LEFT JOIN zona z ON c.zona_id = z.id
     WHERE cc.fecha_corte = ?
+    ORDER BY c.farmacia, c.nombre
+  `,
+  // Obtener cierres por zona
+  getCierresByZona: `
+    SELECT 
+      cc.*,
+      c.nombre,
+      c.apellido,
+      c.farmacia,
+      c.zona_id,
+      z.nombre AS zona_nombre
+    FROM cierre_cuenta cc
+    INNER JOIN cliente c ON cc.cliente_id = c.id
+    LEFT JOIN zona z ON c.zona_id = z.id
+    WHERE cc.fecha_corte = ? AND c.zona_id = ? AND c.estado = 1
     ORDER BY c.farmacia, c.nombre
   `,
 

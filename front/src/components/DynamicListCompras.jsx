@@ -38,7 +38,7 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
     setEditedCantidad(0);
   };
 
-  // Función para guardar los precios editados
+  // Función para guardar los precios editados automáticamente
   const handleSaveClick = (uniqueId) => {
     if (!isNaN(editedCosto) && !isNaN(editedPrecioMonotributista)) {
       onEdit(uniqueId, editedCosto, editedPrecioMonotributista);
@@ -48,6 +48,16 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
       onEditCantidad(uniqueId, editedCantidad);
     }
     setEditingItemId(null);
+  };
+
+  // Función para guardar automáticamente cuando cambian los valores
+  const handleAutoSave = (uniqueId) => {
+    if (!isNaN(editedCosto) && !isNaN(editedPrecioMonotributista)) {
+      onEdit(uniqueId, editedCosto, editedPrecioMonotributista);
+    }
+    if (onEditCantidad && !isNaN(editedCantidad) && editedCantidad > 0) {
+      onEditCantidad(uniqueId, editedCantidad);
+    }
   };
 
   // Guardar los porcentajes cuando cambien (se aplicarán al registrar)
@@ -104,7 +114,12 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
                       <Text type="secondary" style={{ fontSize: "12px", width: "120px" }}>Cantidad:</Text>
                       <InputNumber
                         value={editedCantidad}
-                        onChange={(value) => setEditedCantidad(value || 0)}
+                        onChange={(value) => {
+                          setEditedCantidad(value || 0);
+                          if (onEditCantidad && !isNaN(value) && value > 0) {
+                            onEditCantidad(item.uniqueId, value);
+                          }
+                        }}
                         min={1}
                         style={{ width: 100 }}
                       />
@@ -113,7 +128,12 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
                       <Text type="secondary" style={{ fontSize: "12px", width: "120px" }}>Costo:</Text>
                       <InputNumber
                         value={editedCosto}
-                        onChange={(value) => setEditedCosto(value || 0)}
+                        onChange={(value) => {
+                          setEditedCosto(value || 0);
+                          if (!isNaN(value) && !isNaN(editedPrecioMonotributista)) {
+                            onEdit(item.uniqueId, value || 0, editedPrecioMonotributista);
+                          }
+                        }}
                         min={0}
                         style={{ width: 100 }}
                         formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -125,7 +145,12 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
                       <Text type="secondary" style={{ fontSize: "12px", width: "120px" }}>P. Monot.:</Text>
                       <InputNumber
                         value={editedPrecioMonotributista}
-                        onChange={(value) => setEditedPrecioMonotributista(value || 0)}
+                        onChange={(value) => {
+                          setEditedPrecioMonotributista(value || 0);
+                          if (!isNaN(value) && !isNaN(editedCosto)) {
+                            onEdit(item.uniqueId, editedCosto, value || 0);
+                          }
+                        }}
                         min={0}
                         style={{ width: 100 }}
                         formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}

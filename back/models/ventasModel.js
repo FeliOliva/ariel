@@ -235,20 +235,21 @@ const getResumenZonas = async (fecha_inicio, fecha_fin) => {
     z.nombre AS nombre_zona,
     COALESCE(ventas.total_ventas, 0) AS total_ventas,
     COALESCE(pagos.total_pagos, 0) AS total_pagos,
-    COALESCE(notas_credito.total_notas_credito, 0) AS total_notas_credito
+    COALESCE(notas_credito.total_notas_credito, 0) AS total_notas_credito,
+    COALESCE(saldo_inicial.saldo_inicial, 0) AS saldo_inicial
 FROM zona z
 LEFT JOIN (
     SELECT c.zona_id, SUM(v.total_con_descuento) AS total_ventas
     FROM venta v
     JOIN cliente c ON v.cliente_id = c.id
-    WHERE v.estado = 1 AND DATE(v.fecha_venta) BETWEEN ? AND ?
+    WHERE v.estado = 1 AND c.estado = 1 AND DATE(v.fecha_venta) BETWEEN ? AND ?
     GROUP BY c.zona_id
 ) AS ventas ON z.id = ventas.zona_id
 LEFT JOIN (
     SELECT c.zona_id, SUM(p.monto) AS total_pagos
     FROM pagos p
     JOIN cliente c ON p.cliente_id = c.id
-    WHERE p.estado = 1 AND DATE(p.fecha_pago) BETWEEN ? AND ?
+    WHERE p.estado = 1 AND c.estado = 1 AND DATE(p.fecha_pago) BETWEEN ? AND ?
     GROUP BY c.zona_id
 ) AS pagos ON z.id = pagos.zona_id
 LEFT JOIN (
@@ -256,13 +257,22 @@ LEFT JOIN (
     FROM notascredito nc
     JOIN cliente c ON nc.cliente_id = c.id
     LEFT JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
-    WHERE nc.estado = 1
+    WHERE nc.estado = 1 AND c.estado = 1 AND DATE(nc.fecha) BETWEEN ? AND ?
     GROUP BY c.zona_id
 ) AS notas_credito ON z.id = notas_credito.zona_id
+LEFT JOIN (
+    SELECT c.zona_id, SUM(cc.saldo_cierre) AS saldo_inicial
+    FROM cierre_cuenta cc
+    JOIN cliente c ON cc.cliente_id = c.id
+    WHERE cc.fecha_corte = '2026-01-01' AND c.estado = 1
+    GROUP BY c.zona_id
+) AS saldo_inicial ON z.id = saldo_inicial.zona_id
 ORDER BY z.id;
     `;
 
     const [rows] = await db.query(query, [
+      fecha_inicio,
+      fecha_fin,
       fecha_inicio,
       fecha_fin,
       fecha_inicio,

@@ -70,7 +70,9 @@ LEFT JOIN
     detallenotacredito dnc ON nc.id = dnc.notacredito_id
 WHERE 
     c.zona_id = ?
-    AND nc.estado = 1 
+    AND nc.estado = 1
+    AND c.estado = 1
+    AND DATE(nc.fecha) BETWEEN DATE(?) AND DATE(?)
 GROUP BY 
     nc.id, c.id
 ORDER BY 
