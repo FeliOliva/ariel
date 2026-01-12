@@ -120,6 +120,36 @@ module.exports = {
     SELECT COALESCE(SUM(saldo_cierre), 0) AS saldo_total
     FROM cierre_cuenta
     WHERE fecha_corte = ?
+  `,
+
+  // Recalcular el saldo de un cliente específico para una fecha de corte
+  recalcularSaldoCliente: `
+    SELECT 
+      COALESCE(ventas.total_ventas, 0) AS total_ventas,
+      COALESCE(pagos.total_pagos, 0) AS total_pagos,
+      COALESCE(notas_credito.total_nc, 0) AS total_nc,
+      (COALESCE(ventas.total_ventas, 0) - COALESCE(pagos.total_pagos, 0) - COALESCE(notas_credito.total_nc, 0)) AS saldo
+    FROM cliente c
+    LEFT JOIN (
+      SELECT cliente_id, SUM(total_con_descuento) AS total_ventas
+      FROM venta
+      WHERE estado = 1 AND fecha_venta < ?
+      GROUP BY cliente_id
+    ) AS ventas ON c.id = ventas.cliente_id
+    LEFT JOIN (
+      SELECT cliente_id, SUM(monto) AS total_pagos
+      FROM pagos
+      WHERE estado = 1 AND fecha_pago < ?
+      GROUP BY cliente_id
+    ) AS pagos ON c.id = pagos.cliente_id
+    LEFT JOIN (
+      SELECT nc.cliente_id, SUM(dnc.subTotal) AS total_nc
+      FROM notascredito nc
+      JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
+      WHERE nc.estado = 1 AND nc.fecha < ?
+      GROUP BY nc.cliente_id
+    ) AS notas_credito ON c.id = notas_credito.cliente_id
+    WHERE c.id = ?
   `
 };
 

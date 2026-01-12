@@ -35,6 +35,8 @@ const CompraDetalles = () => {
   const [porcentajeAumentoPrecio, setPorcentajeAumentoPrecio] = useState(0);
   const [costoOriginal, setCostoOriginal] = useState(0);
   const [precioOriginal, setPrecioOriginal] = useState(0);
+  const [costoInicial, setCostoInicial] = useState(0); // Valor inicial cuando se abre el drawer
+  const [precioInicial, setPrecioInicial] = useState(0); // Valor inicial cuando se abre el drawer
   const { confirm } = Modal;
 
   useEffect(() => {
@@ -95,6 +97,10 @@ const CompraDetalles = () => {
     setPorcentajeAumentoCosto(porcentajeCosto);
     setPorcentajeAumentoPrecio(porcentajePrecio);
     
+    // Guardar valores iniciales para detectar cambios manuales
+    setCostoInicial(costo);
+    setPrecioInicial(precio);
+    
     // Calcular valores originales (antes del aumento)
     // Usamos una aproximación ya que el redondeo hacia arriba hace que la inversa no sea exacta
     let costoOriginal = costo;
@@ -122,28 +128,41 @@ const CompraDetalles = () => {
     setOpenUp(true);
   };
   const handleAplyUpFilter = async () => {
-    // Aplicar porcentajes antes de guardar
-    let costoFinal = newCosto;
-    let precioFinal = newPrecioMonotributista;
+    // Detectar si el usuario modificó manualmente los valores
+    // Comparando con el valor inicial cuando se abrió el drawer
+    const tolerancia = 0.01; // Tolerancia para comparaciones de punto flotante
+    const costoFueModificadoManual = Math.abs(newCosto - costoInicial) > tolerancia;
+    const precioFueModificadoManual = Math.abs(newPrecioMonotributista - precioInicial) > tolerancia;
     
-    if (porcentajeAumentoCosto > 0) {
+    // Calcular valores esperados si se aplicaran los porcentajes
+    let costoEsperadoConPorcentaje = newCosto;
+    let precioEsperadoConPorcentaje = newPrecioMonotributista;
+    
+    if (porcentajeAumentoCosto > 0 && costoOriginal > 0) {
       const factorCosto = 1 + porcentajeAumentoCosto / 100;
-      costoFinal = Math.ceil(costoOriginal * factorCosto * 100) / 100;
+      costoEsperadoConPorcentaje = Math.ceil(costoOriginal * factorCosto * 100) / 100;
     }
     
-    if (porcentajeAumentoPrecio > 0) {
+    if (porcentajeAumentoPrecio > 0 && precioOriginal > 0) {
       const factorPrecio = 1 + porcentajeAumentoPrecio / 100;
-      precioFinal = Math.ceil(precioOriginal * factorPrecio * 100) / 100;
+      precioEsperadoConPorcentaje = Math.ceil(precioOriginal * factorPrecio * 100) / 100;
     }
     
-    // Si se aplicaron porcentajes, actualizar los valores
-    if (porcentajeAumentoCosto > 0 || porcentajeAumentoPrecio > 0) {
-      setNewCosto(costoFinal);
-      setNewPrecioMonotributista(precioFinal);
-    }
-    // Usar los valores finales (con porcentajes aplicados si corresponde)
-    const costoAGuardar = porcentajeAumentoCosto > 0 ? costoFinal : newCosto;
-    const precioAGuardar = porcentajeAumentoPrecio > 0 ? precioFinal : newPrecioMonotributista;
+    // Si fue modificado manualmente, usar el valor manual directamente
+    // Si no fue modificado manualmente y hay porcentaje, aplicar el porcentaje
+    const costoAGuardar = costoFueModificadoManual || porcentajeAumentoCosto === 0 
+      ? newCosto 
+      : costoEsperadoConPorcentaje;
+    
+    const precioAGuardar = precioFueModificadoManual || porcentajeAumentoPrecio === 0
+      ? newPrecioMonotributista
+      : precioEsperadoConPorcentaje;
+    
+    // Determinar qué porcentajes guardar
+    // Si el valor fue modificado manualmente, no guardar porcentaje (null)
+    // Si no fue modificado manualmente y hay porcentaje, guardar el porcentaje
+    const porcentajeCostoAGuardar = costoFueModificadoManual ? null : (porcentajeAumentoCosto > 0 ? porcentajeAumentoCosto : null);
+    const porcentajePrecioAGuardar = precioFueModificadoManual ? null : (porcentajeAumentoPrecio > 0 ? porcentajeAumentoPrecio : null);
     
     if (costoAGuardar < 0 || precioAGuardar < 0) {
       Modal.warning({
@@ -161,8 +180,8 @@ const CompraDetalles = () => {
         cantidad: cantidad,
         compra_id: compraInfo.compra_id,
         articulo_id: detalleCompra.articulo_id,
-        porcentaje_aumento_costo: porcentajeAumentoCosto > 0 ? porcentajeAumentoCosto : null,
-        porcentaje_aumento_precio: porcentajeAumentoPrecio > 0 ? porcentajeAumentoPrecio : null,
+        porcentaje_aumento_costo: porcentajeCostoAGuardar,
+        porcentaje_aumento_precio: porcentajePrecioAGuardar,
       };
       console.log(newData);
       confirm({

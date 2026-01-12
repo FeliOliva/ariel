@@ -1,5 +1,6 @@
 const db = require("../database");
 const queriesVentas = require("../querys/queriesVentas");
+const cierreCuentaModel = require("./cierreCuentaModel");
 
 const getAllVentas = async () => {
   try {
@@ -122,12 +123,33 @@ const updateVentas = async (
       .slice(0, 19)
       .replace("T", " ");
 
+    // Obtener información de la venta antes de actualizar
+    const [ventaRows] = await db.query("SELECT cliente_id, fecha_venta FROM venta WHERE id = ?", [ID]);
+    const cliente_id = ventaRows[0]?.cliente_id;
+
     await db.query(query, [
       formattedFechaVenta,
       total_con_descuento,
       descuento,
       ID,
     ]);
+
+    // Recalcular cierre de cuenta si la venta está dentro del período del cierre
+    // Fecha de corte por defecto: 2026-01-01
+    const FECHA_CORTE_DEFAULT = "2026-01-01";
+    const fechaVentaDate = new Date(formattedFechaVenta);
+    const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
+    
+    // Si la venta es anterior a la fecha de corte, recalcular el cierre
+    if (fechaVentaDate < fechaCorteDate && cliente_id) {
+      try {
+        await cierreCuentaModel.recalcularCierreCliente(cliente_id, FECHA_CORTE_DEFAULT);
+        console.log(`Cierre de cuenta recalculado para cliente ${cliente_id} después de actualizar venta ${ID}`);
+      } catch (cierreErr) {
+        // No fallar la actualización de la venta si falla el recálculo del cierre
+        console.error("Error al recalcular cierre de cuenta:", cierreErr);
+      }
+    }
   } catch (err) {
     throw err;
   }
@@ -401,6 +423,20 @@ const editarVenta = async (
     `;
     await db.query(updateVentaQuery, [total, totalConDescuento, ventaId]);
 
+    // Recalcular cierre de cuenta si la venta está dentro del período del cierre
+    const FECHA_CORTE_DEFAULT = "2026-01-01";
+    const fechaVentaDate = new Date(venta[0].fecha_venta);
+    const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
+    
+    if (fechaVentaDate < fechaCorteDate && venta[0].cliente_id) {
+      try {
+        await cierreCuentaModel.recalcularCierreCliente(venta[0].cliente_id, FECHA_CORTE_DEFAULT);
+        console.log(`Cierre de cuenta recalculado para cliente ${venta[0].cliente_id} después de editar venta ${ventaId}`);
+      } catch (cierreErr) {
+        console.error("Error al recalcular cierre de cuenta:", cierreErr);
+      }
+    }
+
     // 8. Descontar stock si corresponde
     if (controlaStock) {
       await descontarStock(articulo_id, cantidad);
@@ -469,6 +505,23 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
       "UPDATE venta SET total = ?, total_con_descuento = ? WHERE id = ?",
       [total, totalConDescuento, ventaId]
     );
+
+    // Recalcular cierre de cuenta si la venta está dentro del período del cierre
+    const FECHA_CORTE_DEFAULT = "2026-01-01";
+    const [ventaInfo] = await db.query("SELECT cliente_id, fecha_venta FROM venta WHERE id = ?", [ventaId]);
+    if (ventaInfo.length > 0) {
+      const fechaVentaDate = new Date(ventaInfo[0].fecha_venta);
+      const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
+      
+      if (fechaVentaDate < fechaCorteDate && ventaInfo[0].cliente_id) {
+        try {
+          await cierreCuentaModel.recalcularCierreCliente(ventaInfo[0].cliente_id, FECHA_CORTE_DEFAULT);
+          console.log(`Cierre de cuenta recalculado para cliente ${ventaInfo[0].cliente_id} después de eliminar detalle de venta ${detalleVentaId}`);
+        } catch (cierreErr) {
+          console.error("Error al recalcular cierre de cuenta:", cierreErr);
+        }
+      }
+    }
 
     // 5. Si controlaba stock, devolver stock con SQL directo
     const lineas = await getLineasStock();

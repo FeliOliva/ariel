@@ -254,6 +254,40 @@ const getSaldoTotalCierreMasivo = async (req, res) => {
   }
 };
 
+// Recalcular el cierre de cuenta de un cliente específico
+const recalcularCierreCliente = async (req, res) => {
+  try {
+    const { cliente_id } = req.params;
+    const { fecha_corte } = req.query;
+    const fechaCorte = fecha_corte || FECHA_CORTE_DEFAULT;
+
+    if (!cliente_id) {
+      return res.status(400).json({ error: "cliente_id es requerido" });
+    }
+
+    const resultado = await cierreCuentaModel.recalcularCierreCliente(
+      cliente_id,
+      fechaCorte
+    );
+
+    if (!resultado.actualizado) {
+      return res.status(404).json({
+        success: false,
+        message: resultado.mensaje,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Cierre de cuenta recalculado correctamente",
+      data: resultado,
+    });
+  } catch (error) {
+    console.error("Error en recalcularCierreCliente:", error);
+    res.status(500).json({ error: "Error al recalcular el cierre de cuenta" });
+  }
+};
+
 module.exports = {
   getCierreCuentaByCliente,
   getAllCierresByCliente,
@@ -267,5 +301,6 @@ module.exports = {
   ejecutarCierreMasivo,
   contarCierresPorFecha,
   getSaldoTotalCierreMasivo,
+  recalcularCierreCliente,
 };
 

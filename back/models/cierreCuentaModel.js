@@ -199,6 +199,52 @@ const getSaldoTotalCierreMasivo = async (fecha_corte) => {
   }
 };
 
+// Recalcular y actualizar el cierre de cuenta de un cliente específico
+const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
+  try {
+    // Verificar si existe un cierre para este cliente y fecha
+    const existe = await existeCierre(cliente_id, fecha_corte);
+    
+    if (!existe) {
+      // Si no existe cierre, no hay nada que recalcular
+      return { actualizado: false, mensaje: "No existe cierre de cuenta para este cliente y fecha" };
+    }
+
+    // Recalcular el saldo actual del cliente
+    const [rows] = await db.query(queriesCierreCuenta.recalcularSaldoCliente, [
+      fecha_corte,
+      fecha_corte,
+      fecha_corte,
+      cliente_id,
+    ]);
+
+    if (rows.length === 0) {
+      throw new Error("Cliente no encontrado");
+    }
+
+    const nuevoSaldo = rows[0].saldo || 0;
+
+    // Actualizar el cierre de cuenta con el nuevo saldo
+    const [result] = await db.query(queriesCierreCuenta.addCierreCuenta, [
+      cliente_id,
+      nuevoSaldo,
+      fecha_corte,
+      `Recalculado automáticamente - ${new Date().toISOString()}`,
+    ]);
+
+    return {
+      actualizado: true,
+      cliente_id,
+      saldo_anterior: null, // Podríamos obtenerlo antes de actualizar si es necesario
+      saldo_nuevo: nuevoSaldo,
+      fecha_corte,
+    };
+  } catch (err) {
+    console.error("Error en recalcularCierreCliente:", err);
+    throw err;
+  }
+};
+
 module.exports = {
   getCierreCuentaByCliente,
   getAllCierresByCliente,
@@ -212,5 +258,6 @@ module.exports = {
   cierreMasivo,
   contarCierresPorFecha,
   getSaldoTotalCierreMasivo,
+  recalcularCierreCliente,
 };
 

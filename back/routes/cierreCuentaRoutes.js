@@ -38,5 +38,8 @@ router.put("/cierre-cuenta", cierreCuentaControllers.updateCierreCuenta);
 // Eliminar cierre de cuenta
 router.delete("/cierre-cuenta/:id", cierreCuentaControllers.deleteCierreCuenta);
 
+// Recalcular cierre de cuenta de un cliente específico
+router.post("/cierre-cuenta/recalcular/:cliente_id", cierreCuentaControllers.recalcularCierreCliente);
+
 module.exports = router;
 
