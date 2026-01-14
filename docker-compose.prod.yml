@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: ariel-backend-prod
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=host.docker.internal
+      - DB_USER=root
+      - DB_PASSWORD=154254693feli
+      - DB_NAME=ariel2db
+      - PORT=3001
+    networks:
+      - ariel-network
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: ariel-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - ariel-network
+    depends_on:
+      - backend
+
+networks:
+  ariel-network:
+    driver: bridge

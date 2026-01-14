@@ -79,7 +79,7 @@ function Gastos() {
       return;
     }
     const gastoEditado = {
-      nombre: currentGasto.nombre,
+      nombre: currentGasto.nombre.toUpperCase().trim(),
       monto: currentGasto.monto,
       ID: currentGasto.id,
     };
@@ -123,8 +123,15 @@ function Gastos() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.post("http://localhost:3001/addGasto", newGasto);
+          // Convertir el nombre a mayúsculas antes de enviar
+          const gastoToSend = {
+            ...newGasto,
+            nombre: newGasto.nombre.toUpperCase().trim(),
+          };
+          await axios.post("http://localhost:3001/addGasto", gastoToSend);
           setOpen(false);
+          // Limpiar el estado del drawer
+          setNewGasto(null);
           fetchData();
         } catch (error) {
           console.error("Error fetching the data:", error);
@@ -176,13 +183,13 @@ function Gastos() {
   };
   const columns = [
     {
-      name: "Nombre",
+      name: "Motivo",
       selector: (row) => (
         <Tooltip
           className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.nombre}
+          title={row.nombre ? row.nombre.toUpperCase() : ""}
         >
-          <span>{row.nombre}</span>
+          <span>{row.nombre ? row.nombre.toUpperCase() : ""}</span>
         </Tooltip>
       ),
 
@@ -190,14 +197,22 @@ function Gastos() {
     },
     {
       name: "Monto",
-      selector: (row) => (
-        <Tooltip
-          className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.monto}
-        >
-          <span>{row.monto}</span>
-        </Tooltip>
-      ),
+      selector: (row) => {
+        const montoFormateado = row.monto 
+          ? `$ ${parseFloat(row.monto).toLocaleString("es-AR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`
+          : "$ 0.00";
+        return (
+          <Tooltip
+            className={row.estado === 0 ? "strikethrough" : ""}
+            title={montoFormateado}
+          >
+            <span>{montoFormateado}</span>
+          </Tooltip>
+        );
+      },
       sortable: true,
     },
     {
@@ -238,26 +253,45 @@ function Gastos() {
 
       <Button
         type="primary"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          // Limpiar el estado antes de abrir el drawer
+          setNewGasto(null);
+          setOpen(true);
+        }}
         style={{ marginBottom: "16px" }}
       >
         Agregar Gasto
       </Button>
-      <Drawer open={open} onClose={() => setOpen(false)} title="Agregar Gasto">
+      <Drawer 
+        open={open} 
+        onClose={() => {
+          setOpen(false);
+          // Limpiar el estado del drawer al cerrar
+          setNewGasto(null);
+        }} 
+        title="Agregar Gasto"
+      >
         <div style={{ display: "flex", marginBottom: 10 }}>
-          <Tooltip>Nombre</Tooltip>
+          <Tooltip>Motivo</Tooltip>
         </div>
         <Input
-          value={newGasto?.nombre}
+          value={newGasto?.nombre || ""}
           onChange={(e) => setNewGasto({ ...newGasto, nombre: e.target.value })}
           style={{ width: "70%" }}
+          placeholder="Ingrese el motivo del gasto"
         />
         <div style={{ display: "flex", margin: 10 }}>
           <Tooltip>Monto</Tooltip>
         </div>
         <InputNumber
-          value={newGasto?.monto}
+          value={newGasto?.monto || undefined}
           onChange={(value) => setNewGasto({ ...newGasto, monto: value })}
+          min={0}
+          style={{ width: "100%" }}
+          placeholder="Ingrese el monto"
+          formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+          parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+          precision={2}
         />
         <Button
           type="primary"
@@ -270,26 +304,37 @@ function Gastos() {
       <Drawer
         title="Editar Gasto"
         open={openEditDrawer}
-        onClose={() => setOpenEditDrawer(false)}
+        onClose={() => {
+          setOpenEditDrawer(false);
+          // Limpiar el estado del drawer al cerrar
+          setCurrentGasto(null);
+        }}
       >
         <div style={{ display: "flex", marginBottom: 10 }}>
-          <Tooltip>Nombre</Tooltip>
+          <Tooltip>Motivo</Tooltip>
         </div>
         <Input
-          value={currentGasto?.nombre}
+          value={currentGasto?.nombre || ""}
           onChange={(e) =>
             setCurrentGasto({ ...currentGasto, nombre: e.target.value })
           }
           style={{ width: "70%" }}
+          placeholder="Ingrese el motivo del gasto"
         />
         <div style={{ display: "flex", marginBottom: 10 }}>
           <Tooltip>Monto</Tooltip>
         </div>
         <InputNumber
-          value={currentGasto?.monto}
+          value={currentGasto?.monto || undefined}
           onChange={(value) =>
             setCurrentGasto({ ...currentGasto, monto: value })
           }
+          min={0}
+          style={{ width: "100%" }}
+          placeholder="Ingrese el monto"
+          formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+          parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+          precision={2}
         />
         <Button
           type="primary"

@@ -1,5 +1,5 @@
 module.exports = {
-  getAllGastos: "SELECT * FROM gasto;",
+  getAllGastos: "SELECT * FROM gasto ORDER BY fecha DESC, id DESC;",
   addGasto: "INSERT INTO gasto (nombre, monto, fecha) VALUES (?, ?, NOW());",
   dropGasto: "UPDATE gasto SET estado = 0 WHERE ID = ?;",
   upGasto: "UPDATE gasto SET estado = 1 WHERE ID = ?;",
