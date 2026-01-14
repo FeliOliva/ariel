@@ -1,1 +1,10 @@
 node_modules
+
+# Archivos de entorno (no subir a Git)
+.env
+back/.env
+front/.env
+*.env
+!.env.example
+!back/.env.example
+backup-12-26-vie_08-10.sql

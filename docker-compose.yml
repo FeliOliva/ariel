@@ -9,13 +9,16 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
+    env_file:
+      - ./back/.env
     environment:
       - NODE_ENV=development
-      - DB_HOST=host.docker.internal
-      - DB_USER=root
-      - DB_PASSWORD=154254693feli
-      - DB_NAME=ariel2db
-      - PORT=3001
+      # Valores por defecto si no existe .env
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-154254693feli}
+      - DB_NAME=${DB_NAME:-ariel2db}
+      - PORT=${PORT:-3001}
     volumes:
       # Montar el código para hot-reload (sin node_modules)
       - ./back:/app
