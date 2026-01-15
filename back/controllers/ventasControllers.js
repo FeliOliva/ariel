@@ -169,10 +169,16 @@ const getVentasByZona = async (req, res) => {
   try {
     const { ID: zona_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query;
-    console.log("ID", zona_id);
+    
+    // Convertir zona_id a número para asegurar el tipo correcto
+    const zonaIdNum = parseInt(zona_id, 10);
+    
+    console.log("ID (original):", zona_id, "tipo:", typeof zona_id);
+    console.log("ID convertido a número:", zonaIdNum, "tipo:", typeof zonaIdNum);
     console.log("fechas", fecha_inicio, fecha_fin);
-    if (!zona_id) {
-      return res.status(400).json({ error: "ID de zona no proporcionado" });
+    
+    if (!zona_id || isNaN(zonaIdNum)) {
+      return res.status(400).json({ error: "ID de zona no proporcionado o inválido" });
     }
 
     if (!fecha_inicio || !fecha_fin) {
@@ -182,10 +188,13 @@ const getVentasByZona = async (req, res) => {
     }
 
     const ventas = await ventasModel.getVentasByZona(
-      zona_id,
+      zonaIdNum,
       fecha_inicio,
       fecha_fin
     );
+    
+    console.log("Ventas obtenidas:", ventas);
+    console.log("Cantidad de ventas:", ventas?.length || 0);
 
     // Manejar el caso de que no existan ventas
     if (!ventas || ventas.length === 0) {

@@ -120,15 +120,25 @@ const getNotasCreditoByZona = async (req, res) => {
     const { ID: zona_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query;
 
-    if (!zona_id) {
-      return res.status(400).json({ error: "ID de zona no proporcionado" });
+    // Convertir zona_id a número para asegurar el tipo correcto
+    const zonaIdNum = parseInt(zona_id, 10);
+
+    console.log("ID (original):", zona_id, "tipo:", typeof zona_id);
+    console.log("ID convertido a número:", zonaIdNum, "tipo:", typeof zonaIdNum);
+    console.log("Fechas:", fecha_inicio, fecha_fin);
+
+    if (!zona_id || isNaN(zonaIdNum)) {
+      return res.status(400).json({ error: "ID de zona no proporcionado o inválido" });
     }
 
     if (!fecha_inicio || !fecha_fin) {
       return res.status(400).json({ error: "fecha_inicio y fecha_fin son requeridos" });
     }
 
-    const notasCredito = await notasCreditoModel.getNotasCreditoByZona(zona_id, fecha_inicio, fecha_fin);
+    const notasCredito = await notasCreditoModel.getNotasCreditoByZona(zonaIdNum, fecha_inicio, fecha_fin);
+    
+    console.log("Notas de crédito obtenidas:", notasCredito);
+    console.log("Cantidad de notas de crédito:", notasCredito?.length || 0);
 
     if (!notasCredito || notasCredito.length === 0) {
       return res.json([]); // Si no hay notas, devolver un array vacío

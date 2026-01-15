@@ -26,6 +26,8 @@ JOIN
     cliente c ON p.cliente_id = c.id
 WHERE 
     c.zona_id = ?
+    AND c.estado = 1
+    AND p.estado = 1
     AND DATE(p.fecha_pago) BETWEEN DATE(?) AND DATE(?)
 GROUP BY 
     c.id, c.nombre, c.apellido, c.zona_id

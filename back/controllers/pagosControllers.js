@@ -110,11 +110,16 @@ const getPagosByZona_id = async (req, res) => {
     const { ID: zona_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
 
-    console.log("ID desde el back:", zona_id);
+    // Convertir zona_id a número para asegurar el tipo correcto
+    const zonaIdNum = parseInt(zona_id, 10);
+
+    console.log("ID desde el back (original):", zona_id, "tipo:", typeof zona_id);
+    console.log("ID convertido a número:", zonaIdNum, "tipo:", typeof zonaIdNum);
+    console.log("Fechas:", fecha_inicio, fecha_fin);
 
     // Validar los parámetros requeridos
-    if (!zona_id) {
-      return res.status(400).json({ error: "ID de zona no proporcionado" });
+    if (!zona_id || isNaN(zonaIdNum)) {
+      return res.status(400).json({ error: "ID de zona no proporcionado o inválido" });
     }
 
     if (!fecha_inicio || !fecha_fin) {
@@ -123,14 +128,15 @@ const getPagosByZona_id = async (req, res) => {
       });
     }
 
-    // Llamar al modelo con los parámetros
+    // Llamar al modelo con los parámetros (usando el número)
     const pagos = await pagosModel.getPagosByZona_id(
-      zona_id,
+      zonaIdNum,
       fecha_inicio,
       fecha_fin
     );
 
     console.log("Pagos obtenidos:", pagos);
+    console.log("Cantidad de pagos:", pagos?.length || 0);
 
     // Manejar el caso de que no existan pagos
     if (!pagos || pagos.length === 0) {

@@ -52,19 +52,41 @@ module.exports = {
     ORDER BY c.farmacia, c.nombre
   `,
   // Obtener cierres por zona
+  // Obtiene todos los clientes de una zona con su saldo inicial del cierre más reciente antes de la fecha especificada
+  // Si no hay cierre, devuelve 0 como saldo_inicial
   getCierresByZona: `
-    SELECT 
-      cc.*,
+    SELECT
+      c.id AS cliente_id,
       c.nombre,
       c.apellido,
       c.farmacia,
       c.zona_id,
-      z.nombre AS zona_nombre
-    FROM cierre_cuenta cc
-    INNER JOIN cliente c ON cc.cliente_id = c.id
-    LEFT JOIN zona z ON c.zona_id = z.id
-    WHERE cc.fecha_corte = ? AND c.zona_id = ? AND c.estado = 1
-    ORDER BY c.farmacia, c.nombre
+      z.nombre AS zona_nombre,
+      COALESCE(cc.saldo_cierre, 0) AS saldo_cierre,
+      cc.fecha_corte,
+      cc.id AS cierre_id,
+      cc.observaciones
+    FROM cliente c
+    INNER JOIN zona z ON z.id = c.zona_id AND z.estado = 1
+    LEFT JOIN (
+      SELECT 
+        cc1.id,
+        cc1.cliente_id,
+        cc1.saldo_cierre,
+        cc1.fecha_corte,
+        cc1.observaciones
+      FROM cierre_cuenta cc1
+      INNER JOIN (
+        SELECT cliente_id, MAX(fecha_corte) AS max_fecha
+        FROM cierre_cuenta
+        WHERE fecha_corte <= ?
+        GROUP BY cliente_id
+      ) cc_max ON cc1.cliente_id = cc_max.cliente_id 
+        AND cc1.fecha_corte = cc_max.max_fecha
+    ) cc ON cc.cliente_id = c.id
+    WHERE c.zona_id = ?
+      AND c.estado = 1
+    ORDER BY c.farmacia, c.nombre, c.apellido
   `,
 
   // Verificar si existe un cierre para un cliente y fecha de corte
@@ -74,6 +96,8 @@ module.exports = {
   `,
 
   // Obtener el saldo de todos los clientes activos para cierre masivo
+  // Base: ultimo cierre anterior a la fecha_corte
+  // Movimientos: ventas/pagos/NC desde ese cierre hasta fecha_corte
   getSaldosTodosClientes: `
     SELECT 
       c.id AS cliente_id,
@@ -81,31 +105,76 @@ module.exports = {
       c.apellido,
       c.farmacia,
       z.nombre AS zona_nombre,
-      COALESCE(ventas.total_ventas, 0) AS total_ventas,
-      COALESCE(pagos.total_pagos, 0) AS total_pagos,
-      COALESCE(notas_credito.total_nc, 0) AS total_nc,
-      (COALESCE(ventas.total_ventas, 0) - COALESCE(pagos.total_pagos, 0) - COALESCE(notas_credito.total_nc, 0)) AS saldo
+      COALESCE(last_cierre.saldo_cierre, 0) AS saldo_base,
+      COALESCE((
+        SELECT SUM(v.total_con_descuento)
+        FROM venta v
+        WHERE v.cliente_id = c.id
+          AND v.estado = 1
+          AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+          AND DATE(v.fecha_venta) < DATE(?)
+      ), 0) AS total_ventas,
+      COALESCE((
+        SELECT SUM(p.monto)
+        FROM pagos p
+        WHERE p.cliente_id = c.id
+          AND p.estado = 1
+          AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+          AND DATE(p.fecha_pago) < DATE(?)
+      ), 0) AS total_pagos,
+      COALESCE((
+        SELECT SUM(dnc.subTotal)
+        FROM notascredito nc
+        JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
+        WHERE nc.cliente_id = c.id
+          AND nc.estado = 1
+          AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+          AND DATE(nc.fecha) < DATE(?)
+      ), 0) AS total_nc,
+      (COALESCE(last_cierre.saldo_cierre, 0)
+        + COALESCE((
+          SELECT SUM(v.total_con_descuento)
+          FROM venta v
+          WHERE v.cliente_id = c.id
+            AND v.estado = 1
+            AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+            AND DATE(v.fecha_venta) < DATE(?)
+        ), 0)
+        - COALESCE((
+          SELECT SUM(p.monto)
+          FROM pagos p
+          WHERE p.cliente_id = c.id
+            AND p.estado = 1
+            AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+            AND DATE(p.fecha_pago) < DATE(?)
+        ), 0)
+        - COALESCE((
+          SELECT SUM(dnc.subTotal)
+          FROM notascredito nc
+          JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
+          WHERE nc.cliente_id = c.id
+            AND nc.estado = 1
+            AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+            AND DATE(nc.fecha) < DATE(?)
+        ), 0)
+      ) AS saldo
     FROM cliente c
     LEFT JOIN zona z ON c.zona_id = z.id
     LEFT JOIN (
-      SELECT cliente_id, SUM(total_con_descuento) AS total_ventas
-      FROM venta
-      WHERE estado = 1 AND fecha_venta < ?
-      GROUP BY cliente_id
-    ) AS ventas ON c.id = ventas.cliente_id
-    LEFT JOIN (
-      SELECT cliente_id, SUM(monto) AS total_pagos
-      FROM pagos
-      WHERE estado = 1 AND fecha_pago < ?
-      GROUP BY cliente_id
-    ) AS pagos ON c.id = pagos.cliente_id
-    LEFT JOIN (
-      SELECT nc.cliente_id, SUM(dnc.subTotal) AS total_nc
-      FROM notascredito nc
-      JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
-      WHERE nc.estado = 1 AND nc.fecha < ?
-      GROUP BY nc.cliente_id
-    ) AS notas_credito ON c.id = notas_credito.cliente_id
+      SELECT 
+        cc1.id,
+        cc1.cliente_id,
+        cc1.saldo_cierre,
+        cc1.fecha_corte
+      FROM cierre_cuenta cc1
+      INNER JOIN (
+        SELECT cliente_id, MAX(fecha_corte) AS max_fecha
+        FROM cierre_cuenta
+        WHERE fecha_corte < ?
+        GROUP BY cliente_id
+      ) cc_max ON cc1.cliente_id = cc_max.cliente_id 
+        AND cc1.fecha_corte = cc_max.max_fecha
+    ) last_cierre ON last_cierre.cliente_id = c.id
     WHERE c.estado = 1
     ORDER BY c.farmacia, c.nombre
   `,
@@ -123,32 +192,80 @@ module.exports = {
   `,
 
   // Recalcular el saldo de un cliente específico para una fecha de corte
+  // Base: ultimo cierre anterior a la fecha_corte
+  // Movimientos: ventas/pagos/NC desde ese cierre hasta fecha_corte
   recalcularSaldoCliente: `
     SELECT 
-      COALESCE(ventas.total_ventas, 0) AS total_ventas,
-      COALESCE(pagos.total_pagos, 0) AS total_pagos,
-      COALESCE(notas_credito.total_nc, 0) AS total_nc,
-      (COALESCE(ventas.total_ventas, 0) - COALESCE(pagos.total_pagos, 0) - COALESCE(notas_credito.total_nc, 0)) AS saldo
+      c.id AS cliente_id,
+      COALESCE(last_cierre.saldo_cierre, 0) AS saldo_base,
+      COALESCE((
+        SELECT SUM(v.total_con_descuento)
+        FROM venta v
+        WHERE v.cliente_id = c.id
+          AND v.estado = 1
+          AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+          AND DATE(v.fecha_venta) < DATE(?)
+      ), 0) AS total_ventas,
+      COALESCE((
+        SELECT SUM(p.monto)
+        FROM pagos p
+        WHERE p.cliente_id = c.id
+          AND p.estado = 1
+          AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+          AND DATE(p.fecha_pago) < DATE(?)
+      ), 0) AS total_pagos,
+      COALESCE((
+        SELECT SUM(dnc.subTotal)
+        FROM notascredito nc
+        JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
+        WHERE nc.cliente_id = c.id
+          AND nc.estado = 1
+          AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+          AND DATE(nc.fecha) < DATE(?)
+      ), 0) AS total_nc,
+      (COALESCE(last_cierre.saldo_cierre, 0)
+        + COALESCE((
+          SELECT SUM(v.total_con_descuento)
+          FROM venta v
+          WHERE v.cliente_id = c.id
+            AND v.estado = 1
+            AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+            AND DATE(v.fecha_venta) < DATE(?)
+        ), 0)
+        - COALESCE((
+          SELECT SUM(p.monto)
+          FROM pagos p
+          WHERE p.cliente_id = c.id
+            AND p.estado = 1
+            AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+            AND DATE(p.fecha_pago) < DATE(?)
+        ), 0)
+        - COALESCE((
+          SELECT SUM(dnc.subTotal)
+          FROM notascredito nc
+          JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
+          WHERE nc.cliente_id = c.id
+            AND nc.estado = 1
+            AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
+            AND DATE(nc.fecha) < DATE(?)
+        ), 0)
+      ) AS saldo
     FROM cliente c
     LEFT JOIN (
-      SELECT cliente_id, SUM(total_con_descuento) AS total_ventas
-      FROM venta
-      WHERE estado = 1 AND fecha_venta < ?
-      GROUP BY cliente_id
-    ) AS ventas ON c.id = ventas.cliente_id
-    LEFT JOIN (
-      SELECT cliente_id, SUM(monto) AS total_pagos
-      FROM pagos
-      WHERE estado = 1 AND fecha_pago < ?
-      GROUP BY cliente_id
-    ) AS pagos ON c.id = pagos.cliente_id
-    LEFT JOIN (
-      SELECT nc.cliente_id, SUM(dnc.subTotal) AS total_nc
-      FROM notascredito nc
-      JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
-      WHERE nc.estado = 1 AND nc.fecha < ?
-      GROUP BY nc.cliente_id
-    ) AS notas_credito ON c.id = notas_credito.cliente_id
+      SELECT 
+        cc1.id,
+        cc1.cliente_id,
+        cc1.saldo_cierre,
+        cc1.fecha_corte
+      FROM cierre_cuenta cc1
+      INNER JOIN (
+        SELECT cliente_id, MAX(fecha_corte) AS max_fecha
+        FROM cierre_cuenta
+        WHERE fecha_corte < ?
+        GROUP BY cliente_id
+      ) cc_max ON cc1.cliente_id = cc_max.cliente_id 
+        AND cc1.fecha_corte = cc_max.max_fecha
+    ) last_cierre ON last_cierre.cliente_id = c.id
     WHERE c.id = ?
   `
 };
