@@ -85,10 +85,12 @@ const getArticulosSinVentas = async () => {
 const getEvolucionVentas = async () => {
   const query = `
     SELECT 
-      DATE(dv.fecha) AS fecha,
+      DATE(v.fecha_venta) AS fecha,
       SUM(dv.sub_total) AS total_dia
     FROM detalle_venta dv
-    GROUP BY fecha
+    INNER JOIN venta v ON dv.venta_id = v.id
+    WHERE v.estado = 1
+    GROUP BY DATE(v.fecha_venta)
     ORDER BY fecha ASC
   `;
   const [rows] = await db.query(query);

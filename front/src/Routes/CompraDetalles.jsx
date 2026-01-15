@@ -21,7 +21,6 @@ const CompraDetalles = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [compraInfo, setCompraInfo] = useState({
-    proveedor_nombre: "",
     nro_compra: "",
     fecha_compra: "",
     total: "",
@@ -49,7 +48,6 @@ const CompraDetalles = () => {
         const {
           detalles,
           compra_id,
-          proveedor_nombre,
           nro_compra,
           fecha_compra,
           articulo_id,
@@ -60,7 +58,6 @@ const CompraDetalles = () => {
           setData(detalles);
           setCompraInfo({
             compra_id,
-            proveedor_nombre,
             nro_compra,
             fecha_compra,
             articulo_id,

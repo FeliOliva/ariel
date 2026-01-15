@@ -14,7 +14,7 @@ import {
   Typography,
 } from "antd";
 import { Link } from "react-router-dom";
-import ProveedoresInput from "../components/ProveedoresInput";
+import ArticulosInput from "../components/ArticulosInput";
 import CustomPagination from "../components/CustomPagination";
 import DynamicListCompras from "../components/DynamicListCompras";
 import {
@@ -40,9 +40,8 @@ function Compras() {
     nro_compra: "",
     cantidad: 0, // Cantidad por defecto
   });
-  const [selectedProveedor, setSelectedProveedor] = useState(null);
-  const [articulosFiltrados, setArticulosFiltrados] = useState([]);
   const [selectedArticulo, setSelectedArticulo] = useState(null);
+  const [articuloValue, setArticuloValue] = useState("");
   const [porcentajeAumento, setPorcentajeAumento] = useState(0); // Porcentaje único (compatibilidad)
   const [porcentajeAumentoCosto, setPorcentajeAumentoCosto] = useState(0); // Porcentaje global para costo
   const [porcentajeAumentoPrecio, setPorcentajeAumentoPrecio] = useState(0); // Porcentaje global para precio
@@ -86,26 +85,6 @@ function Compras() {
           cantidad: compraData.cantidad_actual || 0,
         });
         
-        // Si hay proveedor guardado, cargarlo y sus artículos
-        if (compraData.proveedor_id) {
-          try {
-            // Buscar el proveedor por ID
-            const proveedoresResponse = await axios.get("http://localhost:3001/proveedor");
-            const proveedorEncontrado = proveedoresResponse.data.find(
-              (p) => p.id === compraData.proveedor_id
-            );
-            
-            if (proveedorEncontrado) {
-              setSelectedProveedor(proveedorEncontrado);
-              const response = await axios.get(
-                `http://localhost:3001/getArticulosByProveedorID/${proveedorEncontrado.id}`
-              );
-              setArticulosFiltrados(response.data);
-            }
-          } catch (error) {
-            console.error("Error al cargar proveedor guardado:", error);
-          }
-        }
       } catch (error) {
         console.error("Error al cargar compra guardada:", error);
         // Si hay error, iniciar compra nueva
@@ -130,54 +109,24 @@ function Compras() {
 
   const handleCloseDrawer = () => {
     // Guardar compra antes de cerrar
-    if (compra.articulos.length > 0 || selectedProveedor) {
+    if (compra.articulos.length > 0) {
       localStorage.setItem("compraEnProceso", JSON.stringify({
         articulos: compra.articulos,
         nro_compra: compra.nro_compra,
-        proveedor_id: selectedProveedor?.id,
-        proveedor_nombre: selectedProveedor?.nombre,
+        cantidad_actual: compra.cantidad,
       }));
     }
     setOpen(false);
   };
 
-  const handleProveedorChange = async (proveedor) => {
-    setSelectedProveedor(proveedor);
-
-    if (!proveedor) {
-      Modal.warning({
-        title: "Advertencia",
-        content: "No cargaste un proveedor.",
-        icon: "error",
-      });
-      return;
-    }
-    try {
-      const response = await axios.get(
-        `http://localhost:3001/getArticulosByProveedorID/${proveedor.id}`
-      );
-      setArticulosFiltrados(response.data);
-      // Guardar proveedor en localStorage
-      const compraGuardada = localStorage.getItem("compraEnProceso");
-      if (compraGuardada) {
-        const compraData = JSON.parse(compraGuardada);
-        localStorage.setItem("compraEnProceso", JSON.stringify({
-          ...compraData,
-          proveedor_id: proveedor.id,
-          proveedor_nombre: proveedor.nombre,
-        }));
-      }
-    } catch (error) {
-      console.error("Error fetching filtered articles:", error);
-    }
+  const handleArticuloChange = (articulo) => {
+    setSelectedArticulo(articulo);
+    setArticuloValue(articulo?.id || "");
   };
 
   const handleAddArticulo = () => {
     if (selectedArticulo && compra.cantidad > 0) {
-      const articuloSeleccionado = articulosFiltrados.find(
-        (articulo) => articulo.id === selectedArticulo
-      );
-      if (!articuloSeleccionado) {
+      if (!selectedArticulo) {
         Modal.warning({
           title: "Advertencia",
           content: "No cargaste un articulo.",
@@ -186,19 +135,19 @@ function Compras() {
         return;
       }
 
-      const uniqueId = `${articuloSeleccionado.id}-${Date.now()}`;
+      const uniqueId = `${selectedArticulo.id}-${Date.now()}`;
       const nuevaCompra = {
         ...compra,
         articulos: [
           ...compra.articulos,
           {
-            id: articuloSeleccionado.id,
-            linea_id: articuloSeleccionado.linea_id,
-            nombre: articuloSeleccionado.nombre,
+            id: selectedArticulo.id,
+            linea_id: selectedArticulo.linea_id,
+            nombre: selectedArticulo.nombre,
             cantidad: compra.cantidad,
-            costo: parseFloat(articuloSeleccionado.costo) || 0,
+            costo: parseFloat(selectedArticulo.costo) || 0,
             precio_monotributista: parseFloat(
-              articuloSeleccionado.precio_monotributista
+              selectedArticulo.precio_monotributista
             ) || 0,
             uniqueId,
           },
@@ -210,10 +159,10 @@ function Compras() {
       localStorage.setItem("compraEnProceso", JSON.stringify({
         articulos: nuevaCompra.articulos,
         nro_compra: nuevaCompra.nro_compra,
-        proveedor_id: selectedProveedor?.id,
-        proveedor_nombre: selectedProveedor?.nombre,
+        cantidad_actual: nuevaCompra.cantidad,
       }));
       setSelectedArticulo(null);
+      setArticuloValue("");
     } else {
       Modal.warning({
         title: "Advertencia",
@@ -235,8 +184,7 @@ function Compras() {
     localStorage.setItem("compraEnProceso", JSON.stringify({
       articulos: nuevaCompra.articulos,
       nro_compra: nuevaCompra.nro_compra,
-      proveedor_id: selectedProveedor?.id,
-      proveedor_nombre: selectedProveedor?.nombre,
+      cantidad_actual: nuevaCompra.cantidad,
     }));
   };
 
@@ -256,8 +204,7 @@ function Compras() {
     localStorage.setItem("compraEnProceso", JSON.stringify({
       articulos: updatedArticulos,
       nro_compra: nuevaCompra.nro_compra,
-      proveedor_id: selectedProveedor?.id,
-      proveedor_nombre: selectedProveedor?.nombre,
+      cantidad_actual: nuevaCompra.cantidad,
     }));
   };
 
@@ -276,8 +223,7 @@ function Compras() {
     localStorage.setItem("compraEnProceso", JSON.stringify({
       articulos: updatedArticulos,
       nro_compra: nuevaCompra.nro_compra,
-      proveedor_id: selectedProveedor?.id,
-      proveedor_nombre: selectedProveedor?.nombre,
+      cantidad_actual: nuevaCompra.cantidad,
     }));
   };
 
@@ -314,10 +260,10 @@ function Compras() {
   };
 
   const handleRegistrarCompra = async () => {
-    if (!selectedProveedor || compra.articulos.length === 0) {
+    if (compra.articulos.length === 0) {
       Modal.warning({
         title: "Advertencia",
-        content: "No cargaste un proveedor o no agregaste artículos.",
+        content: "No agregaste artículos.",
         icon: <WarningOutlined />,
       });
       return;
@@ -415,7 +361,6 @@ function Compras() {
                                     (porcentajeAumento > 0 ? porcentajeAumento : null);
     
     const payload = {
-      proveedor_id: selectedProveedor.id,
       nro_compra: compra.nro_compra,
       total: totalFinal,
       // Guardar porcentajes globales (separados o único para compatibilidad)
@@ -455,8 +400,8 @@ function Compras() {
           localStorage.removeItem("compraEnProceso");
           setOpen(false);
           setCompra({ articulos: [], nro_compra: "", cantidad: 0 });
-          setSelectedProveedor(null);
-          setArticulosFiltrados([]);
+          setSelectedArticulo(null);
+          setArticuloValue("");
           fetchData();
         } catch (error) {
           console.error("Error registrando la compra:", error);
@@ -524,18 +469,6 @@ function Compras() {
         </Tooltip>
       ),
 
-      sortable: true,
-    },
-    {
-      name: "Proveedor",
-      selector: (row) => (
-        <Tooltip
-          className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.proveedor_nombre}
-        >
-          <span>{row.proveedor_nombre}</span>
-        </Tooltip>
-      ),
       sortable: true,
     },
     {
@@ -667,16 +600,14 @@ function Compras() {
 
   // Guardar compra en localStorage cuando cambien los artículos
   useEffect(() => {
-    if (compra.articulos.length > 0 || selectedProveedor) {
+    if (compra.articulos.length > 0) {
       localStorage.setItem("compraEnProceso", JSON.stringify({
         articulos: compra.articulos,
         nro_compra: compra.nro_compra,
-        proveedor_id: selectedProveedor?.id,
-        proveedor_nombre: selectedProveedor?.nombre,
         cantidad_actual: compra.cantidad,
       }));
     }
-  }, [compra.articulos, compra.nro_compra, compra.cantidad, selectedProveedor]);
+  }, [compra.articulos, compra.nro_compra, compra.cantidad]);
   return (
     <MenuLayout>
       <h1>Compras</h1>
@@ -706,46 +637,14 @@ function Compras() {
           size="small"
         />
         <div style={{ display: "flex", margin: 10 }}>
-          <Tooltip>Seleccione el proveedor</Tooltip>
+          <Tooltip>Seleccione los artículos</Tooltip>
         </div>
-        <ProveedoresInput 
-          onChangeProveedor={handleProveedorChange} 
-          value={selectedProveedor?.id}
-        />
-        {selectedProveedor && (
-          <>
-            <div style={{ display: "flex", margin: 10 }}>
-              <Tooltip>Seleccione los artículos</Tooltip>
-            </div>
-            <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: 10 }}>
-              <Select
-                placeholder="Seleccione un artículo"
-                options={articulosFiltrados.map((articulo) => ({
-                  label: `${articulo.codigo_producto} - ${articulo.nombre} - ${articulo.mediciones} - ${articulo.linea_nombre} - ${articulo.sublinea_nombre}`,
-                  value: articulo.id,
-                }))}
-                value={selectedArticulo}
-                onChange={(value) => {
-                  setSelectedArticulo(value);
-                  // Si hay cantidad y se selecciona un artículo, agregar automáticamente
-                  if (value && compra.cantidad > 0) {
-                    setTimeout(() => handleAddArticulo(), 100);
-                  }
-                }}
-                onSelect={(value) => {
-                  // Cuando se selecciona un artículo, si hay cantidad, agregar automáticamente
-                  if (value && compra.cantidad > 0) {
-                    setTimeout(() => handleAddArticulo(), 100);
-                  }
-                }}
-                style={{ width: "70%" }}
-                showSearch
-                filterOption={(input, option) => {
-                  // Si no hay input, mostrar todos los productos
-                  if (!input) return true;
-                  return option.label.toLowerCase().includes(input.toLowerCase());
-                }}
-              />
+        <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: 10 }}>
+          <ArticulosInput
+            value={articuloValue}
+            onChangeArticulo={handleArticuloChange}
+            onInputChange={setArticuloValue}
+          />
               <InputNumber
                 min={1}
                 value={compra.cantidad}
@@ -883,18 +782,16 @@ function Compras() {
                     ${formatNumberWithDecimals(calcularTotal())}
                   </Text>
                 </div>
-              </>
+              </> 
             )}
             <Button
               type="primary"
               onClick={handleRegistrarCompra}
               block
-              disabled={!selectedProveedor || compra.articulos.length === 0}
+              disabled={compra.articulos.length === 0}
             >
               Registrar Compra
             </Button>
-          </>
-        )}
       </Drawer>
 
       <DataTable

@@ -224,6 +224,45 @@ const ResumenCuenta = () => {
     const fin = dayjs().format("YYYY-MM-DD");
     setRangoFechas([inicio, fin]);
   }, []);
+
+  // Polling para actualizar el cierre de cuenta cuando se modifican ventas
+  useEffect(() => {
+    // Solo hacer polling si hay un cliente seleccionado y la fecha es posterior al corte
+    if (!selectedCliente || !rangoFechas || rangoFechas.length !== 2) {
+      return;
+    }
+
+    const usarCierre = esFechaPosteriorAlCorte(rangoFechas[0]);
+    if (!usarCierre) {
+      return;
+    }
+
+    const intervalId = setInterval(async () => {
+      try {
+        const nuevoCierre = await fetchCierreCuenta(selectedCliente.id);
+        if (nuevoCierre) {
+          // Solo actualizar si el saldo cambió para evitar re-renders innecesarios
+          setCierreCuenta((prevCierre) => {
+            const saldoAnterior = prevCierre ? parseFloat(prevCierre.saldo_cierre) || 0 : 0;
+            const saldoNuevo = parseFloat(nuevoCierre.saldo_cierre) || 0;
+            
+            if (saldoAnterior !== saldoNuevo) {
+              // Si el cierre cambió, recargar todos los datos
+              setTimeout(() => {
+                fetchData(selectedCliente.id, rangoFechas[0], rangoFechas[1]);
+              }, 100);
+              return nuevoCierre;
+            }
+            return prevCierre;
+          });
+        }
+      } catch (error) {
+        console.error("Error al actualizar cierre de cuenta:", error);
+      }
+    }, 5000); // Actualizar cada 5 segundos
+
+    return () => clearInterval(intervalId);
+  }, [selectedCliente, rangoFechas]);
   const handleSearch = async () => {
     if (!selectedCliente) {
       return message.warning("Seleccione un cliente.");

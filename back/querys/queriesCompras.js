@@ -1,8 +1,6 @@
 module.exports = {
   getAllCompras: `SELECT 
   compra.id,
-  compra.proveedor_id,
-  proveedor.nombre AS proveedor_nombre,
   compra.nro_compra,
   compra.total,
   compra.fecha_compra, 
@@ -16,14 +14,12 @@ module.exports = {
   COALESCE(AVG(CASE WHEN dc.porcentaje_aumento IS NOT NULL THEN dc.porcentaje_aumento END), NULL) AS porcentaje_aumento_promedio
 FROM 
   compra
-INNER JOIN 
-  proveedor ON compra.proveedor_id = proveedor.id
 LEFT JOIN
   detalle_compra dc ON compra.id = dc.compra_id
-GROUP BY compra.id, compra.proveedor_id, proveedor.nombre, compra.nro_compra, compra.total, compra.fecha_compra, compra.estado, compra.porcentaje_aumento_global, compra.porcentaje_aumento_costo_global, compra.porcentaje_aumento_precio_global
+GROUP BY compra.id, compra.nro_compra, compra.total, compra.fecha_compra, compra.estado, compra.porcentaje_aumento_global, compra.porcentaje_aumento_costo_global, compra.porcentaje_aumento_precio_global
 ORDER BY compra.id DESC;
 `,
-  addCompra: `INSERT INTO Compra (proveedor_id, nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global) VALUES (?, ?, ?, ?, ?, ?);`,
+  addCompra: `INSERT INTO Compra (nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global) VALUES (?, ?, ?, ?, ?);`,
   getCompraByID: `
   SELECT 
     dc.id AS detalle_compra_id,
@@ -41,14 +37,12 @@ ORDER BY compra.id DESC;
     (dc.costo * dc.cantidad) AS subtotal, 
     c.nro_compra, 
     c.fecha_compra, 
-    c.total, 
-    p.nombre AS proveedor
+    c.total
 FROM detalle_compra dc
 INNER JOIN articulo a ON dc.articulo_id = a.id
 LEFT JOIN linea l ON a.linea_id = l.id -- Unir con la tabla de líneas
 LEFT JOIN sublinea sl ON a.sublinea_id = sl.id -- Cambié 'a.sublinea' a 'a.sublinea_id' (verifica que el nombre sea correcto)
 INNER JOIN compra c ON dc.compra_id = c.id
-INNER JOIN proveedor p ON c.proveedor_id = p.id
 WHERE dc.compra_id = ?;
 `,
   getComprasByProveedor: `SELECT c.*, d.articulo_id, a.nombre AS articulo_nombre, d.cantidad, d.costo

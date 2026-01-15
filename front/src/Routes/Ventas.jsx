@@ -93,10 +93,27 @@ function Ventas() {
     setTotalVenta(Math.round(totalCalculado));
   }, [venta.articulos, venta.descuento, modoDescuento]);
 
-  const fetchData = async () => {
+  const fetchData = async (skipUpdate = false) => {
     try {
       const response = await axios.get("http://localhost:3001/ventas");
-      setData(response.data);
+      
+      // Solo actualizar si hay cambios reales (evitar re-renders innecesarios)
+      if (!skipUpdate) {
+        setData((prevData) => {
+          // Comparar si los datos realmente cambiaron
+          const prevIds = prevData.map(v => v.id).sort().join(',');
+          const newIds = response.data.map(v => v.id).sort().join(',');
+          
+          // Solo actualizar si hay diferencias
+          if (prevIds !== newIds || prevData.length !== response.data.length) {
+            return response.data;
+          }
+          return prevData; // No hay cambios, mantener datos anteriores
+        });
+      } else {
+        // Primera carga o actualización forzada
+        setData(response.data);
+      }
 
       // Determina el último número de venta basado en los datos recibidos
       const lastVenta = response.data.reduce((max, venta) => {
@@ -104,23 +121,42 @@ function Ventas() {
         return nro > max ? nro : max;
       }, 0);
 
-      // Establece el número de venta para la nueva venta
+      // Establece el número de venta para la nueva venta (solo si cambió)
       if (response.data.length > 0) {
         const nextSaleNumber = lastVenta + 1;
-        setVenta((prev) => ({
-          ...prev,
-          nroVenta: `V${String(nextSaleNumber).padStart(5, "0")}`,
-        }));
+        setVenta((prev) => {
+          const newNroVenta = `V${String(nextSaleNumber).padStart(5, "0")}`;
+          // Solo actualizar si el número cambió
+          if (prev.nroVenta !== newNroVenta) {
+            return { ...prev, nroVenta: newNroVenta };
+          }
+          return prev;
+        });
       } else {
-        setVenta((prev) => ({
-          ...prev,
-          nroVenta: "V00001", // Establece el valor inicial a V004 si no hay ventas previas
-        }));
+        setVenta((prev) => {
+          if (prev.nroVenta !== "V00001") {
+            return { ...prev, nroVenta: "V00001" };
+          }
+          return prev;
+        });
       }
-      const responseGuardadas = await axios.get(
-        "http://localhost:3001/lineas-guardadas"
-      );
-      setSelectedIds(responseGuardadas.data);
+      
+      // Solo actualizar lineas-guardadas si no estamos en modo polling
+      if (!skipUpdate) {
+        const responseGuardadas = await axios.get(
+          "http://localhost:3001/lineas-guardadas"
+        );
+        setSelectedIds((prevIds) => {
+          const prevStr = JSON.stringify(prevIds.sort());
+          const newStr = JSON.stringify(responseGuardadas.data.sort());
+          return prevStr !== newStr ? responseGuardadas.data : prevIds;
+        });
+      } else {
+        const responseGuardadas = await axios.get(
+          "http://localhost:3001/lineas-guardadas"
+        );
+        setSelectedIds(responseGuardadas.data);
+      }
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -139,7 +175,17 @@ function Ventas() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    // Primera carga (actualización completa)
+    fetchData(true);
+    
+    // Polling automático cada 5 segundos para detectar cambios desde otras PCs
+    // Usa skipUpdate=false para comparar cambios y evitar re-renders innecesarios
+    const intervalId = setInterval(() => {
+      fetchData(false);
+    }, 5000); // Verificar cambios cada 5 segundos
+    
+    // Limpiar el interval cuando el componente se desmonte
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {

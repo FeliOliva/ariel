@@ -1,8 +1,8 @@
 const ventasModel = require("../models/ventasModel");
 const NodeCache = require("node-cache");
 
-// Caché con TTL de 5 minutos (300 segundos)
-const ventasCache = new NodeCache({ stdTTL: 300 });
+// Caché con TTL de 10 segundos (para actualización más rápida entre múltiples PCs)
+const ventasCache = new NodeCache({ stdTTL: 10 });
 
 // Función para invalidar caché
 const invalidateVentasCache = () => {

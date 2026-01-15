@@ -25,6 +25,18 @@ import {
 } from "@ant-design/icons";
 import ArticulosInput from "../components/ArticulosInput";
 import DynamicList from "../components/DynamicList";
+
+// Función helper para limpiar números que vienen de la BD con formato español (puntos como separadores de miles)
+const cleanNumber = (value) => {
+  if (!value) return 0;
+  // Si es string, remover puntos (separadores de miles) y comas (separadores decimales)
+  // Luego convertir a número
+  if (typeof value === "string") {
+    return parseFloat(value.replace(/\./g, "").replace(",", ".")) || 0;
+  }
+  return parseFloat(value) || 0;
+};
+
 const VentaDetalles = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
@@ -223,13 +235,23 @@ const VentaDetalles = () => {
     pdf.line(10, 60, 200, 60);
 
     // Datos de la tabla
-    const tableData = data.map((row) => ({
-      cantidad: row.cantidad,
-      nombre: row.nombre,
-      cod_articulo: row.cod_articulo,
-      precio_unitario: `$${row.precio_monotributista}`,
-      importe: `$${row.sub_total}`,
-    }));
+    const tableData = data.map((row) => {
+      const precio = cleanNumber(row.precio_monotributista);
+      const importe = cleanNumber(row.sub_total);
+      return {
+        cantidad: row.cantidad,
+        nombre: row.nombre,
+        cod_articulo: row.cod_articulo,
+        precio_unitario: `$${Math.ceil(precio).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`,
+        importe: `$${importe.toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`,
+      };
+    });
 
     // Renderizar la tabla con margen inferior extra
     pdf.autoTable({
@@ -324,12 +346,18 @@ const VentaDetalles = () => {
     pdf.line(10, 60, 200, 60);
 
     // Datos de la tabla
-    const tableData = data.map((row) => ({
-      cantidad: row.cantidad,
-      nombre: row.nombre,
-      cod_articulo: row.cod_articulo,
-      precio_unitario: `$${row.precio_monotributista}`,
-    }));
+    const tableData = data.map((row) => {
+      const precio = cleanNumber(row.precio_monotributista);
+      return {
+        cantidad: row.cantidad,
+        nombre: row.nombre,
+        cod_articulo: row.cod_articulo,
+        precio_unitario: `$${Math.ceil(precio).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`,
+      };
+    });
 
     // Renderizar la tabla con margen inferior extra
     pdf.autoTable({
@@ -478,11 +506,18 @@ const VentaDetalles = () => {
       name: "Precio Unitario",
       selector: (row) => row.precio_monotributista,
       sortable: true,
-      cell: (row) => (
-        <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
-          ${Math.ceil(parseFloat(row.precio_monotributista) || 0)}
-        </div>
-      ),
+      cell: (row) => {
+        const precio = cleanNumber(row.precio_monotributista);
+        const precioFormateado = Math.ceil(precio).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        return (
+          <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
+            ${precioFormateado}
+          </div>
+        );
+      },
     },
     {
       name: "Aumento",
@@ -498,11 +533,18 @@ const VentaDetalles = () => {
       name: "Importe",
       selector: (row) => row.sub_total,
       sortable: true,
-      cell: (row) => (
-        <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
-          ${row.sub_total}
-        </div>
-      ),
+      cell: (row) => {
+        const importe = cleanNumber(row.sub_total);
+        const importeFormateado = importe.toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        return (
+          <div style={{ fontSize: "12px", padding: "5px", textAlign: "right" }}>
+            ${importeFormateado}
+          </div>
+        );
+      },
     },
     {
       name: "Acciones",

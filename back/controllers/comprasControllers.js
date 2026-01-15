@@ -11,7 +11,6 @@ const getAllCompras = async (req, res) => {
 const addCompra = async (req, res) => {
   try {
     const { 
-      proveedor_id, 
       nro_compra, 
       detalles, 
       porcentaje_aumento_global,
@@ -21,7 +20,6 @@ const addCompra = async (req, res) => {
     let total = 0;
     let sub_total = 0;
     const compra_id = await comprasModel.addCompra(
-      proveedor_id,
       nro_compra,
       total,
       porcentaje_aumento_global || null,
@@ -91,7 +89,6 @@ const getCompraByID = async (req, res) => {
       return res.status(404).json({ error: "Compra no encontrada" });
     } else {
       let data = {
-        proveedor: detalleCompra[0].proveedor,
         nro_compra: detalleCompra[0].nro_compra,
         fecha_compra: detalleCompra[0].fecha_compra,
         compra_id: detalleCompra[0].compra_id,

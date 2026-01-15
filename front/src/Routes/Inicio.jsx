@@ -126,6 +126,33 @@ const Inicio = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangoFechas]);
 
+  // Polling para actualizar el saldo inicial cuando se modifican ventas que afectan el cierre
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Solo actualizar el saldo inicial si hay un rango de fechas seleccionado
+      if (rangoFechas && rangoFechas.length === 2) {
+        axios.get(`http://localhost:3001/cierre-masivo/saldo-total`, {
+          params: { fecha_corte: "2026-01-01" }
+        })
+        .then((response) => {
+          const nuevoSaldo = parseToNumber(response.data.saldo_total || 0);
+          // Solo actualizar si el valor cambió para evitar re-renders innecesarios
+          setSaldoInicial((prevSaldo) => {
+            if (prevSaldo !== nuevoSaldo) {
+              return nuevoSaldo;
+            }
+            return prevSaldo;
+          });
+        })
+        .catch((error) => {
+          console.error("Error al actualizar saldo inicial:", error);
+        });
+      }
+    }, 5000); // Actualizar cada 5 segundos
+
+    return () => clearInterval(intervalId);
+  }, [rangoFechas]);
+
   const fetchGraficoVentas = async () => {
     if (!rangoFechasGrafico || rangoFechasGrafico.length !== 2) {
       message.warning("Por favor seleccione un rango de fechas para el gráfico");
@@ -174,11 +201,26 @@ const Inicio = () => {
   }, [rangoFechasGrafico, filtroTipo, filtroSeleccionado]);
 
   const comprasYGastos = totalCompras + totalGastos;
-  const ingresoLimpio = totalVentas - comprasYGastos;
-  // Si la fecha de inicio es >= 2026-01-01, sumar el saldo inicial al total con entrega
+  
+  // Si la fecha de inicio es >= 2026-01-01, usar el saldo inicial del cierre
   const fechaInicio = rangoFechas?.[0];
   const usarSaldoInicial = fechaInicio && dayjs(fechaInicio).isAfter(dayjs("2025-12-31"));
+  
+  // Ingreso limpio (ganancia neta): Ventas - (Compras + Gastos)
+  // Esto representa la ganancia teórica, pero no considera el flujo de caja real
+  const ingresoLimpio = totalVentas - comprasYGastos;
+  
+  // Flujo de caja real: Dinero que realmente entró menos gastos
+  // Solo cuenta los pagos recibidos, no las ventas pendientes de cobro
+  const flujoCajaReal = totalPagos - comprasYGastos;
+  
+  // Saldo pendiente de cobro: Ventas - Pagos - Notas de Crédito + Saldo Inicial (si aplica)
+  // Representa el total que los clientes deben (cuentas por cobrar)
   const totalConEntrega = totalVentas - totalPagos - totalNotasCredito + (usarSaldoInicial ? saldoInicial : 0);
+  
+  // Ingreso efectivo neto: Flujo de caja real menos el saldo inicial pendiente
+  // Muestra cuánto dinero realmente entró después de considerar lo que ya estaba pendiente
+  const ingresoEfectivoNeto = flujoCajaReal - (usarSaldoInicial ? saldoInicial : 0);
 
   const cardStyle = {
     borderRadius: "12px",
@@ -328,8 +370,8 @@ const Inicio = () => {
                 <Card 
                   title={
                     <span>
-                      Ingreso limpio
-                      <Tooltip title="Ventas - (Compras + Gastos). Representa la ganancia neta después de descontar los costos operativos.">
+                      Ingreso limpio (Ganancia teórica)
+                      <Tooltip title="Ventas - (Compras + Gastos). Representa la ganancia neta teórica después de descontar los costos operativos. No considera el flujo de caja real (dinero que realmente entró).">
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
@@ -337,6 +379,22 @@ const Inicio = () => {
                   style={cardStyle}
                 >
                   {formatNumber(ingresoLimpio)}
+                </Card>
+              </Col>
+
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card 
+                  title={
+                    <span>
+                      Flujo de caja real
+                      <Tooltip title="Pagos - (Compras + Gastos). Representa el dinero que realmente entró al negocio menos los gastos operativos. Solo cuenta los pagos recibidos, no las ventas pendientes de cobro.">
+                        <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
+                      </Tooltip>
+                    </span>
+                  } 
+                  style={cardStyle}
+                >
+                  {formatNumber(flujoCajaReal)}
                 </Card>
               </Col>
 
@@ -360,9 +418,9 @@ const Inicio = () => {
                 <Card 
                   title={
                     <span>
-                      Total con entrega
+                      Saldo pendiente (Cuentas por cobrar)
                       <Tooltip title={usarSaldoInicial 
-                        ? "Ventas - Pagos - Notas de Crédito + Saldo Inicial. Representa el saldo total que deben los clientes incluyendo el saldo inicial del cierre de 2026." 
+                        ? "Ventas - Pagos - Notas de Crédito + Saldo Inicial. Representa el total que los clientes deben (cuentas por cobrar), incluyendo el saldo inicial del cierre de 2026. Este es dinero pendiente de cobro, no efectivo disponible." 
                         : "Ventas - Pagos - Notas de Crédito. Representa el saldo total que deben los clientes (cuentas corrientes pendientes). Este valor debería coincidir con la suma de los saldos del cierre de cuentas si el rango de fechas es hasta el 31/12/2025."}>
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
@@ -373,6 +431,24 @@ const Inicio = () => {
                   {formatNumber(totalConEntrega)}
                 </Card>
               </Col>
+
+              {usarSaldoInicial && (
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Card 
+                    title={
+                      <span>
+                        Ingreso efectivo neto
+                        <Tooltip title="Flujo de caja real - Saldo inicial. Muestra cuánto dinero realmente entró al negocio después de considerar el saldo inicial que ya estaba pendiente de cobro al inicio del período.">
+                          <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
+                        </Tooltip>
+                      </span>
+                    } 
+                    style={cardStyle}
+                  >
+                    {formatNumber(ingresoEfectivoNeto)}
+                  </Card>
+                </Col>
+              )}
 
             </Row>
           )}

@@ -354,11 +354,15 @@ const editarVenta = async (
       }
     }
 
-    // 3. Obtener venta
-    const venta = await getVentaByID(ventaId);
-    if (!venta || venta.length === 0) {
+    // 3. Obtener información de la venta directamente de la tabla venta
+    const [ventaRows] = await db.query(
+      "SELECT id, cliente_id, fecha_venta, descuento, total, total_con_descuento FROM venta WHERE id = ?",
+      [ventaId]
+    );
+    if (!ventaRows || ventaRows.length === 0) {
       throw new Error("Venta no encontrada");
     }
+    const venta = ventaRows[0];
 
     // 4. Precio base y precio final
     const precioBaseArticulo = Number(articulo.precio_monotributista) || 0;
@@ -414,7 +418,7 @@ const editarVenta = async (
     const total = detalles.reduce((acc, d) => acc + Number(d.sub_total), 0);
 
     const totalConDescuento =
-      total - total * (Number(venta[0].descuento) / 100);
+      total - total * (Number(venta.descuento) / 100);
 
     const updateVentaQuery = `
       UPDATE venta 
@@ -425,16 +429,22 @@ const editarVenta = async (
 
     // Recalcular cierre de cuenta si la venta está dentro del período del cierre
     const FECHA_CORTE_DEFAULT = "2026-01-01";
-    const fechaVentaDate = new Date(venta[0].fecha_venta);
+    const fechaVentaDate = new Date(venta.fecha_venta);
     const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
     
-    if (fechaVentaDate < fechaCorteDate && venta[0].cliente_id) {
+    console.log(`[editarVenta] Verificando recálculo de cierre - Venta ID: ${ventaId}, Cliente ID: ${venta.cliente_id}, Fecha venta: ${venta.fecha_venta}, Fecha corte: ${FECHA_CORTE_DEFAULT}`);
+    console.log(`[editarVenta] Comparación fechas - fechaVentaDate: ${fechaVentaDate.toISOString()}, fechaCorteDate: ${fechaCorteDate.toISOString()}, es anterior: ${fechaVentaDate < fechaCorteDate}`);
+    
+    if (fechaVentaDate < fechaCorteDate && venta.cliente_id) {
       try {
-        await cierreCuentaModel.recalcularCierreCliente(venta[0].cliente_id, FECHA_CORTE_DEFAULT);
-        console.log(`Cierre de cuenta recalculado para cliente ${venta[0].cliente_id} después de editar venta ${ventaId}`);
+        console.log(`[editarVenta] Recalculando cierre para cliente ${venta.cliente_id}...`);
+        const resultado = await cierreCuentaModel.recalcularCierreCliente(venta.cliente_id, FECHA_CORTE_DEFAULT);
+        console.log(`[editarVenta] Cierre de cuenta recalculado para cliente ${venta.cliente_id} después de editar venta ${ventaId}`, resultado);
       } catch (cierreErr) {
-        console.error("Error al recalcular cierre de cuenta:", cierreErr);
+        console.error("[editarVenta] Error al recalcular cierre de cuenta:", cierreErr);
       }
+    } else {
+      console.log(`[editarVenta] NO se recalcula cierre - Condición no cumplida: fechaVentaDate < fechaCorteDate: ${fechaVentaDate < fechaCorteDate}, cliente_id: ${venta.cliente_id}`);
     }
 
     // 8. Descontar stock si corresponde
@@ -493,12 +503,16 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
 
     // obtener descuento de la venta
     const [ventaRows] = await db.query(
-      "SELECT descuento FROM venta WHERE id = ?",
+      "SELECT descuento, total_con_descuento FROM venta WHERE id = ?",
       [ventaId]
     );
     const descuento = ventaRows[0]?.descuento || 0;
+    const totalAnterior = Number(ventaRows[0]?.total_con_descuento || 0);
 
     const totalConDescuento = total - total * (Number(descuento) / 100);
+
+    console.log(`[eliminarDetalleVenta] Detalle eliminado: ${detalleVentaId}, Venta ID: ${ventaId}`);
+    console.log(`[eliminarDetalleVenta] Total anterior: ${totalAnterior}, Total nuevo: ${totalConDescuento}, Diferencia: ${totalConDescuento - totalAnterior}`);
 
     // 4. Actualizar la venta
     await db.query(
@@ -513,13 +527,18 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
       const fechaVentaDate = new Date(ventaInfo[0].fecha_venta);
       const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
       
+      console.log(`[eliminarDetalleVenta] Verificando recálculo de cierre - Venta ID: ${ventaId}, Cliente ID: ${ventaInfo[0].cliente_id}, Fecha venta: ${ventaInfo[0].fecha_venta}`);
+      
       if (fechaVentaDate < fechaCorteDate && ventaInfo[0].cliente_id) {
         try {
-          await cierreCuentaModel.recalcularCierreCliente(ventaInfo[0].cliente_id, FECHA_CORTE_DEFAULT);
-          console.log(`Cierre de cuenta recalculado para cliente ${ventaInfo[0].cliente_id} después de eliminar detalle de venta ${detalleVentaId}`);
+          console.log(`[eliminarDetalleVenta] Recalculando cierre para cliente ${ventaInfo[0].cliente_id}...`);
+          const resultado = await cierreCuentaModel.recalcularCierreCliente(ventaInfo[0].cliente_id, FECHA_CORTE_DEFAULT);
+          console.log(`[eliminarDetalleVenta] Cierre de cuenta recalculado para cliente ${ventaInfo[0].cliente_id} después de eliminar detalle de venta ${detalleVentaId}`, resultado);
         } catch (cierreErr) {
-          console.error("Error al recalcular cierre de cuenta:", cierreErr);
+          console.error("[eliminarDetalleVenta] Error al recalcular cierre de cuenta:", cierreErr);
         }
+      } else {
+        console.log(`[eliminarDetalleVenta] NO se recalcula cierre - Condición no cumplida: fechaVentaDate < fechaCorteDate: ${fechaVentaDate < fechaCorteDate}, cliente_id: ${ventaInfo[0].cliente_id}`);
       }
     }
 

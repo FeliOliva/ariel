@@ -1,4 +1,6 @@
 const detalleVentaModel = require("../models/detalleVentaModel");
+const ventasModel = require("../models/ventasModel");
+const cierreCuentaModel = require("../models/cierreCuentaModel");
 
 const getDetalleVentaById = async (req, res) => {
   try {
@@ -35,6 +37,23 @@ const updateDetalleVenta = async (req, res) => {
     );
 
     await recalcularTotales(venta_id);
+
+    // Recalcular cierre de cuenta si la venta está dentro del período del cierre
+    const FECHA_CORTE_DEFAULT = "2026-01-01";
+    try {
+      const venta = await ventasModel.getVentaByID(venta_id);
+      if (venta && venta.length > 0 && venta[0].cliente_id) {
+        const fechaVentaDate = new Date(venta[0].fecha_venta);
+        const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
+        
+        if (fechaVentaDate < fechaCorteDate) {
+          await cierreCuentaModel.recalcularCierreCliente(venta[0].cliente_id, FECHA_CORTE_DEFAULT);
+          console.log(`Cierre de cuenta recalculado para cliente ${venta[0].cliente_id} después de actualizar detalle de venta ${venta_id}`);
+        }
+      }
+    } catch (cierreErr) {
+      console.error("Error al recalcular cierre de cuenta:", cierreErr);
+    }
 
     res.status(200).json({
       message:

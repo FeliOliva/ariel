@@ -233,9 +233,9 @@ const getArticulosVendidosPorLinea = async ({
   try {
     const query = queriesArticulos.getArticulosVendidosPorLinea;
     const [results] = await db.query(query, [
+      linea_id,
       fecha_inicio,
       fecha_fin,
-      linea_id,
     ]);
     return results;
   } catch (error) {

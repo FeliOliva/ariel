@@ -195,14 +195,17 @@ SELECT
 FROM articulo a
 LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
 LEFT JOIN detalle_venta dv ON a.id = dv.articulo_id
-  AND dv.fecha BETWEEN ? AND ?
-WHERE a.linea_id = ? AND a.estado = 1 AND sl.estado = 1
+LEFT JOIN venta v ON dv.venta_id = v.id
+WHERE a.linea_id = ? 
+  AND a.estado = 1 
+  AND sl.estado = 1
+  AND (dv.id IS NULL OR (DATE(v.fecha_venta) BETWEEN ? AND ? AND v.estado = 1))
 GROUP BY a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones, a.stock, a.precio_monotributista, a.costo
 ORDER BY unidades_vendidas DESC;
 `,
   getEvolucionGananciaPorLinea: `
 SELECT 
-  DATE(dv.fecha) AS fecha,
+  DATE(v.fecha_venta) AS fecha,
   a.id AS articulo_id,
   a.codigo_producto AS codigo_articulo,
   CONCAT(a.nombre, ' - ', sl.nombre, ' - ', a.mediciones) AS nombre_completo,
@@ -215,16 +218,18 @@ SELECT
 FROM articulo a
 LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
 INNER JOIN detalle_venta dv ON a.id = dv.articulo_id
+INNER JOIN venta v ON dv.venta_id = v.id
 WHERE a.linea_id = ? 
   AND a.estado = 1 
   AND sl.estado = 1
-  AND DATE(dv.fecha) BETWEEN ? AND ?
-GROUP BY DATE(dv.fecha), a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones
+  AND v.estado = 1
+  AND DATE(v.fecha_venta) BETWEEN ? AND ?
+GROUP BY DATE(v.fecha_venta), a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones
 ORDER BY fecha ASC, nombre_completo ASC;
 `,
   getVentasConGananciaFiltradas: `
 SELECT 
-  DATE(dv.fecha) AS fecha,
+  DATE(v.fecha_venta) AS fecha,
   SUM(dv.cantidad) AS cantidad_vendida,
   ROUND(SUM(dv.precio_monotributista * dv.cantidad), 2) AS total_vendido,
   ROUND(SUM((dv.precio_monotributista - dv.costo) * dv.cantidad), 2) AS ganancia,
@@ -240,12 +245,12 @@ LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
 LEFT JOIN proveedor p ON a.proveedor_id = p.id
 WHERE v.estado = 1
   AND c.estado = 1
-  AND DATE(dv.fecha) BETWEEN ? AND ?
+  AND DATE(v.fecha_venta) BETWEEN ? AND ?
   AND (? IS NULL OR a.id = ?)
   AND (? IS NULL OR a.linea_id = ?)
   AND (? IS NULL OR a.subLinea_id = ?)
   AND (? IS NULL OR a.proveedor_id = ?)
-GROUP BY DATE(dv.fecha)
+GROUP BY DATE(v.fecha_venta)
 ORDER BY fecha ASC;
 `,
 };

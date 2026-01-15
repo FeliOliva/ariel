@@ -202,11 +202,15 @@ const getSaldoTotalCierreMasivo = async (fecha_corte) => {
 // Recalcular y actualizar el cierre de cuenta de un cliente específico
 const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
   try {
+    console.log(`[recalcularCierreCliente] Iniciando recálculo para cliente ${cliente_id}, fecha_corte: ${fecha_corte}`);
+    
     // Verificar si existe un cierre para este cliente y fecha
     const existe = await existeCierre(cliente_id, fecha_corte);
+    console.log(`[recalcularCierreCliente] ¿Existe cierre? ${existe}`);
     
     if (!existe) {
       // Si no existe cierre, no hay nada que recalcular
+      console.log(`[recalcularCierreCliente] No existe cierre para cliente ${cliente_id} y fecha ${fecha_corte}. No se puede recalcular.`);
       return { actualizado: false, mensaje: "No existe cierre de cuenta para este cliente y fecha" };
     }
 
@@ -223,6 +227,7 @@ const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
     }
 
     const nuevoSaldo = rows[0].saldo || 0;
+    console.log(`[recalcularCierreCliente] Nuevo saldo calculado: ${nuevoSaldo}`);
 
     // Actualizar el cierre de cuenta con el nuevo saldo
     const [result] = await db.query(queriesCierreCuenta.addCierreCuenta, [
@@ -231,6 +236,8 @@ const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
       fecha_corte,
       `Recalculado automáticamente - ${new Date().toISOString()}`,
     ]);
+    
+    console.log(`[recalcularCierreCliente] Cierre actualizado correctamente. Result:`, result);
 
     return {
       actualizado: true,

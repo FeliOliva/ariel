@@ -10,10 +10,10 @@ const getAllCompras = async () => {
     throw err;
   }
 };
-const addCompra = async (proveedor_id, nro_compra, total, porcentaje_aumento_global = null, porcentaje_aumento_costo_global = null, porcentaje_aumento_precio_global = null) => {
+const addCompra = async (nro_compra, total, porcentaje_aumento_global = null, porcentaje_aumento_costo_global = null, porcentaje_aumento_precio_global = null) => {
   try {
     const query = queriesCompras.addCompra;
-    const [result] = await db.query(query, [proveedor_id, nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global]);
+    const [result] = await db.query(query, [nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global]);
     return result.insertId; // Devuelve el ID de la compra recién insertada
   } catch (err) {
     throw err;
