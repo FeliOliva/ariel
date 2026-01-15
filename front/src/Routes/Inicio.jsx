@@ -50,7 +50,7 @@ const Inicio = () => {
   const [totalNotasCredito, setTotalNotasCredito] = useState(0);
   const [totalClientes, setTotalClientes] = useState(0);
   const [saldoInicial, setSaldoInicial] = useState(0);
-  
+
   // Estados para el gráfico de ventas
   const [graficoVentasData, setGraficoVentasData] = useState([]);
   const [loadingGrafico, setLoadingGrafico] = useState(false);
@@ -61,7 +61,7 @@ const Inicio = () => {
     dayjs("2026-01-01"),
     dayjs(),
   ]);
-  
+
   // Estados para controlar qué líneas mostrar en el gráfico
   const [lineasVisibles, setLineasVisibles] = useState({
     total_vendido: true,
@@ -134,19 +134,19 @@ const Inicio = () => {
         axios.get(`http://localhost:3001/cierre-masivo/saldo-total`, {
           params: { fecha_corte: "2026-01-01" }
         })
-        .then((response) => {
-          const nuevoSaldo = parseToNumber(response.data.saldo_total || 0);
-          // Solo actualizar si el valor cambió para evitar re-renders innecesarios
-          setSaldoInicial((prevSaldo) => {
-            if (prevSaldo !== nuevoSaldo) {
-              return nuevoSaldo;
-            }
-            return prevSaldo;
+          .then((response) => {
+            const nuevoSaldo = parseToNumber(response.data.saldo_total || 0);
+            // Solo actualizar si el valor cambió para evitar re-renders innecesarios
+            setSaldoInicial((prevSaldo) => {
+              if (prevSaldo !== nuevoSaldo) {
+                return nuevoSaldo;
+              }
+              return prevSaldo;
+            });
+          })
+          .catch((error) => {
+            console.error("Error al actualizar saldo inicial:", error);
           });
-        })
-        .catch((error) => {
-          console.error("Error al actualizar saldo inicial:", error);
-        });
       }
     }, 5000); // Actualizar cada 5 segundos
 
@@ -201,23 +201,23 @@ const Inicio = () => {
   }, [rangoFechasGrafico, filtroTipo, filtroSeleccionado]);
 
   const comprasYGastos = totalCompras + totalGastos;
-  
+
   // Si la fecha de inicio es >= 2026-01-01, usar el saldo inicial del cierre
   const fechaInicio = rangoFechas?.[0];
   const usarSaldoInicial = fechaInicio && dayjs(fechaInicio).isAfter(dayjs("2025-12-31"));
-  
+
   // Ingreso limpio (ganancia neta): Ventas - (Compras + Gastos)
   // Esto representa la ganancia teórica, pero no considera el flujo de caja real
   const ingresoLimpio = totalVentas - comprasYGastos;
-  
+
   // Flujo de caja real: Dinero que realmente entró menos gastos
   // Solo cuenta los pagos recibidos, no las ventas pendientes de cobro
   const flujoCajaReal = totalPagos - comprasYGastos;
-  
+
   // Saldo pendiente de cobro: Ventas - Pagos - Notas de Crédito + Saldo Inicial (si aplica)
   // Representa el total que los clientes deben (cuentas por cobrar)
   const totalConEntrega = totalVentas - totalPagos - totalNotasCredito + (usarSaldoInicial ? saldoInicial : 0);
-  
+
   // Ingreso efectivo neto: Flujo de caja real menos el saldo inicial pendiente
   // Muestra cuánto dinero realmente entró después de considerar lo que ya estaba pendiente
   const ingresoEfectivoNeto = flujoCajaReal - (usarSaldoInicial ? saldoInicial : 0);
@@ -255,7 +255,7 @@ const Inicio = () => {
           ) : (
             <Row gutter={[16, 16]} justify="center">
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Total de Ventas
@@ -263,7 +263,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(totalVentas)}
@@ -271,7 +271,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Total de Compras
@@ -279,7 +279,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(totalCompras)}
@@ -287,7 +287,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Total de Gastos
@@ -295,7 +295,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(totalGastos)}
@@ -303,7 +303,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Total de Pagos
@@ -311,7 +311,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(totalPagos)}
@@ -319,7 +319,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Total Notas de Crédito
@@ -327,7 +327,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(totalNotasCredito)}
@@ -335,7 +335,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Clientes registrados
@@ -343,7 +343,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {totalClientes}
@@ -351,7 +351,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Compras + Gastos
@@ -359,7 +359,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(comprasYGastos)}
@@ -367,15 +367,15 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
-                      Ingreso limpio (Ganancia teórica)
+                      Utilidad Neta
                       <Tooltip title="Ventas - (Compras + Gastos). Representa la ganancia neta teórica después de descontar los costos operativos. No considera el flujo de caja real (dinero que realmente entró).">
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(ingresoLimpio)}
@@ -383,7 +383,7 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
                       Flujo de caja real
@@ -391,7 +391,7 @@ const Inicio = () => {
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(flujoCajaReal)}
@@ -399,15 +399,15 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
-                      Saldo Inicial (Cierre 2026)
+                      Saldo Inicial (Cierre 2025 CTA a Cobrar)
                       <Tooltip title="Saldo total del cierre masivo de cuentas al 01/01/2026. Este es el saldo que tenían los clientes al inicio de 2026.">
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(saldoInicial)}
@@ -415,46 +415,29 @@ const Inicio = () => {
               </Col>
 
               <Col xs={24} sm={12} md={8} lg={6}>
-                <Card 
+                <Card
                   title={
                     <span>
-                      Saldo pendiente (Cuentas por cobrar)
-                      <Tooltip title={usarSaldoInicial 
-                        ? "Ventas - Pagos - Notas de Crédito + Saldo Inicial. Representa el total que los clientes deben (cuentas por cobrar), incluyendo el saldo inicial del cierre de 2026. Este es dinero pendiente de cobro, no efectivo disponible." 
+                      Cuentas por cobrar
+                      <Tooltip title={usarSaldoInicial
+                        ? "Ventas - Pagos - Notas de Crédito + Saldo Inicial. Representa el total que los clientes deben (cuentas por cobrar), incluyendo el saldo inicial del cierre de 2026. Este es dinero pendiente de cobro, no efectivo disponible."
                         : "Ventas - Pagos - Notas de Crédito. Representa el saldo total que deben los clientes (cuentas corrientes pendientes). Este valor debería coincidir con la suma de los saldos del cierre de cuentas si el rango de fechas es hasta el 31/12/2025."}>
                         <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
                       </Tooltip>
                     </span>
-                  } 
+                  }
                   style={cardStyle}
                 >
                   {formatNumber(totalConEntrega)}
                 </Card>
               </Col>
 
-              {usarSaldoInicial && (
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Card 
-                    title={
-                      <span>
-                        Ingreso efectivo neto
-                        <Tooltip title="Flujo de caja real - Saldo inicial. Muestra cuánto dinero realmente entró al negocio después de considerar el saldo inicial que ya estaba pendiente de cobro al inicio del período.">
-                          <InfoCircleOutlined style={{ marginLeft: 8, color: "#1890ff" }} />
-                        </Tooltip>
-                      </span>
-                    } 
-                    style={cardStyle}
-                  >
-                    {formatNumber(ingresoEfectivoNeto)}
-                  </Card>
-                </Col>
-              )}
 
             </Row>
           )}
 
           {/* Gráfico de Ventas y Ganancia */}
-          <Card 
+          <Card
             title="Gráfico de Ventas y Ganancia"
             style={{ marginTop: "2rem", marginBottom: "2rem" }}
           >
@@ -535,7 +518,7 @@ const Inicio = () => {
                 </Col>
               )}
             </Row>
-            
+
             {/* Selector de líneas a mostrar */}
             <Row gutter={16} style={{ marginBottom: "16px", padding: "12px", backgroundColor: "#f5f5f5", borderRadius: "4px" }}>
               <Col span={24}>
@@ -576,7 +559,7 @@ const Inicio = () => {
                 </Space>
               </Col>
             </Row>
-            
+
             <Spin spinning={loadingGrafico}>
               {graficoVentasData && graficoVentasData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={450}>
@@ -592,15 +575,15 @@ const Inicio = () => {
                     margin={{ top: 10, right: 30, left: 20, bottom: 60 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis 
-                      dataKey="fecha" 
+                    <XAxis
+                      dataKey="fecha"
                       tick={{ fontSize: 11 }}
                       angle={-45}
                       textAnchor="end"
                       height={80}
                       interval="preserveStartEnd"
                     />
-                    <YAxis 
+                    <YAxis
                       yAxisId="left"
                       tick={{ fontSize: 11 }}
                       tickFormatter={(value) => {
@@ -618,7 +601,7 @@ const Inicio = () => {
                         // Calcular ticks dinámicamente basado en el máximo valor
                         if (graficoVentasData.length === 0) return [];
                         const maxValue = Math.max(
-                          ...graficoVentasData.map(d => 
+                          ...graficoVentasData.map(d =>
                             Math.max(
                               d.total_vendido || 0,
                               d.ganancia || 0,
@@ -628,13 +611,13 @@ const Inicio = () => {
                             )
                           )
                         );
-                        const step = maxValue > 1000000 
-                          ? 200000 
-                          : maxValue > 500000 
-                          ? 100000 
-                          : maxValue > 100000 
-                          ? 50000 
-                          : 25000;
+                        const step = maxValue > 1000000
+                          ? 200000
+                          : maxValue > 500000
+                            ? 100000
+                            : maxValue > 100000
+                              ? 50000
+                              : 25000;
                         const ticks = [];
                         for (let i = 0; i <= maxValue + step; i += step) {
                           ticks.push(i);
@@ -642,7 +625,7 @@ const Inicio = () => {
                         return ticks;
                       })()}
                     />
-                    <RechartsTooltip 
+                    <RechartsTooltip
                       formatter={(value, name) => {
                         const numValue = parseFloat(value);
                         return [`$${numValue.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`, name];
@@ -650,7 +633,7 @@ const Inicio = () => {
                       labelFormatter={(label) => `Fecha: ${label}`}
                       contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ccc', borderRadius: '4px' }}
                     />
-                    <Legend 
+                    <Legend
                       wrapperStyle={{ paddingTop: '20px' }}
                       iconType="line"
                     />
