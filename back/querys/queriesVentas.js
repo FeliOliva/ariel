@@ -71,12 +71,19 @@ GROUP BY
 ORDER BY 
     total_ventas DESC;
 `,
-  getVentasByProducto: `SELECT v.ID, p.nombre AS nombre_producto, c.nombre AS nombre_cliente, z.zona AS nombre_zona, v.cantidad AS cantidad, v.estado AS estado
-  FROM ventas v
-  JOIN producto p ON v.producto_id = p.ID
-  JOIN cliente c ON v.cliente_id = c.ID
-  JOIN zona z ON v.zona_id = z.ID
-  WHERE p.ID = ?;`,
+  getVentasByProducto: `SELECT 
+    v.id AS venta_id,
+    a.nombre AS nombre_producto,
+    c.nombre AS nombre_cliente,
+    z.nombre AS nombre_zona,
+    dv.cantidad AS cantidad,
+    v.estado AS estado
+  FROM detalle_venta dv
+  JOIN venta v ON dv.venta_id = v.id
+  JOIN articulo a ON dv.articulo_id = a.id
+  JOIN cliente c ON v.cliente_id = c.id
+  JOIN zona z ON v.zona_id = z.id
+  WHERE dv.articulo_id = ?;`,
   getVentaByID: `
  SELECT 
   dv.id AS id_dv, 

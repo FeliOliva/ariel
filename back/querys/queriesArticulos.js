@@ -105,7 +105,7 @@ FROM
 LEFT JOIN 
     linea l ON a.linea_id = l.id
 LEFT JOIN 
-    subLinea sl ON a.subLinea_id = sl.id
+    sublinea sl ON a.subLinea_id = sl.id
 WHERE 
     a.estado = 1 AND l.estado = 1 AND sl.estado = 1 AND a.linea_id = ?
 ORDER BY 
@@ -174,7 +174,7 @@ FROM
 LEFT JOIN 
     linea l ON a.linea_id = l.id
 LEFT JOIN 
-    subLinea sl ON a.subLinea_id = sl.id
+    sublinea sl ON a.subLinea_id = sl.id
 WHERE 
     l.estado = 1 AND sl.estado = 1 
 ORDER BY 

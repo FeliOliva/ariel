@@ -4,6 +4,9 @@
 
 **SÍ, el sistema está configurado para usar base de datos remota.** Solo necesitas cambiar el archivo `back/.env`.
 
+> Nota MariaDB:
+> Si usás MariaDB, usá el archivo `backup_con_indices.sql` ya adaptado para collation compatible.
+
 ## 🚀 Configuración en 3 Pasos
 
 ### Paso 1: Crear archivo .env
@@ -73,9 +76,13 @@ NODE_ENV=development
 
 Antes de usar tu VPS, asegúrate de:
 
-1. **MySQL permite conexiones remotas**
+1. **MariaDB/MySQL permite conexiones remotas**
 2. **Puerto 3306 abierto en firewall**
-3. **Usuario MySQL con permisos remotos**
+3. **Usuario con permisos remotos**
+
+## 🛠️ MariaDB (compatibilidad del SQL)
+Si MariaDB rechaza el dump original por collation (`utf8mb4_0900_ai_ci`), usá el
+`backup_con_indices.sql` ya adaptado a `utf8mb4_unicode_ci`.
 
 Ver `README-DATABASE.md` para instrucciones detalladas.
 

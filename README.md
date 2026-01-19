@@ -52,3 +52,53 @@ Se puede agregar sin tocar el codigo, y es una capa extra.
 ## CORS
 El backend usa `CORS_ORIGIN` para permitir solo los orígenes indicados.
 Dejarlo en `localhost` durante pruebas y cambiarlo al dominio real en produccion.
+
+## Despliegue y actualizaciones (VPS)
+
+### Actualizar codigo desde Git
+```
+cd /projects/ariel
+git pull
+```
+
+### Backend (PM2)
+```
+cd /projects/ariel/back
+npm install
+pm2 restart ariel-back
+pm2 save
+```
+
+### Frontend (build estatico)
+```
+cd /projects/ariel/front
+npm install
+npm run build
+cp -r build/* /var/www/sistemarenacer/
+```
+
+### Recargar Nginx
+```
+nginx -t
+systemctl reload nginx
+```
+
+## Reset rapido (front + back)
+```
+pm2 restart ariel-back
+cd /projects/ariel/front
+npm run build
+cp -r build/* /var/www/sistemarenacer/
+nginx -t && systemctl reload nginx
+```
+
+## Restaurar base de datos en MariaDB
+```
+mysql -u root -p -e "DROP DATABASE IF EXISTS ariel_db;"
+mysql -u root -p -e "CREATE DATABASE ariel_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p ariel_db < /root/backup_con_indices.sql
+```
+
+Si el backup viene de MySQL, asegurarse de:
+- No tener `GTID_PURGED`
+- Usar collation compatible (`utf8mb4_unicode_ci`)

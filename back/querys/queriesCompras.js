@@ -19,7 +19,7 @@ LEFT JOIN
 GROUP BY compra.id, compra.nro_compra, compra.total, compra.fecha_compra, compra.estado, compra.porcentaje_aumento_global, compra.porcentaje_aumento_costo_global, compra.porcentaje_aumento_precio_global
 ORDER BY compra.id DESC;
 `,
-  addCompra: `INSERT INTO Compra (nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global) VALUES (?, ?, ?, ?, ?);`,
+  addCompra: `INSERT INTO compra (nro_compra, total, porcentaje_aumento_global, porcentaje_aumento_costo_global, porcentaje_aumento_precio_global) VALUES (?, ?, ?, ?, ?);`,
   getCompraByID: `
   SELECT 
     dc.id AS detalle_compra_id,
@@ -46,7 +46,7 @@ INNER JOIN compra c ON dc.compra_id = c.id
 WHERE dc.compra_id = ?;
 `,
   getComprasByProveedor: `SELECT c.*, d.articulo_id, a.nombre AS articulo_nombre, d.cantidad, d.costo
-FROM Compra c
+FROM compra c
 LEFT JOIN detalle_compra d ON c.id = d.compra_id
 LEFT JOIN articulo a ON d.articulo_id = a.id
 WHERE c.proveedor_id = ?;
