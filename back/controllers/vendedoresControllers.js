@@ -33,7 +33,6 @@ const dropVendedor = async (req, res) => {
     await vendedoresModel.dropVendedor(ID);
     res.status(200).json({ message: "Vendedor Eliminado" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al desactivar el Vendedor" });
   }
 };
@@ -43,7 +42,6 @@ const updateVendedor = async (req, res) => {
     const vendedor = await vendedoresModel.updateVendedor(nombre, ID);
     res.status(200).json({ message: "Vendedor actualizado" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al actualizar el Vendedor" });
   }
 };

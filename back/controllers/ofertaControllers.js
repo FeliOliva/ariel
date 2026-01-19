@@ -1,4 +1,5 @@
 const ofertaModel = require("../models/ofertaModel");
+const db = require("../database");
 
 const getAllOfertas = async (req, res) => {
   try {
@@ -10,11 +11,36 @@ const getAllOfertas = async (req, res) => {
 };
 
 const addOferta = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { nombre, detalles } = req.body;
-    const ofertaId = await ofertaModel.addOferta(nombre, detalles);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    const ofertaId = await ofertaModel.addOferta(
+      nombre,
+      detalles,
+      connection
+    );
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
     res.status(201).json({ message: "Oferta agregada con éxito", ofertaId });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de addOferta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error(error);
     res.status(500).json({ error: "Error al agregar la oferta" });
   }
@@ -45,19 +71,38 @@ const upOferta = async (req, res) => {
 const updateOferta = async (req, res) => {
   const { id, nombre, productos } = req.body;
 
+  let connection = null;
+  let inTransaction = false;
   try {
-    await ofertaModel.updateOferta(nombre, id);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
 
-    for (const detalle of productos) {
-      await ofertaModel.updateCantidadDetalleOferta(
-        detalle.cantidad,
-        detalle.articulo_id,
-        id
-      );
-    }
+    await ofertaModel.updateOferta(nombre, id, connection);
+
+    await ofertaModel.updateCantidadDetalleOfertaBatch(
+      id,
+      productos,
+      connection
+    );
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     res.status(200).json({ message: "Oferta actualizada correctamente" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de updateOferta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al actualizar la oferta:", error.message);
     res.status(500).json({ error: "Error al actualizar la oferta" });
   }

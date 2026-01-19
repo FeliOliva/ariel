@@ -129,7 +129,7 @@ export default function EstadisticasDashboard() {
     setError((prev) => ({ ...prev, masVendidos: null }));
     try {
       const response = await axios.get(
-        `http://localhost:3001/estadisticas/masVendidos`,
+        `${process.env.REACT_APP_API_URL}/estadisticas/masVendidos`,
         {
           params: {
             filtro: filtroSeleccionado,
@@ -152,7 +152,7 @@ export default function EstadisticasDashboard() {
     setError((prev) => ({ ...prev, masRentables: null }));
     try {
       const response = await axios.get(
-        `http://localhost:3001/estadisticas/masRentables`
+        `${process.env.REACT_APP_API_URL}/estadisticas/masRentables`
       );
       setMasRentables(response.data);
     } catch (err) {
@@ -169,9 +169,8 @@ export default function EstadisticasDashboard() {
     setError((prev) => ({ ...prev, articulosSinVentas: null }));
     try {
       const response = await axios.get(
-        `http://localhost:3001/estadisticas/articulosSinVentas`
+        `${process.env.REACT_APP_API_URL}/estadisticas/articulosSinVentas`
       );
-      console.log("Artículos sin ventas:", response.data);
       setArticulosSinVentas(response.data);
     } catch (err) {
       setError((prev) => ({ ...prev, articulosSinVentas: err.message }));
@@ -187,7 +186,7 @@ export default function EstadisticasDashboard() {
     setError((prev) => ({ ...prev, masUnidadesVendidas: null }));
     try {
       const response = await axios.get(
-        `http://localhost:3001/estadisticas/masUnidadesVendidas`
+        `${process.env.REACT_APP_API_URL}/estadisticas/masUnidadesVendidas`
       );
       setMasUnidadesVendidas(response.data);
     } catch (err) {

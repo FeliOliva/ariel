@@ -139,9 +139,6 @@ const getAllUltimosCierres = async (req, res) => {
 
 // Obtener cierres por zona
 const getCierresByZona = async (req, res) => {
-  console.log("========== getCierresByZona LLAMADO ==========");
-  console.log("req.query:", req.query);
-  console.log("req.params:", req.params);
   try {
     const { fecha_corte, zona_id } = req.query;
     const fechaCorte = fecha_corte || FECHA_CORTE_DEFAULT;
@@ -149,22 +146,14 @@ const getCierresByZona = async (req, res) => {
     // Convertir zona_id a número para asegurar el tipo correcto
     const zonaIdNum = parseInt(zona_id, 10);
 
-    console.log("getCierresByZona - fecha_corte:", fecha_corte, "zona_id (original):", zona_id, "tipo:", typeof zona_id);
-    console.log("getCierresByZona - zona_id (convertido):", zonaIdNum, "tipo:", typeof zonaIdNum);
 
     if (!zona_id || isNaN(zonaIdNum)) {
       return res.status(400).json({ error: "zona_id es requerido y debe ser un número válido" });
     }
 
     const cierres = await cierreCuentaModel.getCierresByZona(fechaCorte, zonaIdNum);
-    console.log("getCierresByZona - cierres recibidos del modelo:", cierres);
-    console.log("getCierresByZona - tipo de cierres:", typeof cierres);
-    console.log("getCierresByZona - es array?", Array.isArray(cierres));
-    console.log("getCierresByZona - cierres encontrados:", cierres ? cierres.length : 0);
-    console.log("getCierresByZona - primeros 3:", cierres ? cierres.slice(0, 3) : "null");
     
     if (!cierres || cierres.length === 0) {
-      console.log("getCierresByZona - No se encontraron cierres para zona_id:", zonaIdNum, "fecha_corte:", fechaCorte);
     }
     
     // Asegurar que siempre devolvemos un array, nunca null

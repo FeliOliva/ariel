@@ -37,7 +37,6 @@ const dropSubLinea = async (req, res) => {
     await subLineaModels.dropSubLinea(ID);
     res.status(200).json({ message: "SubLinea eliminada" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al eliminar la SubLinea" });
   }
 };
@@ -48,7 +47,6 @@ const upSubLinea = async (req, res) => {
     await subLineaModels.upSubLinea(ID);
     res.status(200).json({ message: "SubLinea activada" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al activar la SubLinea" });
   }
 };

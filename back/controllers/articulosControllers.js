@@ -1,4 +1,5 @@
 const articuloModel = require("../models/articuloModel");
+const db = require("../database");
 
 const getAllArticulos = async (req, res) => {
   try {
@@ -176,8 +177,6 @@ const increasePrice = async (req, res) => {
   try {
     const ID = req.params.ID;
     const { percentage } = req.body;
-    console.log("desde increasePrice");
-    console.log(req.body, ID);
     if (!percentage || isNaN(percentage)) {
       return res.status(400).json({ error: "Invalid percentage value" });
     }
@@ -191,8 +190,6 @@ const decreasePrice = async (req, res) => {
   try {
     const ID = req.params.ID;
     const { percentage } = req.body;
-    console.log("desde decreasePrice");
-    console.log(req.body);
     if (!percentage || isNaN(percentage)) {
       return res.status(400).json({ error: "Invalid percentage value" });
     }
@@ -211,8 +208,6 @@ const updateLogPrecios = async (req, res) => {
       precio_monotributista_antiguo,
       porcentaje,
     } = req.body;
-    console.log("desde updateLogPrecios");
-    console.log(req.body);
     if (!porcentaje || isNaN(porcentaje)) {
       return res.status(400).json({ error: "Invalid percentage value" });
     }
@@ -239,19 +234,41 @@ const logsPreciosById = async (req, res) => {
 };
 
 const deshacerCambios = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const id = req.params.id;
     const { costo_antiguo, precio_monotributista_antiguo, articulo_id } =
       req.body;
 
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
     await articuloModel.deshacerCambios(
       articulo_id,
       costo_antiguo,
       precio_monotributista_antiguo,
-      id
+      id,
+      connection
     );
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
     res.status(200).json({ message: "Cambio deshecho correctamente" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de deshacerCambios:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     res.status(500).json({ error: error.message });
   }
 };

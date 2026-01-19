@@ -71,7 +71,6 @@ const updateCheques = async (req, res) => {
   try {
     const { id, banco, nro_cheque, fecha_emision, fecha_cobro, importe } =
       req.body;
-    console.log(req.body);
     const updatedCheque = await chequesModel.updateCheque({
       id,
       banco,

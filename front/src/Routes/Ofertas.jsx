@@ -47,7 +47,7 @@ function Ofertas() {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/ofertas");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/ofertas`);
       setData(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -57,7 +57,7 @@ function Ofertas() {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/detalleOferta/${id}`
+        `${process.env.REACT_APP_API_URL}/detalleOferta/${id}`
       );
       setCurrentOfert(response.data);
       setOpenEditDrawer(true);
@@ -82,7 +82,7 @@ function Ofertas() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.put("http://localhost:3001/updateOferta", updatedOfert);
+          await axios.put(`${process.env.REACT_APP_API_URL}/updateOferta`, updatedOfert);
           setOpenEditDrawer(false);
           fetchData(); // Refresca la tabla con los nuevos datos
           notification.success({
@@ -99,7 +99,6 @@ function Ofertas() {
   };
 
   const handleAddArticulo = () => {
-    console.log(articuloValue, cantidad);
     if (selectedArticulo.precio_oferta === null) {
       Modal.warning({
         title: "Advertencia",
@@ -157,9 +156,8 @@ function Ofertas() {
               precioOferta: producto.precio_oferta, // Ajuste para cumplir con el formato del endpoint
             })),
           };
-          console.log(ofertaData);
 
-          await axios.post("http://localhost:3001/addOferta", ofertaData);
+          await axios.post(`${process.env.REACT_APP_API_URL}/addOferta`, ofertaData);
           setOpen(false);
           fetchData();
           notification.success({
@@ -187,7 +185,7 @@ function Ofertas() {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropOferta/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropOferta/${id}`);
             notification.success({
               message: "Oferta desactivada",
               description: "La oferta se desactivo exitosamente",
@@ -203,7 +201,7 @@ function Ofertas() {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upOferta/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upOferta/${id}`);
             notification.success({
               message: "Oferta activada",
               description: "La oferta se activo exitosamente",

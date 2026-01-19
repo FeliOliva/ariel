@@ -25,7 +25,7 @@ const ChequesTable = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/cheques");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cheques`);
       const sortedCheques = response.data.sort(
         (a, b) => new Date(a.fecha_cobro) - new Date(b.fecha_cobro)
       );
@@ -41,7 +41,6 @@ const ChequesTable = () => {
     (cheque) => cheque.estado === estadoFiltro
   );
   const handleToggleState = async (id, currentState) => {
-    console.log(currentState);
     try {
       if (currentState === 1) {
         confirm({
@@ -50,7 +49,7 @@ const ChequesTable = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropCheque/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropCheque/${id}`);
             notification.success({
               message: "Cheque desactivado",
               description: "El Cheque se desactivo correctamente",
@@ -67,7 +66,7 @@ const ChequesTable = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upCheque/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upCheque/${id}`);
             notification.success({
               message: "Cliente activado",
               description: "El cliente se activo correctamente",

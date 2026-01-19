@@ -60,10 +60,9 @@ const Clientes = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3001/clientes");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/clientes`);
       setData(response.data);
       setClientes(response.data);
-      console.log("clientes", response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -153,7 +152,6 @@ const Clientes = () => {
       });
       return;
     }
-    console.log(newClient);
     confirm({
       title: "¿Estas seguro de agregar este cliente?",
       icon: <WarningOutlined />,
@@ -162,7 +160,7 @@ const Clientes = () => {
       onOk: async () => {
         try {
           const response = await axios.post(
-            "http://localhost:3001/addClient",
+            `${process.env.REACT_APP_API_URL}/addClient`,
             newClient
           );
           setData([...data, response.data]);
@@ -216,7 +214,7 @@ const Clientes = () => {
       onOk: async () => {
         try {
           await axios.put(
-            `http://localhost:3001/updateClients`,
+            `${process.env.REACT_APP_API_URL}/updateClients`,
             clienteActualizado
           );
           setOpenEditDrawer(false);
@@ -238,7 +236,6 @@ const Clientes = () => {
   };
 
   const handleToggleState = async (id, currentState) => {
-    console.log(currentState);
     try {
       if (currentState === 1) {
         confirm({
@@ -247,7 +244,7 @@ const Clientes = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropClient/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropClient/${id}`);
             notification.success({
               message: "Cliente desactivado",
               description: "El cliente se desactivo correctamente",
@@ -264,7 +261,7 @@ const Clientes = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upClient/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upClient/${id}`);
             notification.success({
               message: "Cliente activado",
               description: "El cliente se activo correctamente",
@@ -434,11 +431,9 @@ const Clientes = () => {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getClientsByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getClientsByID/${id}`
       );
       setCurrentCliente(response.data);
-      console.log("data");
-      console.log(response.data);
       setOpenEditDrawer(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -466,7 +461,7 @@ const Clientes = () => {
   const fetchClientesPorZona = async (zonaId) => {
     try {
       const res = await axios.get(
-        `http://localhost:3001/getClientesByZona/${zonaId}`
+        `${process.env.REACT_APP_API_URL}/getClientesByZona/${zonaId}`
       );
       setClientesPorZona(res.data);
     } catch (err) {

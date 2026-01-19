@@ -75,6 +75,7 @@ const ResumenCuenta = () => {
   const [loadingSaldos, setLoadingSaldos] = useState(false);
   const [cierreYaExiste, setCierreYaExiste] = useState(false);
   const [cantidadCierres, setCantidadCierres] = useState(0);
+  const [saldoRestanteBackend, setSaldoRestanteBackend] = useState(0);
 
   // Fecha de corte para el cierre de cuentas (1 de enero de 2026)
   const FECHA_CORTE = "2026-01-01";
@@ -110,7 +111,7 @@ const ResumenCuenta = () => {
   const fetchCierreCuenta = async (clienteId) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/cierre-cuenta/${clienteId}`,
+        `${process.env.REACT_APP_API_URL}/cierre-cuenta/${clienteId}`,
         { params: { fecha_corte: FECHA_CORTE } }
       );
       return response.data;
@@ -122,56 +123,33 @@ const ResumenCuenta = () => {
 
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
-      // Verificar si la fecha de inicio es posterior al corte
-      const usarCierre = esFechaPosteriorAlCorte(fechaInicio);
-      let saldoInicial = 0;
-      let cierreData = null;
-
-      // Si la fecha es posterior al corte, buscar el cierre de cuenta
-      if (usarCierre) {
-        cierreData = await fetchCierreCuenta(clienteId);
-        setCierreCuenta(cierreData);
-        if (cierreData) {
-          saldoInicial = parseFloat(cierreData.saldo_cierre) || 0;
-        }
-      } else {
-        setCierreCuenta(null);
-      }
-
       const response = await axios.get(
-        `http://localhost:3001/resumenCliente/${clienteId}`,
+        `${process.env.REACT_APP_API_URL}/resumenCliente/${clienteId}`,
         { params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin } }
       );
 
-      let saldoAcumulado = saldoInicial; // Usar saldo inicial del cierre si corresponde
+      const responseData = response.data || {};
+      const items = Array.isArray(responseData.items)
+        ? responseData.items
+        : [];
 
-      const filteredData = response.data
-        .map((item, index) => ({
-          ...item,
-          tipoPlano: typeof item.tipo === "string" ? item.tipo : "",
-          uniqueKey: `${item.tipo}-${item.id}-${index}`,
-        }))
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-        .map((item) => {
-          let monto = 0;
+      setCierreCuenta(responseData.cierre || null);
+      setSaldoRestanteBackend(
+        typeof responseData.saldo_final === "number"
+          ? responseData.saldo_final
+          : 0
+      );
 
-          if (item.total_con_descuento) {
-            monto = parseMonto(item.total_con_descuento);
-          } else if (item.monto) {
-            monto = parseMonto(item.monto);
-          }
-
-          // Calculamos el saldo acumulado
-          if (item.tipo === "Venta") {
-            saldoAcumulado += monto;
-          } else if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
-            saldoAcumulado -= monto;
-          }
-
-          // 🔹 si el saldo es muy chico (entre -1 y 1), lo forzamos a 0
-          if (Math.abs(saldoAcumulado) < 1) {
-            saldoAcumulado = 0;
-          }
+      const dataFormateada = items
+        .map((item, index) => {
+          const monto =
+            typeof item.monto_numerico === "number"
+              ? item.monto_numerico
+              : item.total_con_descuento
+              ? parseMonto(item.total_con_descuento)
+              : item.monto
+              ? parseMonto(item.monto)
+              : 0;
 
           const totalNumerico = item.total_con_descuento
             ? parseMonto(item.total_con_descuento)
@@ -179,40 +157,20 @@ const ResumenCuenta = () => {
 
           return {
             ...item,
+            tipoPlano: typeof item.tipo === "string" ? item.tipo : "",
+            uniqueKey: `${item.tipo}-${item.id}-${index}`,
             montoNumerico: monto,
-            saldoRestante: saldoAcumulado,
+            saldoRestante:
+              typeof item.saldo_restante === "number"
+                ? item.saldo_restante
+                : 0,
             montoFormateado: formatMonto(monto),
             totalFormateado: formatMonto(totalNumerico),
           };
         })
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-      // Si hay cierre de cuenta, agregar una fila de "Saldo Inicial" al final (que será la primera cronológicamente)
-      let dataConSaldoInicial = filteredData;
-      if (usarCierre && cierreData) {
-        const filaSaldoInicial = {
-          id: `cierre-${cierreData.id}`,
-          tipo: "Saldo Inicial",
-          tipoPlano: "Saldo Inicial",
-          uniqueKey: `saldo-inicial-${cierreData.id}`,
-          fecha: cierreData.fecha_corte,
-          numero: "-",
-          estado: 1,
-          total_con_descuento: null,
-          monto: null,
-          metodo_pago: null,
-          vendedor_nombre: null,
-          montoNumerico: saldoInicial,
-          saldoRestante: saldoInicial,
-          montoFormateado: formatMonto(saldoInicial),
-          totalFormateado: formatMonto(saldoInicial),
-          esSaldoInicial: true, // Marca especial para identificar esta fila
-        };
-        // Agregar al final del array (aparecerá al final de la tabla, que es el más antiguo)
-        dataConSaldoInicial = [...filteredData, filaSaldoInicial];
-      }
-
-      setData(dataConSaldoInicial);
+      setData(dataFormateada);
     } catch (error) {
       console.error("Error al obtener los datos:", error);
       message.error("No se pudo cargar la información del cliente");
@@ -289,7 +247,7 @@ const ResumenCuenta = () => {
 
       if (tipo === "Pago") {
         const response = await axios.get(
-          `http://localhost:3001/getPagoById/${id}`
+          `${process.env.REACT_APP_API_URL}/getPagoById/${id}`
         );
         const data = response.data[0];
 
@@ -300,10 +258,9 @@ const ResumenCuenta = () => {
         });
       } else if (tipo === "Venta") {
         const response = await axios.get(
-          `http://localhost:3001/getVentaByID/${id}`
+          `${process.env.REACT_APP_API_URL}/getVentaByID/${id}`
         );
         const data = response.data; // La respuesta ya es un objeto
-        console.log("data", data);
         setVentaData({
           ...data,
           fecha_venta: data.fecha ? dayjs(data.fecha) : null, // Convertimos correctamente la fecha
@@ -313,7 +270,7 @@ const ResumenCuenta = () => {
         });
       } else {
         const response = await axios.get(
-          `http://localhost:3001/getNotaCreditoByID/${id}`
+          `${process.env.REACT_APP_API_URL}/getNotaCreditoByID/${id}`
         );
         const data = response.data[0];
 
@@ -341,7 +298,7 @@ const ResumenCuenta = () => {
         return;
       }
       const response = await axios.get(
-        `http://localhost:3001/getDetallesNotaCredito/${id}`
+        `${process.env.REACT_APP_API_URL}/getDetallesNotaCredito/${id}`
       );
       setDetalles(response.data); // Guarda los detalles en el estado
       setOpenNC(true); // Abre el modal
@@ -518,7 +475,7 @@ const ResumenCuenta = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.put(`http://localhost:3001/${value}/${id}`);
+          await axios.put(`${process.env.REACT_APP_API_URL}/${value}/${id}`);
 
           notification.success({
             message: `${tipo} eliminada`,
@@ -536,29 +493,12 @@ const ResumenCuenta = () => {
     });
   };
 
-  const calcularSaldoRestante = (data) => {
-    // Considerar el saldo inicial del cierre si existe y la fecha es posterior al corte
-    const usarCierre = rangoFechas.length === 2 && esFechaPosteriorAlCorte(rangoFechas[0]);
-    const saldoInicial = usarCierre && cierreCuenta ? parseFloat(cierreCuenta.saldo_cierre) || 0 : 0;
-
-    return data
-      .filter((item) => item.estado === 1)
-      .reduce((saldo, item) => {
-        const monto = item.montoNumerico || 0;
-
-        if (item.tipo === "Venta") {
-          return saldo + monto;
-        }
-
-        if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
-          return saldo - monto;
-        }
-
-        return saldo;
-      }, saldoInicial);
+  const calcularSaldoRestante = () => {
+    const valor = Number(saldoRestanteBackend);
+    return Number.isNaN(valor) ? 0 : valor;
   };
 
-  const saldoRestante = calcularSaldoRestante(data);
+  const saldoRestante = calcularSaldoRestante();
 
   // Función para abrir el drawer de cierre masivo y cargar la vista previa
   const handleOpenCierreMasivo = async () => {
@@ -567,7 +507,7 @@ const ResumenCuenta = () => {
     try {
       // Verificar si ya existe un cierre masivo
       const countResponse = await axios.get(
-        `http://localhost:3001/cierre-masivo/count`,
+        `${process.env.REACT_APP_API_URL}/cierre-masivo/count`,
         { params: { fecha_corte: FECHA_CORTE } }
       );
       const count = countResponse.data.count || 0;
@@ -576,7 +516,7 @@ const ResumenCuenta = () => {
 
       // Cargar vista previa de saldos
       const response = await axios.get(
-        `http://localhost:3001/cierre-masivo/preview`,
+        `${process.env.REACT_APP_API_URL}/cierre-masivo/preview`,
         { params: { fecha_corte: FECHA_CORTE } }
       );
       setSaldosClientes(response.data);
@@ -608,7 +548,7 @@ const ResumenCuenta = () => {
       onOk: async () => {
         setLoadingCierre(true);
         try {
-          const response = await axios.post("http://localhost:3001/cierre-masivo", {
+          const response = await axios.post(`${process.env.REACT_APP_API_URL}/cierre-masivo`, {
             fecha_corte: FECHA_CORTE,
             observaciones: `Cierre masivo ejecutado el ${dayjs().format("DD/MM/YYYY HH:mm")}`,
           });
@@ -776,7 +716,7 @@ const ResumenCuenta = () => {
           okText: "Si",
           cancelText: "No",
           onOk: async () => {
-            await axios.post("http://localhost:3001/addNotaCredito", payLoad);
+            await axios.post(`${process.env.REACT_APP_API_URL}/addNotaCredito`, payLoad);
             notification.success({
               message: "Exito",
               description: "Nota de credito registrada con exito",
@@ -816,16 +756,13 @@ const ResumenCuenta = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:3001/notasCreditoByClienteId/${selectedCliente.id}`
+        `${process.env.REACT_APP_API_URL}/notasCreditoByClienteId/${selectedCliente.id}`
       );
-      console.log("notas credito", response.data);
       const notasCredito = response.data;
-      console.log("seleccionada", notaSeleccionadaId);
       // Buscar solo la nota que coincida con el ID seleccionado
       const nota = notasCredito.find(
         (nc) => Number(nc.notaCredito_id) === Number(notaSeleccionadaId)
       );
-      console.log("nota", nota);
       if (!nota) {
         return notification.warning({
           message: "Nota no encontrada",
@@ -922,9 +859,6 @@ const ResumenCuenta = () => {
     let yPos = 60;
 
     if (filteredData.length > 0) {
-      // Calcular saldo acumulado correctamente considerando el saldo inicial
-      let saldoAcumulado = 0;
-      
       doc.autoTable({
         startY: yPos,
         head: [
@@ -939,23 +873,14 @@ const ResumenCuenta = () => {
         ],
         body: filteredData.map((row) => {
           const monto = row.montoNumerico ?? 0;
-
-          // Para Saldo Inicial, el saldo acumulado es el monto mismo
-          if (row.esSaldoInicial) {
-            saldoAcumulado = monto;
-          } else if (row.tipo === "Venta") {
-            saldoAcumulado += monto;
-          } else if (row.tipo === "Pago" || row.tipo === "Nota de Crédito") {
-            saldoAcumulado -= monto;
-          }
-
+          const saldoFila = row.saldoRestante ?? 0;
           return [
             new Date(row.fecha).toLocaleDateString("es-AR"),
             row.tipo,
             `$${formatMonto(monto)}`,
             row.numero || "-",
             row.metodo_pago ? row.metodo_pago : "N/A",
-            `$${formatMonto(saldoAcumulado)}`,
+            `$${formatMonto(saldoFila)}`,
           ];
         }),
         theme: "grid",
@@ -981,18 +906,12 @@ const ResumenCuenta = () => {
       yPos += 10;
     }
 
-    // Calcular el saldo final real
-    const saldoFinal = filteredData.length > 0 
-      ? filteredData.filter(r => !r.esSaldoInicial).reduce((acc, row) => {
-          const monto = row.montoNumerico ?? 0;
-          if (row.tipo === "Venta") return acc + monto;
-          if (row.tipo === "Pago" || row.tipo === "Nota de Crédito") return acc - monto;
-          return acc;
-        }, filteredData.find(r => r.esSaldoInicial)?.montoNumerico || 0)
-      : 0;
-
     doc.setFontSize(14);
-    doc.text(`Saldo Restante Final: $${formatMonto(saldoFinal)}`, 14, yPos);
+    doc.text(
+      `Saldo Restante Final: $${formatMonto(saldoRestanteBackend)}`,
+      14,
+      yPos
+    );
 
     doc.save(`ResumenCuenta_${selectedCliente.nombre}.pdf`);
   };
@@ -1056,14 +975,13 @@ const ResumenCuenta = () => {
     try {
       let payload = {};
       let url = "";
-      console.log("venta", ventaData);
       if (tipoEdicion === "Pago") {
         payload = {
           monto: pagoData.monto,
           fecha_pago: dayjs(pagoData.fecha_pago).format("DD/MM/YYYY"),
           ID: pagoData.id,
         };
-        url = "http://localhost:3001/updatePago";
+        url = `${process.env.REACT_APP_API_URL}/updatePago`;
       } else if (tipoEdicion === "Venta") {
         payload = {
           fecha_venta: dayjs(ventaData.fecha_venta).format("DD/MM/YYYY"),
@@ -1071,13 +989,13 @@ const ResumenCuenta = () => {
           descuento: ventaData.descuento,
           ID: ventaData.venta_id,
         };
-        url = "http://localhost:3001/updateVenta";
+        url = `${process.env.REACT_APP_API_URL}/updateVenta`;
       } else if (tipoEdicion === "Nota de Crédito") {
         payload = {
           fecha: dayjs(ncData.fecha).format("DD/MM/YYYY"),
           ID: ncData.id,
         };
-        url = "http://localhost:3001/updateNotaCredito";
+        url = `${process.env.REACT_APP_API_URL}/updateNotaCredito`;
       }
 
       await axios.put(url, payload);

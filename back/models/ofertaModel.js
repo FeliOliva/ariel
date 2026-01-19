@@ -11,20 +11,23 @@ const getAllOfertas = async () => {
   }
 };
 
-const addOferta = async (nombre, detalles) => {
+const addOferta = async (nombre, detalles, connection = null) => {
   try {
+    const conn = connection || db;
     const query = queriesOfertas.addOferta;
-    const [result] = await db.query(query, [nombre]);
+    const [result] = await conn.query(query, [nombre]);
     const ofertaId = result.insertId;
 
-    for (const detalle of detalles) {
-      const queryDetalle = queriesOfertas.addDetalleOferta;
-      await db.query(queryDetalle, [
+    if (detalles && detalles.length > 0) {
+      const rows = detalles.map((detalle) => [
         ofertaId,
         detalle.articulo_id,
         detalle.cantidad,
         detalle.precioOferta,
       ]);
+      const queryDetalle =
+        "INSERT INTO detalle_oferta (oferta_id, articulo_id, cantidad, precioOferta) VALUES ?";
+      await conn.query(queryDetalle, [rows]);
     }
 
     return ofertaId;
@@ -51,10 +54,11 @@ const upOferta = async (ID) => {
   }
 };
 
-const updateOferta = async (nombre, id) => {
+const updateOferta = async (nombre, id, connection = null) => {
   try {
+    const conn = connection || db;
     const query = queriesOfertas.updateOferta;
-    await db.query(query, [nombre, id]);
+    await conn.query(query, [nombre, id]);
   } catch (err) {
     throw err;
   }
@@ -63,11 +67,38 @@ const updateOferta = async (nombre, id) => {
 const updateCantidadDetalleOferta = async (
   cantidad,
   articulo_id,
-  oferta_id
+  oferta_id,
+  connection = null
 ) => {
   try {
+    const conn = connection || db;
     const query = queriesOfertas.updateCantidadDetalleOferta;
-    await db.query(query, [cantidad, articulo_id, oferta_id]);
+    await conn.query(query, [cantidad, articulo_id, oferta_id]);
+  } catch (err) {
+    throw err;
+  }
+};
+const updateCantidadDetalleOfertaBatch = async (
+  oferta_id,
+  detalles,
+  connection = null
+) => {
+  if (!detalles || detalles.length === 0) {
+    return;
+  }
+  try {
+    const conn = connection || db;
+    const cases = detalles.map(() => "WHEN ? THEN ?").join(" ");
+    const ids = detalles.map((d) => d.articulo_id);
+    const params = [];
+    detalles.forEach((d) => {
+      params.push(d.articulo_id, d.cantidad);
+    });
+    params.push(oferta_id, ...ids);
+    const query = `UPDATE detalle_oferta SET cantidad = CASE articulo_id ${cases} ELSE cantidad END WHERE oferta_id = ? AND articulo_id IN (${ids
+      .map(() => "?")
+      .join(",")})`;
+    await conn.query(query, params);
   } catch (err) {
     throw err;
   }
@@ -91,4 +122,5 @@ module.exports = {
   updateOferta,
   getOfertaById,
   updateCantidadDetalleOferta,
+  updateCantidadDetalleOfertaBatch,
 };

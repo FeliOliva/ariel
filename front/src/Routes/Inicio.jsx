@@ -86,22 +86,22 @@ const Inicio = () => {
       const [ventasRes, pagosRes, gastosRes, comprasRes, notasCreditoRes, clientesRes, saldoInicialRes] =
         await Promise.all([
           axios.get(
-            `http://localhost:3001/totalVentas?startDate=${startDate}&endDate=${endDate}`
+            `${process.env.REACT_APP_API_URL}/totalVentas?startDate=${startDate}&endDate=${endDate}`
           ),
           axios.get(
-            `http://localhost:3001/totalPagos?startDate=${startDate}&endDate=${endDate}`
+            `${process.env.REACT_APP_API_URL}/totalPagos?startDate=${startDate}&endDate=${endDate}`
           ),
           axios.get(
-            `http://localhost:3001/totalGastos?startDate=${startDate}&endDate=${endDate}`
+            `${process.env.REACT_APP_API_URL}/totalGastos?startDate=${startDate}&endDate=${endDate}`
           ),
           axios.get(
-            `http://localhost:3001/filterComprasByFecha?startDate=${startDate}&endDate=${endDate}`
+            `${process.env.REACT_APP_API_URL}/filterComprasByFecha?startDate=${startDate}&endDate=${endDate}`
           ),
           axios.get(
-            `http://localhost:3001/totalNotasCredito?startDate=${startDate}&endDate=${endDate}`
+            `${process.env.REACT_APP_API_URL}/totalNotasCredito?startDate=${startDate}&endDate=${endDate}`
           ),
-          axios.get(`http://localhost:3001/totalClientes`),
-          axios.get(`http://localhost:3001/cierre-masivo/saldo-total`, {
+          axios.get(`${process.env.REACT_APP_API_URL}/totalClientes`),
+          axios.get(`${process.env.REACT_APP_API_URL}/cierre-masivo/saldo-total`, {
             params: { fecha_corte: "2026-01-01" }
           }),
         ]);
@@ -131,7 +131,7 @@ const Inicio = () => {
     const intervalId = setInterval(() => {
       // Solo actualizar el saldo inicial si hay un rango de fechas seleccionado
       if (rangoFechas && rangoFechas.length === 2) {
-        axios.get(`http://localhost:3001/cierre-masivo/saldo-total`, {
+        axios.get(`${process.env.REACT_APP_API_URL}/cierre-masivo/saldo-total`, {
           params: { fecha_corte: "2026-01-01" }
         })
           .then((response) => {
@@ -180,7 +180,7 @@ const Inicio = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:3001/getVentasConGananciaFiltradas`,
+        `${process.env.REACT_APP_API_URL}/getVentasConGananciaFiltradas`,
         { params }
       );
 

@@ -63,7 +63,6 @@ const ResumenCuenta = () => {
 
   const generateNotaCreditoPDF = () => {
     if (!notasCredito || notasCredito.length === 0) {
-      console.log("no hay");
       notification.warning({
         message: "No existen notas de credito",
         description: "Para el cliente seleccionado",
@@ -276,18 +275,17 @@ const ResumenCuenta = () => {
   const fetchData = async (clienteId, fechaInicio, fechaFin) => {
     try {
       const params = { fecha_inicio: fechaInicio, fecha_fin: fechaFin };
-      console.log(fechaInicio, fechaFin);
       // Ejecutar las solicitudes en paralelo con manejo de errores
       const [ventasResponse, pagosResponse, totalNotasCreditoResponse] =
         await Promise.allSettled([
-          axios.get(`http://localhost:3001/ventasxclientexfecha/${clienteId}`, {
+          axios.get(`${process.env.REACT_APP_API_URL}/ventasxclientexfecha/${clienteId}`, {
             params,
           }),
-          axios.get(`http://localhost:3001/getPagosByClienteId/${clienteId}`, {
+          axios.get(`${process.env.REACT_APP_API_URL}/getPagosByClienteId/${clienteId}`, {
             params,
           }),
           axios.get(
-            `http://localhost:3001/notasCreditoByClienteId/${clienteId}`
+            `${process.env.REACT_APP_API_URL}/notasCreditoByClienteId/${clienteId}`
           ),
         ]);
 
@@ -324,9 +322,6 @@ const ResumenCuenta = () => {
         (sum, nota) => sum + (parseFloat(nota.total) || 0),
         0
       );
-      console.log("ventas", ventasData);
-      console.log("pagos", pagosData);
-      console.log("notas de credito", notasCreditoData);
       setVentas(ventasData);
       setPagos(pagosData);
       setNotasCredito(notasCreditoData);
@@ -410,8 +405,6 @@ const ResumenCuenta = () => {
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
-    console.log(selectedArticulo);
-    console.log(articulo);
   };
 
   const handleAddArticulo = () => {
@@ -451,7 +444,6 @@ const ResumenCuenta = () => {
           },
         ],
       }));
-      console.log(notaCredito);
       setSelectedArticulo(null);
       setCantidad(0);
       setArticuloValue("");
@@ -480,15 +472,10 @@ const ResumenCuenta = () => {
         : item
     );
     setNotaCredito((prevNC) => ({ ...prevNC, articulos: updatedArticulos }));
-    console.log("Artículos actualizados: ", updatedArticulos);
   };
 
   const handleAddNotaCredito = async () => {
-    console.log("nota credito", notaCredito);
-    console.log("cliente", selectedCliente.nombre);
-    console.log(notaCredito.articulos.length);
     if (notaCredito.articulos.length > 0) {
-      console.log("hola");
       try {
         const payLoad = {
           cliente_id: selectedCliente.id,
@@ -500,14 +487,13 @@ const ResumenCuenta = () => {
               : articulo.price,
           })),
         };
-        console.log("nota cred data", payLoad);
         confirm({
           title: "Confirmar",
           content: "¿Desea registrar la nota de credito?",
           okText: "Si",
           cancelText: "No",
           onOk: async () => {
-            await axios.post("http://localhost:3001/addNotaCredito", payLoad);
+            await axios.post(`${process.env.REACT_APP_API_URL}/addNotaCredito`, payLoad);
             notification.success({
               message: "Exito",
               description: "Nota de credito registrada con exito",
@@ -540,7 +526,7 @@ const ResumenCuenta = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropNotaCredito/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropNotaCredito/${id}`);
             notification.success({
               message: "La nota de credito se ha desactivado",
               description: "La nota de credito se ha desactivado exitosamente",
@@ -558,7 +544,7 @@ const ResumenCuenta = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upNotaCredito/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upNotaCredito/${id}`);
             notification.success({
               message: "Nota de credito activada",
               description: "El Nota de credito se activo exitosamente",
@@ -922,7 +908,6 @@ const ResumenCuenta = () => {
               clienteId={selectedCliente.id}
               nextNroPago={nextNroPago}
               onPagoAdded={(nuevoPago) => {
-                console.log("Nuevo Pago:", nuevoPago);
 
                 // Volver a cargar los datos
                 if (

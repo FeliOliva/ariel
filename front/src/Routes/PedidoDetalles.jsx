@@ -25,7 +25,7 @@ const PedidoDetalles = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/detallesPedido/${id}`
+          `${process.env.REACT_APP_API_URL}/detallesPedido/${id}`
         );
         if (isMounted) {
           setData(response.data);
@@ -103,13 +103,12 @@ const PedidoDetalles = () => {
   const handleEdit = async (detalleId) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/detallePedidoById/${detalleId}`
+        `${process.env.REACT_APP_API_URL}/detallePedidoById/${detalleId}`
       );
       setDetallePedido(response.data);
       setCantidad(response.data.cantidad); // Setea la cantidad actual
       setOpen(true);
     } catch (error) {
-      console.log("Error al obtener detalle del pedido:", error);
     }
   };
   const handleEditPedido = async () => {
@@ -122,7 +121,7 @@ const PedidoDetalles = () => {
       onOk: async () => {
         try {
           await axios.put(
-            "http://localhost:3001/pedido/detalle",
+            `${process.env.REACT_APP_API_URL}/pedido/detalle`,
             {
               detalleId: detallePedido.detalle_pedido_id,
               nuevaCantidad: cantidad,

@@ -14,10 +14,9 @@ const SubLineaInput = ({ lineaId, onChangeSubLinea }) => {
         setLoading(true);
         try {
           const response = await axios.get(
-            `http://localhost:3001/getSubLineasByLinea/${lineaId}`
+            `${process.env.REACT_APP_API_URL}/getSubLineasByLinea/${lineaId}`
           );
           setSubLineas(response.data);
-          console.log(response.data);
         } catch (error) {
           console.error("Error fetching sublineas:", error);
         } finally {

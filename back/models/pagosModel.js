@@ -25,9 +25,10 @@ const getPagosByClienteId = async (cliente_id, fecha_inicio, fecha_fin) => {
     throw err;
   }
 };
-const getUltimoPago = async (cliente_id) => {
+const getUltimoPago = async (cliente_id, connection = null) => {
+  const conn = connection || db;
   const query = `SELECT nro_pago FROM pagos WHERE cliente_id = ? ORDER BY nro_pago DESC LIMIT 1`;
-  const [rows] = await db.query(query, [cliente_id]); // 👈 fix
+  const [rows] = await conn.query(query, [cliente_id]); // 👈 fix
   return rows[0]?.nro_pago || null;
 };
 
@@ -36,10 +37,12 @@ const addPago = async (
   monto,
   metodo_pago,
   vendedor_id,
-  cheque // 👈 objeto opcional { banco, nro_cheque, fecha_emision, fecha_cobro }
+  cheque, // 👈 objeto opcional { banco, nro_cheque, fecha_emision, fecha_cobro }
+  connection = null
 ) => {
+  const conn = connection || db;
   // 1) Calcular siguiente nro_pago para ese cliente
-  const ultimoNroPago = await getUltimoPago(cliente_id);
+  const ultimoNroPago = await getUltimoPago(cliente_id, conn);
   let nuevoNro;
 
   if (!ultimoNroPago) {
@@ -55,7 +58,7 @@ const addPago = async (
     VALUES (?, ?, ?, ?, ?)
   `;
 
-  const [insertResult] = await db.query(insertPagoQuery, [
+  const [insertResult] = await conn.query(insertPagoQuery, [
     nuevoNro,
     cliente_id,
     monto,
@@ -80,7 +83,7 @@ const addPago = async (
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await db.query(insertChequeQuery, [
+    await conn.query(insertChequeQuery, [
       bancoMayus,
       cheque.nro_cheque,
       cheque.fecha_emision, // "YYYY-MM-DD" desde el front

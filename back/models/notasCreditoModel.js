@@ -10,10 +10,11 @@ const getAllNotasCreditoByClienteId = async (cliente_id) => {
     throw err;
   }
 };
-const addNotaCredito = async (cliente_id) => {
+const addNotaCredito = async (cliente_id, connection = null) => {
   try {
+    const conn = connection || db;
     const query = queriesNotasCredito.addNotaCredito;
-    const [result] = await db.query(query, [cliente_id]);
+    const [result] = await conn.query(query, [cliente_id]);
     return result.insertId;
   } catch (err) {
     throw err;
@@ -33,29 +34,67 @@ const addDetallesNotaCredito = async (
   notaCreditoId,
   articulo_id,
   cantidad,
-  precio
+  precio,
+  connection = null
 ) => {
   try {
+    const conn = connection || db;
     const query = queriesNotasCredito.addDetallesNotaCredito;
-    await db.query(query, [notaCreditoId, articulo_id, cantidad, precio]);
+    await conn.query(query, [notaCreditoId, articulo_id, cantidad, precio]);
   } catch (err) {
     throw err;
   }
 };
-const updateStock = async (articulo_id, cantidad) => {
+const addDetallesNotaCreditoBatch = async (rows, connection = null) => {
+  if (!rows || rows.length === 0) {
+    return;
+  }
   try {
+    const conn = connection || db;
+    const query =
+      "INSERT INTO detallenotacredito (notacredito_id, articulo_id, cantidad, precio) VALUES ?";
+    await conn.query(query, [rows]);
+  } catch (err) {
+    throw err;
+  }
+};
+const updateStock = async (articulo_id, cantidad, connection = null) => {
+  try {
+    const conn = connection || db;
     const query = queriesNotasCredito.updateStock;
-    await db.query(query, [cantidad, articulo_id]); // Asegúrate de que cantidad se sume al stock
+    await conn.query(query, [cantidad, articulo_id]); // Asegúrate de que cantidad se sume al stock
   } catch (err) {
     throw err;
   }
 };
-const dropNotaCredito = async (ID) => {
+const updateStockBatch = async (updates, connection = null) => {
+  if (!updates || updates.length === 0) {
+    return;
+  }
   try {
+    const conn = connection || db;
+    const cases = updates.map(() => "WHEN ? THEN ?").join(" ");
+    const ids = updates.map((u) => u.articulo_id);
+    const params = [];
+    updates.forEach((u) => {
+      params.push(u.articulo_id, u.cantidad);
+    });
+    params.push(...ids);
+    const query = `UPDATE articulo SET stock = stock + CASE id ${cases} ELSE 0 END WHERE id IN (${ids
+      .map(() => "?")
+      .join(",")})`;
+    await conn.query(query, params);
+  } catch (err) {
+    throw err;
+  }
+};
+const dropNotaCredito = async (ID, connection = null) => {
+  try {
+    const conn = connection || db;
     const query = queriesNotasCredito.dropDetallesNotaCredito;
     const query2 = queriesNotasCredito.dropNotaCredito;
-    await db.query(query, [ID]);
-    await db.query(query2, [ID]);
+    await conn.query(query, [ID]);
+    await conn.query(query2, [ID]);
   } catch (err) {
     throw err;
   }
@@ -93,7 +132,9 @@ module.exports = {
   getAllNotasCreditoByClienteId,
   addNotaCredito,
   addDetallesNotaCredito,
+  addDetallesNotaCreditoBatch,
   updateStock,
+  updateStockBatch,
   dropNotaCredito,
   getNotasCreditoByZona,
   getDetallesNotaCredito,

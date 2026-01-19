@@ -6,7 +6,6 @@ const getAllSubLinea = async () => {
     const [rows] = await db.query(queriesSubLinea.getAllSubLinea);
     return rows;
   } catch (error) {
-    console.log(error);
   }
 };
 const addSubLinea = async (nombre, linea_id) => {

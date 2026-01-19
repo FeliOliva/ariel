@@ -12,7 +12,7 @@ export default function ArticulosInput({
   useEffect(() => {
     const fetchArticulos = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/articulos");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/articulos`);
         setArticulos(response.data);
       } catch (error) {
         console.error("Error fetching articulos:", error);
@@ -31,7 +31,6 @@ export default function ArticulosInput({
   };
 
   const handleSearchArticulo = (value) => {
-    console.log("search:", value);
   };
 
   const options = articulos

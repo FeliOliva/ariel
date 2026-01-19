@@ -28,7 +28,7 @@ const Proveedores = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/proveedor");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/proveedor`);
       setData(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -55,7 +55,7 @@ const Proveedores = () => {
       onOk: async () => {
         try {
           const response = await axios.post(
-            "http://localhost:3001/addProveedor",
+            `${process.env.REACT_APP_API_URL}/addProveedor`,
             newProveedor
           );
           setData([...data, response.data]);
@@ -97,7 +97,7 @@ const Proveedores = () => {
       onOk: async () => {
         try {
           await axios.put(
-            "http://localhost:3001/updateProveedor",
+            `${process.env.REACT_APP_API_URL}/updateProveedor`,
             proveedorActualizado
           );
           setOpenEditDrawer(false);
@@ -124,7 +124,7 @@ const Proveedores = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropProveedor/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropProveedor/${id}`);
             fetchData();
             notification.success({
               message: "Proveedor desactivado con exito",
@@ -141,7 +141,7 @@ const Proveedores = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upProveedor/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upProveedor/${id}`);
             fetchData();
             notification.success({
               message: "Proveedor activado con exito",
@@ -190,7 +190,7 @@ const Proveedores = () => {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getProveedorByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getProveedorByID/${id}`
       );
       setCurrentProveedor(response.data);
       setOpenEditDrawer(true);

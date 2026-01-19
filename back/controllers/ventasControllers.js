@@ -1,8 +1,27 @@
 const ventasModel = require("../models/ventasModel");
+const clienteModel = require("../models/clienteModel");
+const pagosModel = require("../models/pagosModel");
+const notasCreditoModel = require("../models/notasCreditoModel");
 const NodeCache = require("node-cache");
+const db = require("../database");
+const cierreCuentaModel = require("../models/cierreCuentaModel");
 
 // Caché con TTL de 10 segundos (para actualización más rápida entre múltiples PCs)
 const ventasCache = new NodeCache({ stdTTL: 10 });
+
+// Fecha de corte por defecto (1 de enero de 2026)
+const FECHA_CORTE_DEFAULT = "2026-01-01";
+
+const parseMonto = (valor) => {
+  if (valor === null || valor === undefined) return 0;
+  if (typeof valor === "number") return valor;
+  if (typeof valor === "string") {
+    const normalizado = valor.replace(/\./g, "").replace(",", ".");
+    const parsed = Number(normalizado);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
 
 // Función para invalidar caché
 const invalidateVentasCache = () => {
@@ -30,6 +49,8 @@ const getAllVentas = async (req, res) => {
   }
 };
 const addVenta = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const {
       cliente_id,
@@ -40,7 +61,13 @@ const addVenta = async (req, res) => {
       detalles,
     } = req.body;
 
-    const lineas = (await ventasModel.getLineasStock()).map((l) => l.linea_id);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    const lineas = (await ventasModel.getLineasStock(connection)).map(
+      (l) => l.linea_id
+    );
 
     // Si es aumento → descuento en DB = 0
     const descuentoDB = tipoDescuento === 1 ? 0 : descuento;
@@ -50,15 +77,20 @@ const addVenta = async (req, res) => {
       cliente_id,
       nroVenta,
       zona_id,
-      descuentoDB
+      descuentoDB,
+      connection
     );
 
     let totalVenta = 0;
+    const detalleRows = [];
+    const logRows = [];
+    const stockMap = new Map();
 
-    // Procesar detalles
+    // Procesar detalles (cálculo en memoria)
     for (const detalle of detalles) {
       if (lineas.includes(detalle.linea_id)) {
-        await ventasModel.descontarStock(detalle.articulo_id, detalle.cantidad);
+        const current = stockMap.get(detalle.articulo_id) || 0;
+        stockMap.set(detalle.articulo_id, current + Number(detalle.cantidad));
       }
 
       let precioUnitario = Number(detalle.precio_monotributista);
@@ -75,21 +107,35 @@ const addVenta = async (req, res) => {
 
       totalVenta += sub_total;
 
-      await ventasModel.addDetalleVenta(
+      detalleRows.push([
         ventaId,
         detalle.articulo_id,
         detalle.costo,
         detalle.cantidad,
         precioUnitario,
         sub_total,
-        tipoDescuento === 1 ? descuento : 0
-      );
+        tipoDescuento === 1 ? descuento : 0,
+      ]);
 
-      await ventasModel.updateLogVenta(
+      logRows.push([
         cliente_id,
         detalle.articulo_id,
-        detalle.cantidad
+        detalle.cantidad,
+        new Date(),
+      ]);
+    }
+
+    await ventasModel.addDetalleVentaBatch(detalleRows, connection);
+    await ventasModel.updateLogVentaBatch(logRows, connection);
+
+    if (stockMap.size > 0) {
+      const updates = Array.from(stockMap.entries()).map(
+        ([articulo_id, cantidad]) => ({
+          articulo_id,
+          cantidad: -cantidad,
+        })
       );
+      await ventasModel.updateStockBatch(updates, connection);
     }
 
     // ===============================
@@ -112,22 +158,53 @@ const addVenta = async (req, res) => {
     totalVenta = Math.round(totalVenta);
 
     // Guardar totales
-    await ventasModel.updateVentaTotal(totalVenta, totalConDescuento, ventaId);
+    await ventasModel.updateVentaTotal(
+      totalVenta,
+      totalConDescuento,
+      ventaId,
+      connection
+    );
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     // Invalidar caché de ventas
     invalidateVentasCache();
 
     res.status(201).json({ message: "Venta agregada con éxito" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de addVenta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al agregar la venta:", error);
     res.status(500).json({ error: "Error al agregar la venta" });
   }
 };
 
 const dropVenta = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const ID = req.params.ID;
-    await ventasModel.dropVenta(ID);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    await ventasModel.dropVenta(ID, connection);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     // Invalidar caché de ventas
     invalidateVentasCache();
@@ -136,6 +213,16 @@ const dropVenta = async (req, res) => {
       .status(200)
       .json({ message: "Venta deshabilitada con éxito y stock actualizado" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de dropVenta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al deshabilitar la venta:", error);
     res.status(500).json({ error: "Error al deshabilitar la venta" });
   }
@@ -144,9 +231,7 @@ const dropVenta = async (req, res) => {
 const updateVentas = async (req, res) => {
   try {
     const { fecha_venta, total, descuento, ID } = req.body;
-    console.log("Datos recibidos para actualizar la venta:", req.body);
     const total_con_descuento = (total - total * (descuento / 100)).toFixed(3);
-    console.log("Total con descuento:", total_con_descuento);
 
     await ventasModel.updateVentas(
       fecha_venta,
@@ -173,9 +258,6 @@ const getVentasByZona = async (req, res) => {
     // Convertir zona_id a número para asegurar el tipo correcto
     const zonaIdNum = parseInt(zona_id, 10);
     
-    console.log("ID (original):", zona_id, "tipo:", typeof zona_id);
-    console.log("ID convertido a número:", zonaIdNum, "tipo:", typeof zonaIdNum);
-    console.log("fechas", fecha_inicio, fecha_fin);
     
     if (!zona_id || isNaN(zonaIdNum)) {
       return res.status(400).json({ error: "ID de zona no proporcionado o inválido" });
@@ -193,8 +275,6 @@ const getVentasByZona = async (req, res) => {
       fecha_fin
     );
     
-    console.log("Ventas obtenidas:", ventas);
-    console.log("Cantidad de ventas:", ventas?.length || 0);
 
     // Manejar el caso de que no existan ventas
     if (!ventas || ventas.length === 0) {
@@ -224,7 +304,6 @@ const getVentasByClientes = async (req, res) => {
     const cliente_id = req.params.ID;
     const ventas = await ventasModel.getVentasByClientes(cliente_id);
     res.json(ventas);
-    console.log(ventas);
   } catch (error) {
     console.error("Error al obtener las ventas por cliente:", error);
     res.status(500).json({ error: "Error al obtener las ventas por cliente" });
@@ -291,12 +370,84 @@ const getResumenCliente = async (req, res) => {
     }
     const fecha_Inicio_Hora = fecha_inicio + " 00:00:00";
     const fecha_Final = fecha_fin + " 23:59:59";
-    const data = await ventasModel.getResumenCliente(
+
+    const usarCierre =
+      new Date(fecha_inicio) >= new Date(FECHA_CORTE_DEFAULT);
+
+    let cierreData = null;
+    let saldoInicial = 0;
+
+    if (usarCierre) {
+      cierreData = await cierreCuentaModel.getCierreCuentaByCliente(
+        cliente_id,
+        FECHA_CORTE_DEFAULT
+      );
+      if (cierreData) {
+        saldoInicial = Number(cierreData.saldo_cierre) || 0;
+      }
+    }
+
+    const movimientos = await ventasModel.getResumenCliente(
       cliente_id,
       fecha_Inicio_Hora,
       fecha_Final
     );
-    res.json(data);
+
+    let saldoAcumulado = usarCierre ? saldoInicial : 0;
+    const items = movimientos.map((item) => {
+      let monto = 0;
+      if (item.total_con_descuento) {
+        monto = parseMonto(item.total_con_descuento);
+      } else if (item.monto) {
+        monto = parseMonto(item.monto);
+      }
+
+      if (item.tipo === "Venta") {
+        saldoAcumulado += monto;
+      } else if (item.tipo === "Pago" || item.tipo === "Nota de Crédito") {
+        saldoAcumulado -= monto;
+      }
+
+      if (Math.abs(saldoAcumulado) < 1) {
+        saldoAcumulado = 0;
+      }
+
+      return {
+        ...item,
+        monto_numerico: monto,
+        saldo_restante: saldoAcumulado,
+      };
+    });
+
+    const saldoFinal = saldoAcumulado;
+
+    if (usarCierre && cierreData) {
+      items.push({
+        id: `cierre-${cierreData.id}`,
+        tipo: "Saldo Inicial",
+        estado: 1,
+        cliente_id: cierreData.cliente_id,
+        numero: "-",
+        fecha: cierreData.fecha_corte,
+        total_con_descuento: null,
+        monto: null,
+        metodo_pago: null,
+        vendedor_id: null,
+        vendedor_nombre: null,
+        monto_numerico: saldoInicial,
+        saldo_restante: saldoInicial,
+        esSaldoInicial: true,
+      });
+    }
+
+    res.json({
+      items,
+      saldo_inicial: saldoInicial,
+      saldo_final: saldoFinal,
+      cierre: cierreData,
+      usar_saldo_inicial: usarCierre,
+      fecha_corte: FECHA_CORTE_DEFAULT,
+    });
   } catch (error) {
     console.error("Error al obtener el resumen del cliente:", error);
     res.status(500).json({ error: "Error al obtener el resumen del cliente" });
@@ -325,7 +476,6 @@ const getVentasByClientesxFecha = async (req, res) => {
       fecha_fin
     );
 
-    console.log("Ventas obtenidas:", ventas);
 
     // Manejar el caso de que no existan ventas
     if (!ventas || ventas.length === 0) {
@@ -343,8 +493,6 @@ const getVentasByClientesxFecha = async (req, res) => {
 const getResumenZonas = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = req.query;
-    console.log("Fecha inicio:", fecha_inicio);
-    console.log("Fecha fin:", fecha_fin);
 
     if (!fecha_inicio || !fecha_fin) {
       return res.status(400).json({
@@ -365,12 +513,148 @@ const getResumenZonas = async (req, res) => {
   }
 };
 
+const getResumenCuentaZona = async (req, res) => {
+  try {
+    const { ID: zona_id } = req.params;
+    const { fecha_inicio, fecha_fin } = req.query;
+
+    if (!zona_id) {
+      return res.status(400).json({ error: "ID de zona no proporcionado" });
+    }
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Los parámetros fecha_inicio y fecha_fin son requeridos.",
+      });
+    }
+
+    const zonaIdNum = Number(zona_id);
+    if (Number.isNaN(zonaIdNum)) {
+      return res.status(400).json({ error: "ID de zona inválido" });
+    }
+
+    const usarSaldoInicial =
+      new Date(fecha_inicio) >= new Date(FECHA_CORTE_DEFAULT);
+
+    const [
+      clientes,
+      ventas,
+      pagos,
+      notasCredito,
+      cierres,
+      saldoTotalCierre,
+    ] = await Promise.all([
+      clienteModel.getClientesByZona(zonaIdNum),
+      ventasModel.getVentasByZona(zonaIdNum, fecha_inicio, fecha_fin),
+      pagosModel.getPagosByZona_id(zonaIdNum, fecha_inicio, fecha_fin),
+      notasCreditoModel.getNotasCreditoByZona(
+        zonaIdNum,
+        fecha_inicio,
+        fecha_fin
+      ),
+      cierreCuentaModel.getCierresByZona(FECHA_CORTE_DEFAULT, zonaIdNum),
+      cierreCuentaModel.getSaldoTotalCierreMasivo(FECHA_CORTE_DEFAULT),
+    ]);
+
+    const saldosInicialesPorCliente = {};
+    (cierres || []).forEach((cierre) => {
+      if (cierre && cierre.cliente_id) {
+        saldosInicialesPorCliente[cierre.cliente_id] =
+          Number(cierre.saldo_cierre) || 0;
+      }
+    });
+
+    const ventasPorCliente = {};
+    (ventas || []).forEach((venta) => {
+      const clienteId = venta.cliente_id;
+      ventasPorCliente[clienteId] =
+        (ventasPorCliente[clienteId] || 0) + (Number(venta.total_ventas) || 0);
+    });
+
+    const pagosPorCliente = {};
+    (pagos || []).forEach((pago) => {
+      const clienteId = pago.cliente_id;
+      pagosPorCliente[clienteId] =
+        (pagosPorCliente[clienteId] || 0) + (Number(pago.total_pagos) || 0);
+    });
+
+    const notasCreditoPorCliente = {};
+    (notasCredito || []).forEach((nc) => {
+      const clienteId = nc.cliente_id;
+      notasCreditoPorCliente[clienteId] =
+        (notasCreditoPorCliente[clienteId] || 0) + (Number(nc.total) || 0);
+    });
+
+    const datos = (clientes || [])
+      .filter((cliente) => cliente.estado === 1)
+      .map((cliente) => {
+        const clienteId = cliente.id;
+        const totalVentas = ventasPorCliente[clienteId] || 0;
+        const totalPagos = pagosPorCliente[clienteId] || 0;
+        const totalNotasCredito = notasCreditoPorCliente[clienteId] || 0;
+        const saldoInicialCliente = saldosInicialesPorCliente[clienteId] || 0;
+        const saldo =
+          totalVentas -
+          totalPagos -
+          totalNotasCredito +
+          (usarSaldoInicial ? saldoInicialCliente : 0);
+
+        return {
+          cliente_id: clienteId,
+          nombre: `${cliente.farmacia || ""} - ${cliente.nombre} ${
+            cliente.apellido || ""
+          }`.trim(),
+          localidad: cliente.localidad || "",
+          totalVentas,
+          totalPagos,
+          totalNotasCredito,
+          saldoInicial: saldoInicialCliente,
+          saldo,
+        };
+      });
+
+    const totalVentas = datos.reduce((sum, d) => sum + d.totalVentas, 0);
+    const totalPagos = datos.reduce((sum, d) => sum + d.totalPagos, 0);
+    const totalNotasCredito = datos.reduce(
+      (sum, d) => sum + d.totalNotasCredito,
+      0
+    );
+    const totalSaldoInicial = datos.reduce(
+      (sum, d) => sum + (d.saldoInicial || 0),
+      0
+    );
+    const saldoGlobal =
+      totalVentas -
+      totalPagos -
+      totalNotasCredito +
+      (usarSaldoInicial ? totalSaldoInicial : 0);
+
+    res.json({
+      datos,
+      totales: {
+        totalVentas,
+        totalPagos,
+        totalNotasCredito,
+        totalSaldoInicial,
+        saldoGlobal,
+      },
+      usarSaldoInicial,
+      fecha_corte: FECHA_CORTE_DEFAULT,
+      saldo_total_cierre: Number(saldoTotalCierre) || 0,
+    });
+  } catch (error) {
+    console.error("Error al obtener el resumen de cuentas por zona:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+
 const editarVenta = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { venta_id, articulo_id, cantidad, precio_monotributista, isGift } =
       req.body;
 
-    console.log("Datos recibidos para editar la venta:", req.body);
 
     if (!venta_id || !articulo_id || !cantidad) {
       return res
@@ -389,13 +673,39 @@ const editarVenta = async (req, res) => {
       return res.status(400).json({ error: "Cantidad inválida" });
     }
 
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
     const result = await ventasModel.editarVenta(
       venta_id,
       articulo_id,
       cantidadNum,
       precioNum,
-      Boolean(isGift)
+      Boolean(isGift),
+      { connection, skipCierreRecalculo: true }
     );
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
+
+    const FECHA_CORTE_DEFAULT = "2026-01-01";
+    if (result?.cierreRecalculoInfo?.cliente_id && result?.cierreRecalculoInfo?.fecha_venta) {
+      const fechaVentaDate = new Date(result.cierreRecalculoInfo.fecha_venta);
+      const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
+      if (fechaVentaDate < fechaCorteDate) {
+        try {
+          await cierreCuentaModel.recalcularCierreCliente(
+            result.cierreRecalculoInfo.cliente_id,
+            FECHA_CORTE_DEFAULT
+          );
+        } catch (cierreErr) {
+          console.error("Error al recalcular cierre de cuenta:", cierreErr);
+        }
+      }
+    }
 
     // Invalidar caché de ventas
     invalidateVentasCache();
@@ -405,6 +715,16 @@ const editarVenta = async (req, res) => {
       data: result,
     });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de editarVenta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al editar la venta:", error);
     const status = error.status || 500;
     res
@@ -414,6 +734,8 @@ const editarVenta = async (req, res) => {
 };
 
 const eliminarDetalleVenta = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { detalle_venta_id } = req.body;
 
@@ -423,7 +745,35 @@ const eliminarDetalleVenta = async (req, res) => {
         .json({ error: "Se requiere el id del detalle de venta" });
     }
 
-    const result = await ventasModel.eliminarDetalleVenta(detalle_venta_id);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    const result = await ventasModel.eliminarDetalleVenta(detalle_venta_id, {
+      connection,
+      skipCierreRecalculo: true,
+    });
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
+
+    const FECHA_CORTE_DEFAULT = "2026-01-01";
+    if (result?.cierreRecalculoInfo?.cliente_id && result?.cierreRecalculoInfo?.fecha_venta) {
+      const fechaVentaDate = new Date(result.cierreRecalculoInfo.fecha_venta);
+      const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
+      if (fechaVentaDate < fechaCorteDate) {
+        try {
+          await cierreCuentaModel.recalcularCierreCliente(
+            result.cierreRecalculoInfo.cliente_id,
+            FECHA_CORTE_DEFAULT
+          );
+        } catch (cierreErr) {
+          console.error("Error al recalcular cierre de cuenta:", cierreErr);
+        }
+      }
+    }
 
     // Invalidar caché de ventas
     invalidateVentasCache();
@@ -433,6 +783,16 @@ const eliminarDetalleVenta = async (req, res) => {
       data: result,
     });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de eliminarDetalleVenta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al eliminar el detalle:", error);
     const status = error.status || 500;
     res.status(status).json({ error: error.message || "Error interno" });
@@ -466,6 +826,7 @@ module.exports = {
   getVentasByClientesxFecha,
   getResumenZonas,
   getResumenCliente,
+  getResumenCuentaZona,
   editarVenta,
   eliminarDetalleVenta,
   getVentasPorFecha,

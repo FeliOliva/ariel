@@ -23,7 +23,6 @@ const dropProveedor = async (req, res) => {
     await proveedorModel.dropProveedor(ID);
     res.status(200).json({ message: "Proveedoredor eliminado con exito" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al eliminar el proveedor" });
   }
 };
@@ -33,7 +32,6 @@ const upProveedor = async (req, res) => {
     await proveedorModel.upProveedor(ID);
     res.status(200).json({ message: "Proveedoredor activado con exito" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al activar el proveedor" });
   }
 };
@@ -44,7 +42,6 @@ const updateProveedor = async (req, res) => {
     res.status(200).json({ message: "Proveedor actualizado con exito" });
     res.json(proveedor);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -54,7 +51,6 @@ const getProveedorByID = async (req, res) => {
     const proveedor = await proveedorModel.getProveedorByID(ID);
     res.json(proveedor);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: error.message });
   }
 };

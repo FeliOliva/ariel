@@ -23,7 +23,7 @@ const SubLinea = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getSubLineasByLinea/${id}`
+        `${process.env.REACT_APP_API_URL}/getSubLineasByLinea/${id}`
       );
       setSubLineas(response.data);
       setNombre(response.data[0].nombre_linea);
@@ -47,7 +47,7 @@ const SubLinea = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropSubLinea/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropSubLinea/${id}`);
             notification.success({
               message: "SubLinea desactivada",
               description: "La subLinea se desactivo exitosamente",
@@ -63,7 +63,7 @@ const SubLinea = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upSubLinea/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upSubLinea/${id}`);
             notification.success({
               message: "SubLinea activada",
               description: "La subLinea se activo exitosamente",
@@ -83,7 +83,7 @@ const SubLinea = () => {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getSublineaByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getSublineaByID/${id}`
       );
       setCurrentSubLinea(response.data);
       setEditDrawer(true);
@@ -113,7 +113,7 @@ const SubLinea = () => {
       onOk: async () => {
         try {
           await axios.put(
-            `http://localhost:3001/updateSubLinea`,
+            `${process.env.REACT_APP_API_URL}/updateSubLinea`,
             editedSubLinea
           );
           setEditDrawer(false);

@@ -39,9 +39,8 @@ const Pedido = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/pedidos");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/pedidos`);
       setData(response.data);
-      console.log("data", response.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -61,7 +60,7 @@ const Pedido = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.delete(`http://localhost:3001/dropPedido/${id}`);
+            await axios.delete(`${process.env.REACT_APP_API_URL}/dropPedido/${id}`);
             notification.success({
               message: "Pedido desactivado",
               description: "El pedido se desactivo exitosamente",
@@ -77,7 +76,7 @@ const Pedido = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.post(`http://localhost:3001/upPedido/${id}`);
+            await axios.post(`${process.env.REACT_APP_API_URL}/upPedido/${id}`);
             notification.success({
               message: "Pedido activado",
               description: "El pedido se activo exitosamente",
@@ -141,8 +140,6 @@ const Pedido = () => {
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
-    console.log(selectedArticulo);
-    console.log(articulo);
   };
   const handleAddArticulo = () => {
     if (selectedArticulo && cantidad > 0) {
@@ -165,7 +162,6 @@ const Pedido = () => {
           },
         ],
       }));
-      console.log(pedido);
       setSelectedArticulo(null);
       setCantidad(0);
       setArticuloValue("");
@@ -194,7 +190,6 @@ const Pedido = () => {
           cantidad: articulo.quantity,
         })),
       };
-      console.log("Datos a enviar:", pedidoData);
       confirm({
         title: "Confirmar",
         content: "¿Desea registrar este pedido?",
@@ -203,7 +198,7 @@ const Pedido = () => {
         onOk: async () => {
           try {
             await axios.post(
-              "http://localhost:3001/pedidos",
+              `${process.env.REACT_APP_API_URL}/pedidos`,
               pedidoData
             );
             notification.success({

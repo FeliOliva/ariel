@@ -68,26 +68,19 @@ const getLineaByID = async (ID) => {
     throw err;
   }
 };
-const guardarLineas = async (lineas) => {
+const guardarLineas = async (lineas, connection = null) => {
   try {
+    const conn = connection || db;
     if (!lineas || !Array.isArray(lineas) || lineas.length === 0) {
       throw new Error("No se recibieron líneas válidas.");
     }
 
     // Desactivar SQL_SAFE_UPDATES y eliminar los registros
-    await db.query("SET SQL_SAFE_UPDATES = 0;");
-    await db.query("DELETE FROM lineas_stock;");
-    const query = `
-      INSERT INTO lineas_stock (linea_id) 
-      SELECT ? 
-      WHERE NOT EXISTS (
-          SELECT 1 FROM lineas_stock WHERE linea_id = ?
-      );
-    `;
-
-    for (const id of lineas) {
-      await db.query(query, [id, id]);
-    }
+    await conn.query("SET SQL_SAFE_UPDATES = 0;");
+    await conn.query("DELETE FROM lineas_stock;");
+    const values = lineas.map((id) => [id]);
+    const query = "INSERT INTO lineas_stock (linea_id) VALUES ?";
+    await conn.query(query, [values]);
 
   } catch (error) {
     console.error("Error guardando líneas:", error);

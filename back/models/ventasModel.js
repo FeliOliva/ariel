@@ -12,10 +12,17 @@ const getAllVentas = async () => {
   }
 };
 
-const addVenta = async (cliente_id, nroVenta, zona_id, descuentoDB) => {
+const addVenta = async (
+  cliente_id,
+  nroVenta,
+  zona_id,
+  descuentoDB,
+  connection = null
+) => {
   try {
+    const conn = connection || db;
     const query = queriesVentas.addVenta;
-    const [result] = await db.query(query, [
+    const [result] = await conn.query(query, [
       cliente_id,
       nroVenta,
       zona_id,
@@ -27,9 +34,10 @@ const addVenta = async (cliente_id, nroVenta, zona_id, descuentoDB) => {
   }
 };
 
-const checkStock = async (articulo_id, cantidad) => {
+const checkStock = async (articulo_id, cantidad, connection = null) => {
   try {
-    const [rows] = await db.query(queriesVentas.checkStock, [articulo_id]);
+    const conn = connection || db;
+    const [rows] = await conn.query(queriesVentas.checkStock, [articulo_id]);
     if (rows.length === 0 || rows[0].stock < cantidad) {
       return {
         disponible: false,
@@ -42,17 +50,24 @@ const checkStock = async (articulo_id, cantidad) => {
   }
 };
 
-const descontarStock = async (articulo_id, cantidad) => {
+const descontarStock = async (articulo_id, cantidad, connection = null) => {
   try {
-    await db.query(queriesVentas.descontarStock, [cantidad, articulo_id]);
+    const conn = connection || db;
+    await conn.query(queriesVentas.descontarStock, [cantidad, articulo_id]);
   } catch (error) {
     throw new Error("Error al descontar el stock: " + error.message);
   }
 };
 
-const updateLogVenta = async (cliente_id, articulo_id, cantidad) => {
+const updateLogVenta = async (
+  cliente_id,
+  articulo_id,
+  cantidad,
+  connection = null
+) => {
   try {
-    await db.query(queriesVentas.updateLogVenta, [
+    const conn = connection || db;
+    await conn.query(queriesVentas.updateLogVenta, [
       cliente_id,
       articulo_id,
       cantidad,
@@ -62,6 +77,21 @@ const updateLogVenta = async (cliente_id, articulo_id, cantidad) => {
   }
 };
 
+const updateLogVentaBatch = async (rows, connection = null) => {
+  if (!rows || rows.length === 0) {
+    return;
+  }
+  try {
+    const conn = connection || db;
+    const query =
+      "INSERT INTO stock_log(cliente_id, articulo_id, cantidad, fecha) VALUES ?";
+    await conn.query(query, [rows]);
+  } catch (error) {
+    throw new Error(
+      "Error al registrar en el log de ventas (batch): " + error.message
+    );
+  }
+};
 const addDetalleVenta = async (
   ventaId,
   articulo_id,
@@ -69,10 +99,12 @@ const addDetalleVenta = async (
   cantidad,
   precio_monotributista,
   sub_total,
-  aumento_porcentaje
+  aumento_porcentaje,
+  connection = null
 ) => {
   try {
-    await db.query(queriesVentas.addDetalleVenta, [
+    const conn = connection || db;
+    await conn.query(queriesVentas.addDetalleVenta, [
       ventaId,
       articulo_id,
       costo,
@@ -86,24 +118,71 @@ const addDetalleVenta = async (
   }
 };
 
-const dropVenta = async (ID) => {
+const addDetalleVentaBatch = async (rows, connection = null) => {
+  if (!rows || rows.length === 0) {
+    return;
+  }
   try {
+    const conn = connection || db;
+    const query = `INSERT INTO detalle_venta 
+      (venta_id, articulo_id, costo, cantidad, precio_monotributista, sub_total, aumento_porcentaje) 
+      VALUES ?`;
+    await conn.query(query, [rows]);
+  } catch (error) {
+    throw new Error(
+      "Error al agregar el detalle de venta (batch): " + error.message
+    );
+  }
+};
+
+const updateStockBatch = async (updates, connection = null) => {
+  if (!updates || updates.length === 0) {
+    return;
+  }
+  try {
+    const conn = connection || db;
+    const cases = updates.map(() => "WHEN ? THEN ?").join(" ");
+    const ids = updates.map((u) => u.articulo_id);
+    const params = [];
+    updates.forEach((u) => {
+      params.push(u.articulo_id, u.cantidad);
+    });
+    params.push(...ids);
+    const query = `UPDATE articulo SET stock = stock + CASE id ${cases} ELSE 0 END WHERE id IN (${ids
+      .map(() => "?")
+      .join(",")})`;
+    await conn.query(query, params);
+  } catch (error) {
+    throw new Error(
+      "Error al actualizar el stock en batch: " + error.message
+    );
+  }
+};
+const dropVenta = async (ID, connection = null) => {
+  try {
+    const conn = connection || db;
     // Obtener detalles de la venta antes de eliminarla
-    const [detalles] = await db.query(queriesVentas.getDetallesVenta, [ID]);
+    const [detalles] = await conn.query(queriesVentas.getDetallesVenta, [ID]);
 
     // Devolver stock a los artículos vendidos
-    for (const detalle of detalles) {
-      await db.query(queriesVentas.devolverStock, [
-        detalle.cantidad,
-        detalle.articulo_id,
-      ]);
+    if (detalles.length > 0) {
+      const stockMap = new Map();
+      for (const detalle of detalles) {
+        const current = stockMap.get(detalle.articulo_id) || 0;
+        stockMap.set(detalle.articulo_id, current + Number(detalle.cantidad));
+      }
+      const updates = Array.from(stockMap.entries()).map(([articulo_id, cantidad]) => ({
+        articulo_id,
+        cantidad,
+      }));
+      await updateStockBatch(updates, conn);
     }
 
     // Eliminar los detalles de la venta
-    await db.query(queriesVentas.dropDetallesVenta, [ID]);
+    await conn.query(queriesVentas.dropDetallesVenta, [ID]);
 
     // Eliminar la venta
-    await db.query(queriesVentas.dropVenta, [ID]);
+    await conn.query(queriesVentas.dropVenta, [ID]);
   } catch (err) {
     throw err;
   }
@@ -144,7 +223,6 @@ const updateVentas = async (
     if (fechaVentaDate < fechaCorteDate && cliente_id) {
       try {
         await cierreCuentaModel.recalcularCierreCliente(cliente_id, FECHA_CORTE_DEFAULT);
-        console.log(`Cierre de cuenta recalculado para cliente ${cliente_id} después de actualizar venta ${ID}`);
       } catch (cierreErr) {
         // No fallar la actualización de la venta si falla el recálculo del cierre
         console.error("Error al recalcular cierre de cuenta:", cierreErr);
@@ -185,10 +263,11 @@ const getVentasByProducto = async (producto_id) => {
   }
 };
 
-const getVentaByID = async (venta_id) => {
+const getVentaByID = async (venta_id, connection = null) => {
   try {
+    const conn = connection || db;
     const query = queriesVentas.getVentaByID;
-    const [rows] = await db.query(query, [venta_id]);
+    const [rows] = await conn.query(query, [venta_id]);
     return rows;
   } catch (err) {
     throw err;
@@ -204,9 +283,15 @@ const getTotal = async (venta_id) => {
     throw err;
   }
 };
-const updateVentaTotal = async (total, total_con_descuento, ventaId) => {
+const updateVentaTotal = async (
+  total,
+  total_con_descuento,
+  ventaId,
+  connection = null
+) => {
+  const conn = connection || db;
   const query = queriesVentas.updateVentaTotal;
-  await db.query(query, [total, total_con_descuento, ventaId]);
+  await conn.query(query, [total, total_con_descuento, ventaId]);
 };
 
 const getResumenCliente = async (cliente_id, fecha_inicio, fecha_fin) => {
@@ -264,14 +349,14 @@ LEFT JOIN (
     SELECT c.zona_id, SUM(v.total_con_descuento) AS total_ventas
     FROM venta v
     JOIN cliente c ON v.cliente_id = c.id
-    WHERE v.estado = 1 AND c.estado = 1 AND DATE(v.fecha_venta) BETWEEN ? AND ?
+    WHERE v.estado = 1 AND c.estado = 1 AND v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
     GROUP BY c.zona_id
 ) AS ventas ON z.id = ventas.zona_id
 LEFT JOIN (
     SELECT c.zona_id, SUM(p.monto) AS total_pagos
     FROM pagos p
     JOIN cliente c ON p.cliente_id = c.id
-    WHERE p.estado = 1 AND c.estado = 1 AND DATE(p.fecha_pago) BETWEEN ? AND ?
+    WHERE p.estado = 1 AND c.estado = 1 AND p.fecha_pago >= ? AND p.fecha_pago < DATE_ADD(?, INTERVAL 1 DAY)
     GROUP BY c.zona_id
 ) AS pagos ON z.id = pagos.zona_id
 LEFT JOIN (
@@ -279,7 +364,7 @@ LEFT JOIN (
     FROM notascredito nc
     JOIN cliente c ON nc.cliente_id = c.id
     LEFT JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
-    WHERE nc.estado = 1 AND c.estado = 1 AND DATE(nc.fecha) BETWEEN ? AND ?
+    WHERE nc.estado = 1 AND c.estado = 1 AND nc.fecha >= ? AND nc.fecha < DATE_ADD(?, INTERVAL 1 DAY)
     GROUP BY c.zona_id
 ) AS notas_credito ON z.id = notas_credito.zona_id
 LEFT JOIN (
@@ -305,19 +390,21 @@ ORDER BY z.id;
     throw err;
   }
 };
-const getLineasStock = async () => {
+const getLineasStock = async (connection = null) => {
   try {
+    const conn = connection || db;
     const query = "select linea_id from lineas_stock";
-    const [lineas] = await db.query(query);
+    const [lineas] = await conn.query(query);
     return lineas;
   } catch (err) {
     throw err;
   }
 };
-const getArticuloById = async (articulo_id) => {
+const getArticuloById = async (articulo_id, connection = null) => {
   try {
+    const conn = connection || db;
     const query = "SELECT * FROM articulo WHERE id = ?";
-    const [rows] = await db.query(query, [articulo_id]);
+    const [rows] = await conn.query(query, [articulo_id]);
     if (rows.length === 0) {
       throw new Error("Artículo no encontrado");
     }
@@ -332,19 +419,22 @@ const editarVenta = async (
   articulo_id,
   cantidad,
   precio_monotributista, // viene del front
-  isGift = false
+  isGift = false,
+  options = {}
 ) => {
   try {
+    const { connection = null, skipCierreRecalculo = false } = options;
+    const conn = connection || db;
     // 1. Obtener líneas controladas
-    const lineas = await getLineasStock();
+    const lineas = await getLineasStock(conn);
     const lineasControladas = lineas.map((l) => l.linea_id);
 
     // 2. Verificar si el artículo pertenece a esas líneas
-    const articulo = await getArticuloById(articulo_id);
+    const articulo = await getArticuloById(articulo_id, conn);
     const controlaStock = lineasControladas.includes(articulo.linea_id);
 
     if (controlaStock) {
-      const stockCheck = await checkStock(articulo_id, cantidad);
+      const stockCheck = await checkStock(articulo_id, cantidad, conn);
       if (!stockCheck.disponible) {
         const err = new Error(
           `No hay suficiente stock para el artículo ${stockCheck.nombre}`
@@ -355,7 +445,7 @@ const editarVenta = async (
     }
 
     // 3. Obtener información de la venta directamente de la tabla venta
-    const [ventaRows] = await db.query(
+    const [ventaRows] = await conn.query(
       "SELECT id, cliente_id, fecha_venta, descuento, total, total_con_descuento FROM venta WHERE id = ?",
       [ventaId]
     );
@@ -382,26 +472,12 @@ const editarVenta = async (
     // 5. Subtotal (si es regalo, sub_total = 0)
     const subTotal = isGift ? 0 : precioFinal * cantidad;
 
-    if (
-      !isGift &&
-      precioBaseArticulo > 0 &&
-      precioFinal > 0 &&
-      precioFinal >= precioBaseArticulo
-    )
-      console.log({
-        articulo_id,
-        precioBaseArticulo,
-        precioFinal,
-        cantidad,
-        subTotal,
-      });
-
     const insertDetalleQuery = `
       INSERT INTO detalle_venta 
       (articulo_id, venta_id, costo, cantidad, precio_monotributista, fecha, sub_total)
       VALUES (?, ?, ?, ?, ?, NOW(), ?)
     `;
-    await db.query(insertDetalleQuery, [
+    await conn.query(insertDetalleQuery, [
       articulo_id,
       ventaId,
       articulo.costo ?? 0,
@@ -411,7 +487,7 @@ const editarVenta = async (
     ]);
 
     // 7. Recalcular totales de la venta
-    const [detalles] = await db.query(
+    const [detalles] = await conn.query(
       "SELECT sub_total FROM detalle_venta WHERE venta_id = ?",
       [ventaId]
     );
@@ -425,39 +501,34 @@ const editarVenta = async (
       SET total = ?, total_con_descuento = ?
       WHERE id = ?
     `;
-    await db.query(updateVentaQuery, [total, totalConDescuento, ventaId]);
+    await conn.query(updateVentaQuery, [total, totalConDescuento, ventaId]);
 
     // Recalcular cierre de cuenta si la venta está dentro del período del cierre
     const FECHA_CORTE_DEFAULT = "2026-01-01";
     const fechaVentaDate = new Date(venta.fecha_venta);
     const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
     
-    console.log(`[editarVenta] Verificando recálculo de cierre - Venta ID: ${ventaId}, Cliente ID: ${venta.cliente_id}, Fecha venta: ${venta.fecha_venta}, Fecha corte: ${FECHA_CORTE_DEFAULT}`);
-    console.log(`[editarVenta] Comparación fechas - fechaVentaDate: ${fechaVentaDate.toISOString()}, fechaCorteDate: ${fechaCorteDate.toISOString()}, es anterior: ${fechaVentaDate < fechaCorteDate}`);
     
-    if (fechaVentaDate < fechaCorteDate && venta.cliente_id) {
+    if (!skipCierreRecalculo && fechaVentaDate < fechaCorteDate && venta.cliente_id) {
       try {
-        console.log(`[editarVenta] Recalculando cierre para cliente ${venta.cliente_id}...`);
         const resultado = await cierreCuentaModel.recalcularCierreCliente(venta.cliente_id, FECHA_CORTE_DEFAULT);
-        console.log(`[editarVenta] Cierre de cuenta recalculado para cliente ${venta.cliente_id} después de editar venta ${ventaId}`, resultado);
       } catch (cierreErr) {
         console.error("[editarVenta] Error al recalcular cierre de cuenta:", cierreErr);
       }
     } else {
-      console.log(`[editarVenta] NO se recalcula cierre - Condición no cumplida: fechaVentaDate < fechaCorteDate: ${fechaVentaDate < fechaCorteDate}, cliente_id: ${venta.cliente_id}`);
     }
 
     // 8. Descontar stock si corresponde
     if (controlaStock) {
-      await descontarStock(articulo_id, cantidad);
+      await descontarStock(articulo_id, cantidad, conn);
     }
 
     // 9. Log
-    await updateLogVenta(ventaId, articulo_id, cantidad);
+    await updateLogVenta(ventaId, articulo_id, cantidad, conn);
 
     // 10. Devolver la venta actualizada
-    const ventaFinal = await getVentaByID(ventaId);
-    const [detallesFinal] = await db.query(
+    const ventaFinal = await getVentaByID(ventaId, conn);
+    const [detallesFinal] = await conn.query(
       "SELECT * FROM detalle_venta WHERE venta_id = ?",
       [ventaId]
     );
@@ -465,6 +536,10 @@ const editarVenta = async (
     return {
       venta: ventaFinal[0],
       detalles: detallesFinal,
+      cierreRecalculoInfo: {
+        cliente_id: venta.cliente_id,
+        fecha_venta: venta.fecha_venta,
+      },
     };
   } catch (error) {
     console.error("Error al editar la venta:", error);
@@ -472,10 +547,12 @@ const editarVenta = async (
   }
 };
 
-const eliminarDetalleVenta = async (detalleVentaId) => {
+const eliminarDetalleVenta = async (detalleVentaId, options = {}) => {
   try {
+    const { connection = null, skipCierreRecalculo = false } = options;
+    const conn = connection || db;
     // 1. Buscar el detalle antes de eliminarlo
-    const [detalleRows] = await db.query(
+    const [detalleRows] = await conn.query(
       "SELECT * FROM detalle_venta WHERE id = ?",
       [detalleVentaId]
     );
@@ -488,10 +565,10 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
     const ventaId = detalle.venta_id;
 
     // 2. Eliminar el detalle
-    await db.query("DELETE FROM detalle_venta WHERE id = ?", [detalleVentaId]);
+    await conn.query("DELETE FROM detalle_venta WHERE id = ?", [detalleVentaId]);
 
     // 3. Recalcular totales de la venta
-    const [detalles] = await db.query(
+    const [detalles] = await conn.query(
       "SELECT sub_total FROM detalle_venta WHERE venta_id = ?",
       [ventaId]
     );
@@ -502,7 +579,7 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
     }
 
     // obtener descuento de la venta
-    const [ventaRows] = await db.query(
+    const [ventaRows] = await conn.query(
       "SELECT descuento, total_con_descuento FROM venta WHERE id = ?",
       [ventaId]
     );
@@ -511,54 +588,48 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
 
     const totalConDescuento = total - total * (Number(descuento) / 100);
 
-    console.log(`[eliminarDetalleVenta] Detalle eliminado: ${detalleVentaId}, Venta ID: ${ventaId}`);
-    console.log(`[eliminarDetalleVenta] Total anterior: ${totalAnterior}, Total nuevo: ${totalConDescuento}, Diferencia: ${totalConDescuento - totalAnterior}`);
 
     // 4. Actualizar la venta
-    await db.query(
+    await conn.query(
       "UPDATE venta SET total = ?, total_con_descuento = ? WHERE id = ?",
       [total, totalConDescuento, ventaId]
     );
 
     // Recalcular cierre de cuenta si la venta está dentro del período del cierre
     const FECHA_CORTE_DEFAULT = "2026-01-01";
-    const [ventaInfo] = await db.query("SELECT cliente_id, fecha_venta FROM venta WHERE id = ?", [ventaId]);
-    if (ventaInfo.length > 0) {
+    const [ventaInfo] = await conn.query("SELECT cliente_id, fecha_venta FROM venta WHERE id = ?", [ventaId]);
+    if (!skipCierreRecalculo && ventaInfo.length > 0) {
       const fechaVentaDate = new Date(ventaInfo[0].fecha_venta);
       const fechaCorteDate = new Date(FECHA_CORTE_DEFAULT);
       
-      console.log(`[eliminarDetalleVenta] Verificando recálculo de cierre - Venta ID: ${ventaId}, Cliente ID: ${ventaInfo[0].cliente_id}, Fecha venta: ${ventaInfo[0].fecha_venta}`);
       
       if (fechaVentaDate < fechaCorteDate && ventaInfo[0].cliente_id) {
         try {
-          console.log(`[eliminarDetalleVenta] Recalculando cierre para cliente ${ventaInfo[0].cliente_id}...`);
           const resultado = await cierreCuentaModel.recalcularCierreCliente(ventaInfo[0].cliente_id, FECHA_CORTE_DEFAULT);
-          console.log(`[eliminarDetalleVenta] Cierre de cuenta recalculado para cliente ${ventaInfo[0].cliente_id} después de eliminar detalle de venta ${detalleVentaId}`, resultado);
         } catch (cierreErr) {
           console.error("[eliminarDetalleVenta] Error al recalcular cierre de cuenta:", cierreErr);
         }
       } else {
-        console.log(`[eliminarDetalleVenta] NO se recalcula cierre - Condición no cumplida: fechaVentaDate < fechaCorteDate: ${fechaVentaDate < fechaCorteDate}, cliente_id: ${ventaInfo[0].cliente_id}`);
       }
     }
 
     // 5. Si controlaba stock, devolver stock con SQL directo
-    const lineas = await getLineasStock();
+    const lineas = await getLineasStock(conn);
     const lineasControladas = lineas.map((l) => l.linea_id);
 
-    const articulo = await getArticuloById(detalle.articulo_id);
+    const articulo = await getArticuloById(detalle.articulo_id, conn);
     if (lineasControladas.includes(articulo.linea_id)) {
-      await db.query("UPDATE articulo SET stock = stock + ? WHERE id = ?", [
+      await conn.query("UPDATE articulo SET stock = stock + ? WHERE id = ?", [
         detalle.cantidad,
         detalle.articulo_id,
       ]);
     }
 
     // 6. Devolver venta actualizada
-    const [ventaFinal] = await db.query("SELECT * FROM venta WHERE id = ?", [
+    const [ventaFinal] = await conn.query("SELECT * FROM venta WHERE id = ?", [
       ventaId,
     ]);
-    const [detallesFinal] = await db.query(
+    const [detallesFinal] = await conn.query(
       "SELECT * FROM detalle_venta WHERE venta_id = ?",
       [ventaId]
     );
@@ -566,6 +637,9 @@ const eliminarDetalleVenta = async (detalleVentaId) => {
     return {
       venta: ventaFinal[0],
       detalles: detallesFinal,
+      cierreRecalculoInfo: ventaInfo?.[0]
+        ? { cliente_id: ventaInfo[0].cliente_id, fecha_venta: ventaInfo[0].fecha_venta }
+        : null,
     };
   } catch (err) {
     throw err;
@@ -586,7 +660,9 @@ module.exports = {
   checkStock,
   descontarStock,
   updateLogVenta,
+  updateLogVentaBatch,
   addDetalleVenta,
+  addDetalleVentaBatch,
   dropVenta,
   updateVentas,
   getVentasByClientes,
@@ -602,4 +678,5 @@ module.exports = {
   editarVenta,
   eliminarDetalleVenta,
   getVentasPorFecha,
+  updateStockBatch,
 };

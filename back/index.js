@@ -4,8 +4,25 @@ const cors = require("cors"); // Importa el módulo cors
 require("dotenv").config();
 
 const PORT = process.env.PORT;
-// Habilita CORS para todas las rutas, con esta sentencia permite todo
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS no permitido"), false);
+    },
+    credentials: true,
+  })
+);
 // Middleware para parsear JSON y URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -55,5 +72,6 @@ app.use(
 );
 
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`DB_HOST: ${process.env.DB_HOST}`);
 });

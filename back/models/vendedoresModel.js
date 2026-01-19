@@ -57,7 +57,7 @@ const getPagosPorVendedor = async (vendedor_id, fecha_inicio, fecha_fin) => {
       JOIN cliente c ON p.cliente_id = c.id
       LEFT JOIN vendedores v ON p.vendedor_id = v.id
       WHERE p.vendedor_id = ?
-        AND DATE(p.fecha_pago) BETWEEN ? AND ?
+        AND p.fecha_pago >= ? AND p.fecha_pago < DATE_ADD(?, INTERVAL 1 DAY)
 
       UNION ALL
 
@@ -72,7 +72,7 @@ const getPagosPorVendedor = async (vendedor_id, fecha_inicio, fecha_fin) => {
           NULL AS vendedor_nombre
       FROM pagos p
       WHERE p.vendedor_id = ?
-        AND DATE(p.fecha_pago) BETWEEN ? AND ?
+        AND p.fecha_pago >= ? AND p.fecha_pago < DATE_ADD(?, INTERVAL 1 DAY)
       ORDER BY fecha_pago IS NULL, fecha_pago;
     `;
 

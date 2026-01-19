@@ -60,10 +60,10 @@ export default function EstadisticasDashboard() {
 
       const [productosRes, evolucionRes] = await Promise.all([
         axios.get(
-          `http://localhost:3001/getArticulosVendidosPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+          `${process.env.REACT_APP_API_URL}/getArticulosVendidosPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
         ),
         axios.get(
-          `http://localhost:3001/getEvolucionGananciaPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+          `${process.env.REACT_APP_API_URL}/getEvolucionGananciaPorLinea?linea_id=${selectedLinea.id}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
         ),
       ]);
 

@@ -8,7 +8,7 @@ export default function OfertasInput({ value, onChangeOferta, onInputChange }) {
   useEffect(() => {
     const fetchOfertas = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/ofertas");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/ofertas`);
         setOfertas(response.data);
       } catch (error) {
         console.error(error);
@@ -23,7 +23,6 @@ export default function OfertasInput({ value, onChangeOferta, onInputChange }) {
   };
 
   const handleSearchOferta = (value) => {
-    console.log("search:", value);
   };
 
   const options = ofertas

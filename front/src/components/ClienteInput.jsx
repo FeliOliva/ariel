@@ -8,7 +8,7 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
   useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/clientes");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/clientes`);
         setClientes(response.data);
       } catch (error) {
         console.error("Error fetching clientes:", error);
@@ -19,13 +19,11 @@ const ClienteInput = ({ value, onChangeCliente, onInputChange }) => {
   }, []);
 
   const handleSearchCliente = (value) => {
-    console.log("search:", value);
   };
 
   const handleChangeCliente = (value) => {
     const selectedCliente = clientes.find((cliente) => cliente.id === value);
     onChangeCliente(selectedCliente); // Pass selected cliente to parent
-    console.log("Cliente seleccionado:", selectedCliente);
 
     // Solo llama a onInputChange si se ha pasado como prop
     if (onInputChange) {

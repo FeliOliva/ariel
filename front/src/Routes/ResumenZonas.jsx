@@ -32,10 +32,10 @@ export default function ResumenZonas() {
 
     try {
       const [response, saldoInicialRes] = await Promise.all([
-        axios.get("http://localhost:3001/resumenZonas", {
+        axios.get(`${process.env.REACT_APP_API_URL}/resumenZonas`, {
           params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
         }),
-        axios.get(`http://localhost:3001/cierre-masivo/saldo-total`, {
+        axios.get(`${process.env.REACT_APP_API_URL}/cierre-masivo/saldo-total`, {
           params: { fecha_corte: "2026-01-01" }
         }),
       ]);

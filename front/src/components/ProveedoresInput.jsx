@@ -8,7 +8,7 @@ export default function ProveedoresInput({ onChangeProveedor, value }) {
   useEffect(() => {
     const fetchProveedor = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/proveedor");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/proveedor`);
         setProveedor(response.data);
       } catch (error) {
         console.error("Error fetching proveedores:", error);
@@ -26,7 +26,6 @@ export default function ProveedoresInput({ onChangeProveedor, value }) {
   };
 
   const handleSearchProveedor = (value) => {
-    console.log("search:", value);
   };
 
   const options = proveedor

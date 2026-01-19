@@ -18,7 +18,7 @@ const OfertasDetalles = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/detalleOferta/${id}`
+          `${process.env.REACT_APP_API_URL}/detalleOferta/${id}`
         );
         const { nombre, productos } = response.data; // Aquí accedes a 'nombre' y 'productos'
 

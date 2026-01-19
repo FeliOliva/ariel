@@ -111,16 +111,16 @@ module.exports = {
         FROM venta v
         WHERE v.cliente_id = c.id
           AND v.estado = 1
-          AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-          AND DATE(v.fecha_venta) < DATE(?)
+          AND v.fecha_venta > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+          AND v.fecha_venta < DATE(?)
       ), 0) AS total_ventas,
       COALESCE((
         SELECT SUM(p.monto)
         FROM pagos p
         WHERE p.cliente_id = c.id
           AND p.estado = 1
-          AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-          AND DATE(p.fecha_pago) < DATE(?)
+          AND p.fecha_pago > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+          AND p.fecha_pago < DATE(?)
       ), 0) AS total_pagos,
       COALESCE((
         SELECT SUM(dnc.subTotal)
@@ -128,8 +128,8 @@ module.exports = {
         JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
         WHERE nc.cliente_id = c.id
           AND nc.estado = 1
-          AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-          AND DATE(nc.fecha) < DATE(?)
+          AND nc.fecha > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+          AND nc.fecha < DATE(?)
       ), 0) AS total_nc,
       (COALESCE(last_cierre.saldo_cierre, 0)
         + COALESCE((
@@ -137,16 +137,16 @@ module.exports = {
           FROM venta v
           WHERE v.cliente_id = c.id
             AND v.estado = 1
-            AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-            AND DATE(v.fecha_venta) < DATE(?)
+            AND v.fecha_venta > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+            AND v.fecha_venta < DATE(?)
         ), 0)
         - COALESCE((
           SELECT SUM(p.monto)
           FROM pagos p
           WHERE p.cliente_id = c.id
             AND p.estado = 1
-            AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-            AND DATE(p.fecha_pago) < DATE(?)
+            AND p.fecha_pago > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+            AND p.fecha_pago < DATE(?)
         ), 0)
         - COALESCE((
           SELECT SUM(dnc.subTotal)
@@ -154,8 +154,8 @@ module.exports = {
           JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
           WHERE nc.cliente_id = c.id
             AND nc.estado = 1
-            AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-            AND DATE(nc.fecha) < DATE(?)
+            AND nc.fecha > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+            AND nc.fecha < DATE(?)
         ), 0)
       ) AS saldo
     FROM cliente c
@@ -203,16 +203,16 @@ module.exports = {
         FROM venta v
         WHERE v.cliente_id = c.id
           AND v.estado = 1
-          AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-          AND DATE(v.fecha_venta) < DATE(?)
+          AND v.fecha_venta > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+          AND v.fecha_venta < DATE(?)
       ), 0) AS total_ventas,
       COALESCE((
         SELECT SUM(p.monto)
         FROM pagos p
         WHERE p.cliente_id = c.id
           AND p.estado = 1
-          AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-          AND DATE(p.fecha_pago) < DATE(?)
+          AND p.fecha_pago > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+          AND p.fecha_pago < DATE(?)
       ), 0) AS total_pagos,
       COALESCE((
         SELECT SUM(dnc.subTotal)
@@ -220,8 +220,8 @@ module.exports = {
         JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
         WHERE nc.cliente_id = c.id
           AND nc.estado = 1
-          AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-          AND DATE(nc.fecha) < DATE(?)
+          AND nc.fecha > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+          AND nc.fecha < DATE(?)
       ), 0) AS total_nc,
       (COALESCE(last_cierre.saldo_cierre, 0)
         + COALESCE((
@@ -229,16 +229,16 @@ module.exports = {
           FROM venta v
           WHERE v.cliente_id = c.id
             AND v.estado = 1
-            AND DATE(v.fecha_venta) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-            AND DATE(v.fecha_venta) < DATE(?)
+            AND v.fecha_venta > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+            AND v.fecha_venta < DATE(?)
         ), 0)
         - COALESCE((
           SELECT SUM(p.monto)
           FROM pagos p
           WHERE p.cliente_id = c.id
             AND p.estado = 1
-            AND DATE(p.fecha_pago) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-            AND DATE(p.fecha_pago) < DATE(?)
+            AND p.fecha_pago > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+            AND p.fecha_pago < DATE(?)
         ), 0)
         - COALESCE((
           SELECT SUM(dnc.subTotal)
@@ -246,8 +246,8 @@ module.exports = {
           JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
           WHERE nc.cliente_id = c.id
             AND nc.estado = 1
-            AND DATE(nc.fecha) > DATE(COALESCE(last_cierre.fecha_corte, '1900-01-01'))
-            AND DATE(nc.fecha) < DATE(?)
+            AND nc.fecha > COALESCE(last_cierre.fecha_corte, '1900-01-01')
+            AND nc.fecha < DATE(?)
         ), 0)
       ) AS saldo
     FROM cliente c

@@ -1,6 +1,7 @@
 const detalleVentaModel = require("../models/detalleVentaModel");
 const ventasModel = require("../models/ventasModel");
 const cierreCuentaModel = require("../models/cierreCuentaModel");
+const db = require("../database");
 
 const getDetalleVentaById = async (req, res) => {
   try {
@@ -14,6 +15,8 @@ const getDetalleVentaById = async (req, res) => {
 };
 
 const updateDetalleVenta = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { ID, new_precio_monotributista, cantidad, venta_id } = req.body;
 
@@ -29,14 +32,24 @@ const updateDetalleVenta = async (req, res) => {
 
     const sub_total = precioFinal * cantidadNum;
 
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
     await detalleVentaModel.updateDetalleVenta(
       ID,
       precioFinal,
       cantidadNum,
-      sub_total
+      sub_total,
+      connection
     );
 
-    await recalcularTotales(venta_id);
+    await recalcularTotales(venta_id, connection);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     // Recalcular cierre de cuenta si la venta está dentro del período del cierre
     const FECHA_CORTE_DEFAULT = "2026-01-01";
@@ -48,7 +61,6 @@ const updateDetalleVenta = async (req, res) => {
         
         if (fechaVentaDate < fechaCorteDate) {
           await cierreCuentaModel.recalcularCierreCliente(venta[0].cliente_id, FECHA_CORTE_DEFAULT);
-          console.log(`Cierre de cuenta recalculado para cliente ${venta[0].cliente_id} después de actualizar detalle de venta ${venta_id}`);
         }
       }
     } catch (cierreErr) {
@@ -60,15 +72,28 @@ const updateDetalleVenta = async (req, res) => {
         "Detalle de venta actualizado y totales recalculados correctamente",
     });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de updateDetalleVenta:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error en updateDetalleVenta:", error);
     res.status(500).json({ error: "Error al actualizar el detalle de venta" });
   }
 };
 
-const recalcularTotales = async (venta_id) => {
+const recalcularTotales = async (venta_id, connection = null) => {
   try {
     // Obtener todos los detalles de la venta
-    const detalles = await detalleVentaModel.getDetalleVenta(venta_id);
+    const detalles = await detalleVentaModel.getDetalleVenta(
+      venta_id,
+      connection
+    );
     // Inicializamos el total
     let total = 0;
 
@@ -81,7 +106,10 @@ const recalcularTotales = async (venta_id) => {
       }
     });
     // Obtener el porcentaje de descuento de la tabla venta
-    const porcentajeDescuento = await detalleVentaModel.getPorcentage(venta_id);
+    const porcentajeDescuento = await detalleVentaModel.getPorcentage(
+      venta_id,
+      connection
+    );
     // Calcular el total con descuento
     const totalConDescuento =
       total - total * (porcentajeDescuento[0].descuento / 100);
@@ -89,7 +117,8 @@ const recalcularTotales = async (venta_id) => {
     await detalleVentaModel.updateTotalesVenta(
       venta_id,
       total,
-      totalConDescuento
+      totalConDescuento,
+      connection
     );
   } catch (err) {
     throw err;

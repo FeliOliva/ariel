@@ -199,7 +199,7 @@ LEFT JOIN venta v ON dv.venta_id = v.id
 WHERE a.linea_id = ? 
   AND a.estado = 1 
   AND sl.estado = 1
-  AND (dv.id IS NULL OR (DATE(v.fecha_venta) BETWEEN ? AND ? AND v.estado = 1))
+  AND (dv.id IS NULL OR (v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY) AND v.estado = 1))
 GROUP BY a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones, a.stock, a.precio_monotributista, a.costo
 ORDER BY unidades_vendidas DESC;
 `,
@@ -223,7 +223,7 @@ WHERE a.linea_id = ?
   AND a.estado = 1 
   AND sl.estado = 1
   AND v.estado = 1
-  AND DATE(v.fecha_venta) BETWEEN ? AND ?
+  AND v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
 GROUP BY DATE(v.fecha_venta), a.id, a.codigo_producto, a.nombre, sl.nombre, a.mediciones
 ORDER BY fecha ASC, nombre_completo ASC;
 `,
@@ -245,7 +245,7 @@ LEFT JOIN sublinea sl ON a.subLinea_id = sl.id
 LEFT JOIN proveedor p ON a.proveedor_id = p.id
 WHERE v.estado = 1
   AND c.estado = 1
-  AND DATE(v.fecha_venta) BETWEEN ? AND ?
+  AND v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
   AND (? IS NULL OR a.id = ?)
   AND (? IS NULL OR a.linea_id = ?)
   AND (? IS NULL OR a.subLinea_id = ?)

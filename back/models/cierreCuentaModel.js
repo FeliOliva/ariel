@@ -87,42 +87,15 @@ const getAllUltimosCierres = async (fecha_corte) => {
 // Obtener cierres por zona
 const getCierresByZona = async (fecha_corte, zona_id) => {
   try {
-    console.log("[getCierresByZona] Parámetros recibidos - fecha_corte:", fecha_corte, "zona_id:", zona_id, "tipo zona_id:", typeof zona_id);
-    console.log("[getCierresByZona] Query SQL:", queriesCierreCuenta.getCierresByZona);
-    console.log("[getCierresByZona] Parámetros del query:", [fecha_corte, zona_id]);
     
     const [rows] = await db.query(queriesCierreCuenta.getCierresByZona, [
       fecha_corte,
       zona_id,
     ]);
     
-    console.log("[getCierresByZona] Resultado del query - rows:", rows);
-    console.log("[getCierresByZona] Tipo de rows:", typeof rows);
-    console.log("[getCierresByZona] Es array?", Array.isArray(rows));
-    console.log("[getCierresByZona] Filas encontradas:", rows ? rows.length : 0);
     if (rows.length > 0) {
-      console.log("[getCierresByZona] Primer registro:", {
-        cliente_id: rows[0].cliente_id,
-        saldo_cierre: rows[0].saldo_cierre,
-        zona_id: rows[0].zona_id,
-        nombre: rows[0].nombre,
-        farmacia: rows[0].farmacia
-      });
-      
-      // Buscar específicamente MACKINSON
-      const mackinson = rows.find(r => r.farmacia && r.farmacia.toUpperCase().includes("MACKINSON"));
-      if (mackinson) {
-        console.log("[getCierresByZona] ========== MACKINSON ENCONTRADO ==========");
-        console.log("[getCierresByZona] Cliente completo:", mackinson);
-        console.log("[getCierresByZona] cliente_id:", mackinson.cliente_id);
-        console.log("[getCierresByZona] saldo_cierre:", mackinson.saldo_cierre);
-        console.log("[getCierresByZona] zona_id:", mackinson.zona_id);
-        console.log("[getCierresByZona] fecha_corte:", mackinson.fecha_corte);
-      } else {
-        console.log("[getCierresByZona] MACKINSON NO encontrado en los resultados");
-        console.log("[getCierresByZona] Total registros:", rows.length);
-        console.log("[getCierresByZona] Primeros 5 clientes:", rows.slice(0, 5).map(r => ({ id: r.cliente_id, farmacia: r.farmacia, zona_id: r.zona_id })));
-      }
+      // se dejó vacío a propósito: mantenemos el comportamiento original
+      // de devolver rows sin alterar la lógica de saldos
     }
     
     // Asegurar que siempre devolvemos un array, nunca null
@@ -242,15 +215,12 @@ const getSaldoTotalCierreMasivo = async (fecha_corte) => {
 // Recalcular y actualizar el cierre de cuenta de un cliente específico
 const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
   try {
-    console.log(`[recalcularCierreCliente] Iniciando recálculo para cliente ${cliente_id}, fecha_corte: ${fecha_corte}`);
     
     // Verificar si existe un cierre para este cliente y fecha
     const existe = await existeCierre(cliente_id, fecha_corte);
-    console.log(`[recalcularCierreCliente] ¿Existe cierre? ${existe}`);
     
     if (!existe) {
       // Si no existe cierre, no hay nada que recalcular
-      console.log(`[recalcularCierreCliente] No existe cierre para cliente ${cliente_id} y fecha ${fecha_corte}. No se puede recalcular.`);
       return { actualizado: false, mensaje: "No existe cierre de cuenta para este cliente y fecha" };
     }
 
@@ -271,7 +241,6 @@ const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
     }
 
     const nuevoSaldo = rows[0].saldo || 0;
-    console.log(`[recalcularCierreCliente] Nuevo saldo calculado: ${nuevoSaldo}`);
 
     // Actualizar el cierre de cuenta con el nuevo saldo
     const [result] = await db.query(queriesCierreCuenta.addCierreCuenta, [
@@ -281,7 +250,6 @@ const recalcularCierreCliente = async (cliente_id, fecha_corte) => {
       `Recalculado automáticamente - ${new Date().toISOString()}`,
     ]);
     
-    console.log(`[recalcularCierreCliente] Cierre actualizado correctamente. Result:`, result);
 
     return {
       actualizado: true,

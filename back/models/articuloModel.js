@@ -37,7 +37,6 @@ const addArticulo = async (
       subLinea_id,
       precio_oferta,
     ]);
-    console.log("Articulo agregado");
   } catch (err) {
     throw err;
   }
@@ -195,21 +194,23 @@ const deshacerCambios = async (
   articulo_id,
   costo_antiguo,
   precio_monotributista_antiguo,
-  log_id
+  log_id,
+  connection = null
 ) => {
   try {
+    const conn = connection || db;
     const queryUpdate = queriesArticulos.deshacerCambiosUpdate;
     const queryDelete = queriesArticulos.deshacerCambiosDelete;
 
     // Ejecutar la actualización del artículo
-    await db.query(queryUpdate, [
+    await conn.query(queryUpdate, [
       costo_antiguo,
       precio_monotributista_antiguo,
       articulo_id,
     ]);
 
     // Ejecutar la eliminación del log
-    await db.query(queryDelete, [log_id]);
+    await conn.query(queryDelete, [log_id]);
   } catch (err) {
     throw err;
   }

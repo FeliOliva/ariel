@@ -1,4 +1,5 @@
 const pagosModel = require("../models/pagosModel");
+const db = require("../database");
 
 const getAllPagos = async (req, res) => {
   const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
@@ -22,9 +23,6 @@ const getPagosByClienteId = async (req, res) => {
     const { ID: cliente_id } = req.params;
     const { fecha_inicio, fecha_fin } = req.query; // Obtener las fechas del query string
 
-    console.log("ID desde el back:", cliente_id);
-    console.log("Fecha inicio:", fecha_inicio);
-    console.log("Fecha fin:", fecha_fin);
 
     // Validar los parámetros requeridos
     if (!cliente_id) {
@@ -44,7 +42,6 @@ const getPagosByClienteId = async (req, res) => {
       fecha_fin
     );
 
-    console.log("Pagos obtenidos:", pagos);
 
     // Manejar el caso de que no existan pagos
     if (!pagos || pagos.length === 0) {
@@ -61,18 +58,29 @@ const getPagosByClienteId = async (req, res) => {
 };
 
 const addPago = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { cliente_id, monto, metodo_pago, vendedor_id, cheque } = req.body;
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
 
     const result = await pagosModel.addPago(
       cliente_id,
       monto,
       metodo_pago,
       vendedor_id,
-      cheque
+      cheque,
+      connection
     );
 
-    console.log("datos del pago: ", req.body);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     res.status(201).json({
       message: "Pago agregado con éxito",
@@ -80,6 +88,16 @@ const addPago = async (req, res) => {
       nro_pago: result.nro_pago,
     });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de addPago:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error en addPago:", error);
     res.status(500).json({ error: error.message });
   }
@@ -113,9 +131,6 @@ const getPagosByZona_id = async (req, res) => {
     // Convertir zona_id a número para asegurar el tipo correcto
     const zonaIdNum = parseInt(zona_id, 10);
 
-    console.log("ID desde el back (original):", zona_id, "tipo:", typeof zona_id);
-    console.log("ID convertido a número:", zonaIdNum, "tipo:", typeof zonaIdNum);
-    console.log("Fechas:", fecha_inicio, fecha_fin);
 
     // Validar los parámetros requeridos
     if (!zona_id || isNaN(zonaIdNum)) {
@@ -135,8 +150,6 @@ const getPagosByZona_id = async (req, res) => {
       fecha_fin
     );
 
-    console.log("Pagos obtenidos:", pagos);
-    console.log("Cantidad de pagos:", pagos?.length || 0);
 
     // Manejar el caso de que no existan pagos
     if (!pagos || pagos.length === 0) {

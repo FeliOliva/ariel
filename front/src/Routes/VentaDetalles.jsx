@@ -72,7 +72,7 @@ const VentaDetalles = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/getVentaByID/${id}`
+          `${process.env.REACT_APP_API_URL}/getVentaByID/${id}`
         );
         const {
           detalles,
@@ -89,7 +89,6 @@ const VentaDetalles = () => {
           farmacia,
           localidad,
         } = response.data;
-        console.log("Detalles de la venta:", response.data);
         if (Array.isArray(detalles)) {
           setData(detalles);
           setVentaInfo({
@@ -120,8 +119,6 @@ const VentaDetalles = () => {
   const handleArticuloChange = (articulo) => {
     setSelectedArticulo(articulo);
     setArticuloValue(articulo?.id || ""); // Actualiza el valor del input del artículo
-    console.log(selectedArticulo);
-    console.log(articulo);
   };
   const handleAddArticuloToList = () => {
     if (!selectedArticulo || !cantidad || cantidad <= 0) {
@@ -179,7 +176,7 @@ const VentaDetalles = () => {
       onOk: async () => {
         try {
           for (const art of venta.articulos) {
-            await axios.post("http://localhost:3001/editarVenta", {
+            await axios.post(`${process.env.REACT_APP_API_URL}/editarVenta`, {
               articulo_id: art.id,
               cantidad: art.quantity,
               precio_monotributista: parseFloat(art.precio_monotributista),
@@ -401,7 +398,7 @@ const VentaDetalles = () => {
   const handleEditPrice = async (detalleId) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/detalleVenta/${detalleId}`
+        `${process.env.REACT_APP_API_URL}/detalleVenta/${detalleId}`
       );
 
       setDetalleVenta(response.data);
@@ -424,7 +421,7 @@ const VentaDetalles = () => {
       onOk: async () => {
         try {
           const response = await axios.delete(
-            "http://localhost:3001/eliminarDetalleVenta",
+            `${process.env.REACT_APP_API_URL}/eliminarDetalleVenta`,
             { data: { detalle_venta_id: detalleId } }
           );
           if (response.status === 200) {
@@ -459,7 +456,7 @@ const VentaDetalles = () => {
             venta_id: ventaInfo.venta_id,
           };
 
-          await axios.put("http://localhost:3001/updateDetalleVenta", payload);
+          await axios.put(`${process.env.REACT_APP_API_URL}/updateDetalleVenta`, payload);
 
           message.success("Detalle actualizado correctamente");
           setTimeout(() => window.location.reload(), 800);

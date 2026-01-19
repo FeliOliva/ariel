@@ -42,7 +42,7 @@ const CompraDetalles = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/getCompraByID/${id}`
+          `${process.env.REACT_APP_API_URL}/getCompraByID/${id}`
         );
 
         const {
@@ -63,7 +63,6 @@ const CompraDetalles = () => {
             articulo_id,
             total,
           });
-          console.log(response.data);
         } else {
           console.error("Expected 'detalles' to be an array");
         }
@@ -77,12 +76,9 @@ const CompraDetalles = () => {
     fetchData();
   }, [id]);
   const handleUpPrice = async (id) => {
-    console.log(id);
     const response = await axios.get(
-      `http://localhost:3001/detalleCompra/${id}`
+      `${process.env.REACT_APP_API_URL}/detalleCompra/${id}`
     );
-    console.log("response.data");
-    console.log(response.data);
     const costo = parseFloat(response.data.costo) || 0;
     const precio = parseFloat(response.data.precio_monotributista) || 0;
     const porcentajeCosto = parseFloat(response.data.porcentaje_aumento_costo) || 0;
@@ -180,14 +176,13 @@ const CompraDetalles = () => {
         porcentaje_aumento_costo: porcentajeCostoAGuardar,
         porcentaje_aumento_precio: porcentajePrecioAGuardar,
       };
-      console.log(newData);
       confirm({
         title: "Confirmar",
         content: "¿Estás seguro de aplicar este cambio?",
         okText: "Si",
         cancelText: "No",
         onOk: async () => {
-          await axios.put("http://localhost:3001/updateDetalleCompra", newData);
+          await axios.put(`${process.env.REACT_APP_API_URL}/updateDetalleCompra`, newData);
           setOpenUp(false);
           notification.success({
             message: "Operación exitosa",

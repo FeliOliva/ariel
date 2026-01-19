@@ -22,7 +22,7 @@ const filterComprasByFecha = async (startDate, endDate) => {
         COUNT(*) AS cantidad_compras,
         COALESCE(FORMAT(SUM(total), 2), '0.00') AS suma_total
       FROM compra
-      WHERE DATE(fecha_compra) BETWEEN ? AND ?
+      WHERE fecha_compra >= ? AND fecha_compra < DATE_ADD(?, INTERVAL 1 DAY)
         AND estado = 1
     `;
     const values = [startDate, endDate];
@@ -42,7 +42,7 @@ const getTotalVentas = async (startDate, endDate) => {
       COALESCE(FORMAT(SUM(v.total_con_descuento), 2), '0.00') AS suma_total
     FROM venta v
     INNER JOIN cliente c ON v.cliente_id = c.id
-    WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
+    WHERE v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
       AND v.estado = 1
       AND c.estado = 1
   `;
@@ -56,7 +56,7 @@ const getTotalGastos = async (startDate, endDate) => {
     SELECT 
       COALESCE(FORMAT(SUM(monto), 2), '0.00') AS suma_total
     FROM gasto
-    WHERE DATE(fecha) BETWEEN ? AND ?
+    WHERE fecha >= ? AND fecha < DATE_ADD(?, INTERVAL 1 DAY)
       AND estado = 1
   `;
   const values = [startDate, endDate];
@@ -82,7 +82,7 @@ const getTotalPagos = async (startDate, endDate) => {
       COALESCE(FORMAT(SUM(p.monto), 2), '0.00') AS suma_total
     FROM pagos p
     INNER JOIN cliente c ON p.cliente_id = c.id
-    WHERE DATE(p.fecha_pago) BETWEEN ? AND ?
+    WHERE p.fecha_pago >= ? AND p.fecha_pago < DATE_ADD(?, INTERVAL 1 DAY)
       AND p.estado = 1
       AND c.estado = 1
   `;
@@ -110,7 +110,7 @@ const getTotalNotasCredito = async (startDate, endDate) => {
     FROM notascredito nc
     JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
     INNER JOIN cliente c ON nc.cliente_id = c.id
-    WHERE DATE(nc.fecha) BETWEEN ? AND ?
+    WHERE nc.fecha >= ? AND nc.fecha < DATE_ADD(?, INTERVAL 1 DAY)
       AND nc.estado = 1
       AND c.estado = 1
   `;
@@ -129,7 +129,7 @@ const getTotalGanancia = async (startDate, endDate) => {
     FROM detalle_venta dv
     INNER JOIN venta v ON dv.venta_id = v.id
     INNER JOIN cliente c ON v.cliente_id = c.id
-    WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
+    WHERE v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
       AND v.estado = 1
       AND c.estado = 1
   `;

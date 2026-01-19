@@ -95,7 +95,7 @@ function Ventas() {
 
   const fetchData = async (skipUpdate = false) => {
     try {
-      const response = await axios.get("http://localhost:3001/ventas");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/ventas`);
       
       // Solo actualizar si hay cambios reales (evitar re-renders innecesarios)
       if (!skipUpdate) {
@@ -144,7 +144,7 @@ function Ventas() {
       // Solo actualizar lineas-guardadas si no estamos en modo polling
       if (!skipUpdate) {
         const responseGuardadas = await axios.get(
-          "http://localhost:3001/lineas-guardadas"
+          `${process.env.REACT_APP_API_URL}/lineas-guardadas`
         );
         setSelectedIds((prevIds) => {
           const prevStr = JSON.stringify(prevIds.sort());
@@ -153,7 +153,7 @@ function Ventas() {
         });
       } else {
         const responseGuardadas = await axios.get(
-          "http://localhost:3001/lineas-guardadas"
+          `${process.env.REACT_APP_API_URL}/lineas-guardadas`
         );
         setSelectedIds(responseGuardadas.data);
       }
@@ -419,7 +419,6 @@ function Ventas() {
         } else {
           tipoDescuento = 0; // Descuento
         }
-        console.log("tipoDescuento", tipoDescuento);
         const ventaData = {
           cliente_id: venta.cliente.id,
           nroVenta: venta.nroVenta,
@@ -443,7 +442,7 @@ function Ventas() {
           okText: "Si",
           cancelText: "No",
           onOk: async () => {
-            await axios.post("http://localhost:3001/addVenta", ventaData);
+            await axios.post(`${process.env.REACT_APP_API_URL}/addVenta`, ventaData);
             setArticuloValue("");
             setClienteValue("");
             setCantidad(0);
@@ -475,15 +474,13 @@ function Ventas() {
   // const handleOfertaChange = (oferta) => {
   //   setSelectedOferta(oferta);
   //   setOfertaValue(oferta?.id || "");
-  //   console.log(ofertaValue);
-  //   console.log(selectedOferta);
   // };
   // const handleAddOferta = async () => {
   //   if (selectedOferta) {
   //     try {
   //       // Realiza la solicitud al backend para obtener los productos de la oferta seleccionada
   //       const response = await axios.get(
-  //         `http://localhost:3001/detalleOferta/${selectedOferta.id}`
+  //         `${process.env.REACT_APP_API_URL}/detalleOferta/${selectedOferta.id}`
   //       );
   //       const { productos } = response.data;
   //       // Filtrar los productos que ya están en la lista de venta
@@ -524,7 +521,6 @@ function Ventas() {
   //       }
   //       // Itera sobre los productos y agrega cada uno a la lista de artículos de la venta
   //       productos.forEach((producto) => {
-  //         console.log("producto", producto);
   //         setVenta((prev) => ({
   //           ...prev,
   //           articulos: [
@@ -573,7 +569,7 @@ function Ventas() {
   const fetchVentasByClient = async (cliente) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/ventasCliente/${cliente}`
+        `${process.env.REACT_APP_API_URL}/ventasCliente/${cliente}`
       );
       setData(response.data);
     } catch (error) {
@@ -586,7 +582,7 @@ function Ventas() {
   const handleUpdateVenta = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getVentaByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getVentaByID/${id}`
       );
       setOpenEditDrawer(true);
       setEditedVenta(response.data);
@@ -610,7 +606,7 @@ function Ventas() {
         descuento: cleanNumber(editedVenta.descuento),
         ID: editedVenta.venta_id,
       };
-      await axios.put(`http://localhost:3001/updateVenta`, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/updateVenta`, {
         ...payload,
       });
       setOpenEditDrawer(false);
@@ -640,7 +636,7 @@ function Ventas() {
         okText: "Si, confirmar",
         cancelText: "Cancelar",
         onOk: async () => {
-          await axios.put(`http://localhost:3001/dropVenta/${id}`);
+          await axios.put(`${process.env.REACT_APP_API_URL}/dropVenta/${id}`);
           notification.success({
             message: "Venta eliminada",
             description: "La venta se elimino exitosamente",

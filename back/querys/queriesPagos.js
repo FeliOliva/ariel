@@ -28,7 +28,7 @@ WHERE
     c.zona_id = ?
     AND c.estado = 1
     AND p.estado = 1
-    AND DATE(p.fecha_pago) BETWEEN DATE(?) AND DATE(?)
+    AND p.fecha_pago >= ? AND p.fecha_pago < DATE_ADD(?, INTERVAL 1 DAY)
 GROUP BY 
     c.id, c.nombre, c.apellido, c.zona_id
 ORDER BY 

@@ -13,12 +13,12 @@ export default function LineaSelect() {
     const fetchData = async () => {
       try {
         // Obtener todas las líneas
-        const responseLineas = await axios.get("http://localhost:3001/lineas");
+        const responseLineas = await axios.get(`${process.env.REACT_APP_API_URL}/lineas`);
         setLineas(responseLineas.data);
 
         // Obtener líneas ya guardadas
         const responseGuardadas = await axios.get(
-          "http://localhost:3001/lineas-guardadas"
+          `${process.env.REACT_APP_API_URL}/lineas-guardadas`
         );
         setSelectedIds(responseGuardadas.data);
 
@@ -89,8 +89,7 @@ export default function LineaSelect() {
   // Guardar líneas en la base de datos
   const handleSave = async () => {
     try {
-      console.log("Líneas seleccionadas:", selectedNames);
-      await axios.post("http://localhost:3001/guardar-lineas", {
+      await axios.post(`${process.env.REACT_APP_API_URL}/guardar-lineas`, {
         lineas: selectedIds,
       });
       alert("Líneas guardadas exitosamente");

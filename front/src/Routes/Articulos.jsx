@@ -59,9 +59,8 @@ function Articulos() {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/articulos");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/articulos`);
       setData(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -263,7 +262,7 @@ function Articulos() {
             ? "increasePrice"
             : "decreasePrice";
           await axios.put(
-            `http://localhost:3001/${endpoint}/${currentIncrease.id}`,
+            `${process.env.REACT_APP_API_URL}/${endpoint}/${currentIncrease.id}`,
             {
               percentage: currentIncrease.percentage,
             }
@@ -293,7 +292,7 @@ function Articulos() {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropArticulo/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropArticulo/${id}`);
             notification.success({
               message: "Articulo desactivado",
               description: "El articulo se desactivo exitosamente",
@@ -309,7 +308,7 @@ function Articulos() {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upArticulo/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upArticulo/${id}`);
             notification.success({
               message: "Articulo activado",
               description: "El articulo se activo exitosamente",
@@ -330,10 +329,9 @@ function Articulos() {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getArticuloByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getArticuloByID/${id}`
       );
       setCurrentArticulo(response.data);
-      console.log(response.data);
       setOpen(true);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -375,7 +373,7 @@ function Articulos() {
 
         try {
           await axios.put(
-            `http://localhost:3001/updateArticulos/`,
+            `${process.env.REACT_APP_API_URL}/updateArticulos/`,
             articuloEdited
           );
 
@@ -449,7 +447,7 @@ function Articulos() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.post(`http://localhost:3001/addArticulo`, articulo);
+          await axios.post(`${process.env.REACT_APP_API_URL}/addArticulo`, articulo);
           notification.success({
             message: "Articulo agregado",
             description: "El articulo se agrego exitosamente",
@@ -468,8 +466,6 @@ function Articulos() {
   };
 
   const handleFilterChange = async () => {
-    console.log("is Increase", isIncrease);
-    console.log("current filter", currentFilter);
     if (currentFilter === null) {
       Modal.warning({
         title: "Advertencia",
@@ -516,12 +512,12 @@ function Articulos() {
           }
           if (isIncrease === true) {
             await axios.put(
-              `http://localhost:3001/AumentarPrecioxLinea/${currentFilter.linea_id}`,
+              `${process.env.REACT_APP_API_URL}/AumentarPrecioxLinea/${currentFilter.linea_id}`,
               { percentage: currentFilter.percentage }
             );
           } else if (isIncrease === false) {
             await axios.put(
-              `http://localhost:3001/BajarPrecioxLinea/${currentFilter.linea_id}`,
+              `${process.env.REACT_APP_API_URL}/BajarPrecioxLinea/${currentFilter.linea_id}`,
               { percentage: currentFilter.percentage }
             );
           }

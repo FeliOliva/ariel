@@ -37,9 +37,8 @@ function Gastos() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3001/gastos");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/gastos`);
       setData(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -53,7 +52,7 @@ function Gastos() {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getGastoByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getGastoByID/${id}`
       );
       setCurrentGasto(response.data);
       setOpenEditDrawer(true);
@@ -83,7 +82,6 @@ function Gastos() {
       monto: currentGasto.monto,
       ID: currentGasto.id,
     };
-    console.log(gastoEditado);
     confirm({
       title: "¿Estas seguro de editar este Gasto?",
       icon: <WarningOutlined />,
@@ -91,7 +89,7 @@ function Gastos() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.put(`http://localhost:3001/updateGastos/`, gastoEditado);
+          await axios.put(`${process.env.REACT_APP_API_URL}/updateGastos/`, gastoEditado);
           setOpenEditDrawer(false);
           fetchData();
           notification.success({
@@ -107,7 +105,6 @@ function Gastos() {
     });
   };
   const handleAddGasto = async () => {
-    console.log(newGasto);
     if (!newGasto.nombre || !newGasto.monto) {
       Modal.warning({
         title: "Error",
@@ -128,7 +125,7 @@ function Gastos() {
             ...newGasto,
             nombre: newGasto.nombre.toUpperCase().trim(),
           };
-          await axios.post("http://localhost:3001/addGasto", gastoToSend);
+          await axios.post(`${process.env.REACT_APP_API_URL}/addGasto`, gastoToSend);
           setOpen(false);
           // Limpiar el estado del drawer
           setNewGasto(null);
@@ -149,7 +146,7 @@ function Gastos() {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropGasto/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropGasto/${id}`);
             notification.success({
               message: "Gasto desactivado",
               description: "El gasto se desactivo correctamente",
@@ -166,7 +163,7 @@ function Gastos() {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upGasto/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upGasto/${id}`);
             notification.success({
               message: "Gasto activado",
               description: "El gasto se activo correctamente",

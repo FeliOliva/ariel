@@ -8,9 +8,8 @@ export default function SubLineasInput({ onChangeSubLineas }) {
   useEffect(() => {
     const fetchSubLineas = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/subLinea");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/subLinea`);
         setSubLineas(response.data);
-        console.log(response.data);
       } catch (error) {
         console.error("Error fetching subLineass:", error);
       }
@@ -26,7 +25,6 @@ export default function SubLineasInput({ onChangeSubLineas }) {
   };
 
   const handleSearchSubLineas = (value) => {
-    console.log("search:", value);
   };
 
   const options = subLineas

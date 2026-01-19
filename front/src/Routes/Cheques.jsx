@@ -36,9 +36,8 @@ const Cheques = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/cheques");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cheques`);
       setCheques(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -47,7 +46,6 @@ const Cheques = () => {
   };
 
   const handleToggleState = async (id, currentState) => {
-    console.log(currentState);
     try {
       if (currentState === 1) {
         confirm({
@@ -56,7 +54,7 @@ const Cheques = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropCheque/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropCheque/${id}`);
             notification.success({
               message: "Cheque desactivado",
               description: "El Cheque se desactivo correctamente",
@@ -73,7 +71,7 @@ const Cheques = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upCheque/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upCheque/${id}`);
             notification.success({
               message: "Cliente activado",
               description: "El cliente se activo correctamente",
@@ -94,7 +92,7 @@ const Cheques = () => {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getChequeByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getChequeByID/${id}`
       );
       setCurrentCheque(response.data);
       setOpen(true);
@@ -217,8 +215,7 @@ const Cheques = () => {
         fecha_cobro: currentCheque.fecha_cobro,
         importe: currentCheque.importe,
       };
-      console.log("Payload", payLoad);
-      await axios.put(`http://localhost:3001/updateCheques/`, payLoad);
+      await axios.put(`${process.env.REACT_APP_API_URL}/updateCheques/`, payLoad);
       notification.success({
         message: "Cheque actualizado",
         description: "El cheque se actualizó correctamente",

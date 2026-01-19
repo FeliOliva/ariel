@@ -30,7 +30,7 @@ const Zonas = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/zonas");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/zonas`);
       setData(response.data);
       setLoading(false);
     } catch (error) {
@@ -53,7 +53,7 @@ const Zonas = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.post("http://localhost:3001/addZona", newZone);
+          await axios.post(`${process.env.REACT_APP_API_URL}/addZona`, newZone);
           fetchData();
           setOpenAddDrawer(false);
           setNewZone(null);
@@ -79,7 +79,7 @@ const Zonas = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropZona/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropZona/${id}`);
             notification.success({
               message: "Zona desactivada",
               description: "La zona se desactivo correctamente",
@@ -96,7 +96,7 @@ const Zonas = () => {
           okText: "Sí",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upZona/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upZona/${id}`);
             notification.success({
               message: "Zona activada",
               description: "La zona se activo correctamente",
@@ -134,7 +134,7 @@ const Zonas = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.put(`http://localhost:3001/updateZona`, zonaActualizada);
+          await axios.put(`${process.env.REACT_APP_API_URL}/updateZona`, zonaActualizada);
           setOpenEditDrawer(false);
           fetchData();
           notification.success({
@@ -183,7 +183,7 @@ const Zonas = () => {
   const handleOpenEditDrawer = async (ID) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getZonaByID/${ID}`
+        `${process.env.REACT_APP_API_URL}/getZonaByID/${ID}`
       );
       setCurrentZona(response.data);
       setOpenEditDrawer(true);

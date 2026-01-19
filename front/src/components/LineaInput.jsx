@@ -8,7 +8,7 @@ export default function LineaInput({ onChangeLinea }) {
   useEffect(() => {
     const fetchlinea = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/lineas");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/lineas`);
         setlinea(response.data);
       } catch (error) {
         console.error("Error fetching lineas:", error);
@@ -24,7 +24,6 @@ export default function LineaInput({ onChangeLinea }) {
   };
 
   const handleSearchlinea = (value) => {
-    console.log("search:", value);
   };
 
   const options = linea

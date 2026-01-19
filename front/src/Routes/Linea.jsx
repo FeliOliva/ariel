@@ -44,7 +44,7 @@ const Linea = () => {
   const { confirm } = Modal;
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/lineas");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/lineas`);
       setLineas(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -78,7 +78,7 @@ const Linea = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.post("http://localhost:3001/addLinea", {
+          await axios.post(`${process.env.REACT_APP_API_URL}/addLinea`, {
             nombre: linea.nombre,
           });
           notification.success({
@@ -121,7 +121,7 @@ const Linea = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.post(`http://localhost:3001/addSubLinea`, {
+          await axios.post(`${process.env.REACT_APP_API_URL}/addSubLinea`, {
             nombre: subLinea.nombre,
             linea_id: subLinea.linea_id,
           });
@@ -140,7 +140,6 @@ const Linea = () => {
   };
 
   const handleToggleState = async (id, currentState) => {
-    console.log(currentState);
     try {
       if (currentState === 1) {
         confirm({
@@ -149,7 +148,7 @@ const Linea = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/dropLinea/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/dropLinea/${id}`);
             notification.success({
               message: "Linea desactivada",
               description: "La linea se desactivo exitosamente",
@@ -165,7 +164,7 @@ const Linea = () => {
           okText: "Si, confirmar",
           cancelText: "Cancelar",
           onOk: async () => {
-            await axios.put(`http://localhost:3001/upLinea/${id}`);
+            await axios.put(`${process.env.REACT_APP_API_URL}/upLinea/${id}`);
             notification.success({
               message: "Linea activada",
               description: "La linea se activo exitosamente",
@@ -185,7 +184,7 @@ const Linea = () => {
   const handleOpenEditDrawer = async (id) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getLineaByID/${id}`
+        `${process.env.REACT_APP_API_URL}/getLineaByID/${id}`
       );
       setCurrentLinea(response.data);
       setOpenEditDrawer(true);
@@ -198,7 +197,6 @@ const Linea = () => {
       nombre: currentLinea.nombre,
       ID: currentLinea.id,
     };
-    console.log(editedLinea.nombre);
     if (!editedLinea.nombre) {
       Modal.warning({
         title: "Error",
@@ -215,7 +213,7 @@ const Linea = () => {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.put(`http://localhost:3001/updateLinea`, editedLinea);
+          await axios.put(`${process.env.REACT_APP_API_URL}/updateLinea`, editedLinea);
           setOpenEditDrawer(false);
           fetchData();
           notification.success({
@@ -283,10 +281,9 @@ const Linea = () => {
   ];
   const handleClearLineas = async () => {
     try {
-      await axios.put("http://localhost:3001/eliminarLineas");
+      await axios.put(`${process.env.REACT_APP_API_URL}/eliminarLineas`);
       window.location.reload();
     } catch (error) {
-      console.log(error);
     }
   };
   return (

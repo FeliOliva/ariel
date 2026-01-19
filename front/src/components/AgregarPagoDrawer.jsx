@@ -74,7 +74,7 @@ const AgregarPagoDrawer = ({
         okText: "Si",
         cancelText: "No",
         onOk: async () => {
-          await axios.post("http://localhost:3001/addPago", {
+          await axios.post(`${process.env.REACT_APP_API_URL}/addPago`, {
             cliente_id: clienteId,
             metodo_pago,
             monto: rest.monto,

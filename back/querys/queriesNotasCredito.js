@@ -72,7 +72,7 @@ WHERE
     c.zona_id = ?
     AND nc.estado = 1
     AND c.estado = 1
-    AND DATE(nc.fecha) BETWEEN DATE(?) AND DATE(?)
+    AND nc.fecha >= ? AND nc.fecha < DATE_ADD(?, INTERVAL 1 DAY)
 GROUP BY 
     nc.id, c.id
 ORDER BY 

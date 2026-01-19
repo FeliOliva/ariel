@@ -51,7 +51,7 @@ export default function ResumenVentasPorFecha() {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:3001/getVentasPorFecha`,
+        `${process.env.REACT_APP_API_URL}/getVentasPorFecha`,
         {
           params: {
             fecha_inicio: fechaInicio,
@@ -59,7 +59,6 @@ export default function ResumenVentasPorFecha() {
           },
         }
       );
-      console.log("data", response.data);
       const datosOrdenados = response.data.sort(
         (a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta)
       );

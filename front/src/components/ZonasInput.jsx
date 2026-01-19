@@ -8,7 +8,7 @@ export default function ZonasInput({ onChangeZona }) {
   useEffect(() => {
     const fetchZonas = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/zonas");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/zonas`);
         // Guardar las zonas que tienen estado igual a 1
         setZonas(response.data.filter((zona) => zona.estado === 1));
       } catch (error) {
@@ -22,11 +22,9 @@ export default function ZonasInput({ onChangeZona }) {
   const handleChangeZona = (value) => {
     const selectedZona = zonas.find((zona) => zona.id === value);
     onChangeZona(selectedZona); // Llama la función de callback con la zona seleccionada
-    console.log(selectedZona);
   };
 
   const handleSearchZona = (value) => {
-    console.log("search:", value); // Puedes agregar lógica de búsqueda personalizada aquí si lo necesitas
   };
 
   const options = zonas

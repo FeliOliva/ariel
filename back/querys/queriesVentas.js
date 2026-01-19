@@ -64,7 +64,7 @@ JOIN
 WHERE 
     c.zona_id = ?
     AND c.estado = 1
-    AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?)
+    AND v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
     AND v.estado = 1
 GROUP BY 
     c.id, c.nombre, c.apellido, c.zona_id
@@ -201,14 +201,14 @@ ORDER BY fecha;
          FROM venta 
          WHERE cliente_id = v.cliente_id
          AND estado = 1  
-         AND DATE(fecha_venta) BETWEEN DATE(?) AND DATE(?)), 0, 'de_DE'
+         AND fecha_venta >= ? AND fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)), 0, 'de_DE'
     ) AS total_ventas_formateado
   FROM venta v
   JOIN cliente c ON v.cliente_id = c.id
   JOIN zona z ON v.zona_id = z.id
   WHERE v.cliente_id = ?
     AND v.estado = 1
-    AND DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?);
+    AND v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY);
 `,
   getDetallesVenta: `SELECT articulo_id, cantidad FROM detalle_venta WHERE venta_id = ?;`,
   devolverStock: `UPDATE articulo SET stock = stock + ? WHERE id = ?;`,
@@ -236,7 +236,7 @@ INNER JOIN
 LEFT JOIN 
     detalle_venta d ON v.id = d.venta_id
 WHERE 
-    DATE(v.fecha_venta) BETWEEN DATE(?) AND DATE(?)
+    v.fecha_venta >= ? AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
 GROUP BY
     v.id, 
     v.estado, 

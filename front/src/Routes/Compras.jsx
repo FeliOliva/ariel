@@ -49,7 +49,7 @@ function Compras() {
   const { confirm } = Modal;
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/compras");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/compras`);
       setData(response.data);
     } catch (error) {
       console.error("Error fetching the data:", error);
@@ -391,7 +391,7 @@ function Compras() {
       cancelText: "Cancelar",
       onOk: async () => {
         try {
-          await axios.post("http://localhost:3001/addCompra", payload);
+          await axios.post(`${process.env.REACT_APP_API_URL}/addCompra`, payload);
           notification.success({
             message: "Registro exitoso",
             description: "La compra se registró correctamente.",
@@ -424,7 +424,7 @@ function Compras() {
         okType: "danger",
         onOk: async () => {
           try {
-            await axios.delete(`http://localhost:3001/deleteCompra/${id}`);
+            await axios.delete(`${process.env.REACT_APP_API_URL}/deleteCompra/${id}`);
             notification.success({
               message: "Compra eliminada",
               description: "La compra se eliminó permanentemente.",

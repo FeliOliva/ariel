@@ -12,7 +12,7 @@ export default function VendedoresInput({
   useEffect(() => {
     const fetchVendedores = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/vendedores");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/vendedores`);
         setVendedores(response.data);
       } catch (error) {
         console.error("Error fetching vendedores:", error);

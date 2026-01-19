@@ -8,7 +8,7 @@ export default function TipoClienteInput({ onChangeTipoCliente }) {
   useEffect(() => {
     const fetchTipoCliente = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/tipocliente");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/tipocliente`);
         setTipoCliente(response.data);
       } catch (error) {
         console.error("Error fetching tipoCliente:", error);
@@ -23,11 +23,9 @@ export default function TipoClienteInput({ onChangeTipoCliente }) {
       (tipoCliente) => tipoCliente.id === value
     );
     onChangeTipoCliente(selectedTipoCliente);
-    console.log(selectedTipoCliente);
   };
 
   const handleSearchtipo = (value) => {
-    console.log("search:", value);
   };
 
   const options = tipoCliente

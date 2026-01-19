@@ -1,4 +1,5 @@
 const notasCreditoModel = require("../models/notasCreditoModel");
+const db = require("../database");
 
 const getAllNotasCreditoByClienteId = async (req, res) => {
   try {
@@ -82,35 +83,90 @@ const getDetallesNotaCredito = async (req, res) => {
 };
 
 const addNotaCredito = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { cliente_id, detalles } = req.body;
-    console.log("datos desde el back", req.body);
-    const notaCreditoId = await notasCreditoModel.addNotaCredito(cliente_id);
-    console.log("id de la nota de credito", notaCreditoId);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    const notaCreditoId = await notasCreditoModel.addNotaCredito(
+      cliente_id,
+      connection
+    );
+    const detalleRows = [];
+    const stockMap = new Map();
     for (const detalle of detalles) {
-      await notasCreditoModel.addDetallesNotaCredito(
+      detalleRows.push([
         notaCreditoId,
         detalle.articulo_id,
         detalle.cantidad,
-        detalle.precio
-      );
-      await notasCreditoModel.updateStock(
-        detalle.articulo_id,
-        detalle.cantidad
-      ); // Actualiza el stock sumando la cantidad
+        detalle.precio,
+      ]);
+      const current = stockMap.get(detalle.articulo_id) || 0;
+      stockMap.set(detalle.articulo_id, current + Number(detalle.cantidad));
     }
+
+    await notasCreditoModel.addDetallesNotaCreditoBatch(
+      detalleRows,
+      connection
+    );
+
+    if (stockMap.size > 0) {
+      const updates = Array.from(stockMap.entries()).map(
+        ([articulo_id, cantidad]) => ({ articulo_id, cantidad })
+      );
+      await notasCreditoModel.updateStockBatch(updates, connection);
+    }
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
     res.status(200).json({ message: "Nota de crédito creada con éxito" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de addNotaCredito:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al crear la nota de crédito:", error);
     res.status(500).json({ error: "Error al crear la nota de crédito" });
   }
 };
 const dropNotaCredito = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const ID = req.params.ID;
-    await notasCreditoModel.dropNotaCredito(ID);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    await notasCreditoModel.dropNotaCredito(ID, connection);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
     res.status(200).json({ message: "Nota de credito eliminada con exito" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de dropNotaCredito:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error("Error al eliminar la nota de credito:", error);
     res.status(500).json({ error: "Error al eliminar la nota de credito" });
   }
@@ -123,9 +179,6 @@ const getNotasCreditoByZona = async (req, res) => {
     // Convertir zona_id a número para asegurar el tipo correcto
     const zonaIdNum = parseInt(zona_id, 10);
 
-    console.log("ID (original):", zona_id, "tipo:", typeof zona_id);
-    console.log("ID convertido a número:", zonaIdNum, "tipo:", typeof zonaIdNum);
-    console.log("Fechas:", fecha_inicio, fecha_fin);
 
     if (!zona_id || isNaN(zonaIdNum)) {
       return res.status(400).json({ error: "ID de zona no proporcionado o inválido" });
@@ -137,8 +190,6 @@ const getNotasCreditoByZona = async (req, res) => {
 
     const notasCredito = await notasCreditoModel.getNotasCreditoByZona(zonaIdNum, fecha_inicio, fecha_fin);
     
-    console.log("Notas de crédito obtenidas:", notasCredito);
-    console.log("Cantidad de notas de crédito:", notasCredito?.length || 0);
 
     if (!notasCredito || notasCredito.length === 0) {
       return res.json([]); // Si no hay notas, devolver un array vacío
@@ -165,7 +216,6 @@ const updateNotaCredito = async (req, res) => {
 const getNotaCreditoById = async (req, res) => {
   try {
     const ID = req.params.ID;
-    console.log("ID", ID);
     const notaCredito = await notasCreditoModel.getNotaCreditoById(ID);
     if (!notaCredito) {
       return res.status(404).json({ error: "Nota de crédito no encontrada" });

@@ -19,9 +19,8 @@ const ArticulosDetalles = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3001/getArticulosOrdenados"
+          `${process.env.REACT_APP_API_URL}/getArticulosOrdenados`
         );
-        console.log(response.data);
         // Filtrar los artículos activos (estado = 1)
         const filteredData = response.data.filter((item) => item.estado === 1);
 
@@ -235,9 +234,8 @@ const ArticulosDetalles = () => {
     const linea_id = lineaId.id;
     try {
       const response = await axios.get(
-        `http://localhost:3001/getArticulosByLineaID/${linea_id}`
+        `${process.env.REACT_APP_API_URL}/getArticulosByLineaID/${linea_id}`
       );
-      console.log(response.data);
       const data = response.data;
       handleGeneratePDFlinea(data, lineaId, imageUrl);
     } catch (error) {
@@ -331,9 +329,8 @@ const ArticulosDetalles = () => {
   const handleImprimirMedicamentos = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/getArticulosByLineaID/69`
+        `${process.env.REACT_APP_API_URL}/getArticulosByLineaID/69`
       );
-      console.log(response.data);
       const data = response.data;
       const linea = "Medicamentos"; // Ahora es solo un string
       handleGeneratePDFMedicamentos(data, linea);

@@ -16,6 +16,7 @@ router.get(
 );
 router.get("/resumenCliente/:ID", ventaControllers.getResumenCliente);
 router.get("/resumenZonas", ventaControllers.getResumenZonas);
+router.get("/resumenCuentaZona/:ID", ventaControllers.getResumenCuentaZona);
 router.post("/editarVenta", ventaControllers.editarVenta);
 router.delete("/eliminarDetalleVenta", ventaControllers.eliminarDetalleVenta);
 router.get("/getVentasPorFecha", ventaControllers.getVentasPorFecha);

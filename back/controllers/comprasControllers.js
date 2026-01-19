@@ -1,4 +1,5 @@
 const comprasModel = require("../models/comprasModel");
+const db = require("../database");
 
 const getAllCompras = async (req, res) => {
   try {
@@ -9,6 +10,8 @@ const getAllCompras = async (req, res) => {
   }
 };
 const addCompra = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const { 
       nro_compra, 
@@ -19,21 +22,30 @@ const addCompra = async (req, res) => {
     } = req.body;
     let total = 0;
     let sub_total = 0;
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
     const compra_id = await comprasModel.addCompra(
       nro_compra,
       total,
       porcentaje_aumento_global || null,
       porcentaje_aumento_costo_global || null,
-      porcentaje_aumento_precio_global || null
+      porcentaje_aumento_precio_global || null,
+      connection
     );
-    const lineasStock = await comprasModel.getLineasStock();
+    const lineasStock = await comprasModel.getLineasStock(connection);
     const lineas = lineasStock.map(l => Number(l.linea_id));
-    console.log("Líneas que controlan stock:", lineas);
+    const detalleRows = [];
+    const stockMap = new Map();
+    const costoMap = new Map();
 
     for (const detalle of detalles) {
       sub_total = Math.round(detalle.cantidad * detalle.costo);
       Math.round((total += sub_total));
-      await comprasModel.addDetalleCompra(
+
+      detalleRows.push([
         compra_id,
         detalle.articulo_id,
         detalle.cantidad,
@@ -42,31 +54,60 @@ const addCompra = async (req, res) => {
         sub_total,
         detalle.porcentaje_aumento || null,
         detalle.porcentaje_aumento_costo || null,
-        detalle.porcentaje_aumento_precio || null
-      );
-      
-      // Actualizar el costo y precio_monotributista del artículo con los nuevos valores
-      await comprasModel.updateCostoArticulo(
-        detalle.articulo_id,
-        detalle.costo,
-        detalle.precio_monotributista
-      );
-      console.log(`✓ Precios actualizados: Artículo ${detalle.articulo_id}, Costo: ${detalle.costo}, Precio Monotributista: ${detalle.precio_monotributista}`);
-      
-      // Verificar si la línea del artículo controla stock (convertir a número para comparación)
+        detalle.porcentaje_aumento_precio || null,
+      ]);
+
+      costoMap.set(detalle.articulo_id, {
+        costo: detalle.costo,
+        precio_monotributista: detalle.precio_monotributista,
+      });
+
       const lineaId = Number(detalle.linea_id);
       if (lineaId && lineas.includes(lineaId)) {
-        await comprasModel.updateStock(detalle.articulo_id, detalle.cantidad); // Actualiza el stock sumando la cantidad
-        console.log(`✓ Stock actualizado: Artículo ${detalle.articulo_id}, cantidad agregada: ${detalle.cantidad}`);
-      } else {
-        console.log(`✗ Stock NO actualizado: Línea ${lineaId} no controla stock o no está en la lista`);
+        const current = stockMap.get(detalle.articulo_id) || 0;
+        stockMap.set(detalle.articulo_id, current + Number(detalle.cantidad));
       }
-      
-      await comprasModel.updateTotalCompra(compra_id, total);
     }
+
+    await comprasModel.addDetalleCompraBatch(detalleRows, connection);
+
+    if (costoMap.size > 0) {
+      const updates = Array.from(costoMap.entries()).map(
+        ([articulo_id, values]) => ({
+          articulo_id,
+          costo: values.costo,
+          precio_monotributista: values.precio_monotributista,
+        })
+      );
+      await comprasModel.updateCostoArticuloBatch(updates, connection);
+    }
+
+    if (stockMap.size > 0) {
+      const updates = Array.from(stockMap.entries()).map(
+        ([articulo_id, cantidad]) => ({ articulo_id, cantidad })
+      );
+      await comprasModel.updateStockBatch(updates, connection);
+    }
+
+    await comprasModel.updateTotalCompra(compra_id, total, connection);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     res.status(201).json({ message: "Compra agregada con éxito" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de addCompra:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error(error);
     res.status(500).json({ error: "Error al agregar la compra" });
   }
@@ -131,6 +172,8 @@ const getDetalleCompraById = async (req, res) => {
 };
 
 const updateDetalleCompra = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const {
       ID,
@@ -144,6 +187,10 @@ const updateDetalleCompra = async (req, res) => {
     } = req.body;
     const sub_total = new_costo * cantidad;
 
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
     // Actualizamos el detalle de la compra
     await comprasModel.updateDetalleCompra(
       ID,
@@ -152,33 +199,50 @@ const updateDetalleCompra = async (req, res) => {
       cantidad,
       sub_total,
       porcentaje_aumento_costo || null,
-      porcentaje_aumento_precio || null
+      porcentaje_aumento_precio || null,
+      connection
     );
 
     // Actualizamos el costo y precio del artículo en la tabla articulo
     await comprasModel.updateCostoArticulo(
       articulo_id,
       new_costo,
-      new_precio_monotributista
+      new_precio_monotributista,
+      connection
     );
 
     // Recalculamos los totales de la compra
-    await recalcularTotalesCompra(compra_id);
+    await recalcularTotalesCompra(compra_id, connection);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
 
     res.status(200).json({
       message:
         "Detalle de compra actualizado, artículo modificado y totales recalculados correctamente",
     });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de updateDetalleCompra:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error(error);
     res.status(500).json({ error: "Error al actualizar el detalle de compra" });
   }
 };
 
-const recalcularTotalesCompra = async (compra_id) => {
+const recalcularTotalesCompra = async (compra_id, connection = null) => {
   try {
     // Obtener todos los detalles de la compra
-    const detalles = await comprasModel.getDetalleCompra(compra_id);
+    const detalles = await comprasModel.getDetalleCompra(compra_id, connection);
     // Inicializamos el total
     let total = 0;
 
@@ -188,7 +252,7 @@ const recalcularTotalesCompra = async (compra_id) => {
     });
 
     // Actualizamos el total en la tabla compra
-    await comprasModel.updateTotalCompra(compra_id, total);
+    await comprasModel.updateTotalCompra(compra_id, total, connection);
   } catch (err) {
     throw err;
   }
@@ -205,11 +269,33 @@ const dropCompra = async (req, res) => {
 };
 
 const deleteCompra = async (req, res) => {
+  let connection = null;
+  let inTransaction = false;
   try {
     const compra_id = req.params.ID;
-    await comprasModel.deleteCompra(compra_id);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    inTransaction = true;
+
+    await comprasModel.deleteCompra(compra_id, connection);
+
+    await connection.commit();
+    inTransaction = false;
+    connection.release();
+    connection = null;
+
     res.json({ message: "Compra eliminada permanentemente" });
   } catch (error) {
+    if (inTransaction) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback de deleteCompra:", rollbackError);
+      }
+    }
+    if (connection) {
+      connection.release();
+    }
     console.error(error);
     res.status(500).json({ error: "Error al eliminar la compra" });
   }

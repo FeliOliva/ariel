@@ -26,7 +26,6 @@ export default function ResumenPagosPorVendedor() {
   }, []);
 
   const handleVendedorChange = (id, option) => {
-    console.log("id", id, "option", option);
     setVendedorSeleccionado({ id, nombre: option.label });
   };
 
@@ -67,7 +66,7 @@ export default function ResumenPagosPorVendedor() {
       // 🔹 Un solo vendedor
       if (vendedorSeleccionado.id !== "ALL") {
         const response = await axios.get(
-          `http://localhost:3001/pagosPorVendedor`,
+          `${process.env.REACT_APP_API_URL}/pagosPorVendedor`,
           {
             params: {
               vendedor_id: vendedorSeleccionado.id,
@@ -88,14 +87,14 @@ export default function ResumenPagosPorVendedor() {
 
       // 🔹 Todos los vendedores
       const respVendedores = await axios.get(
-        "http://localhost:3001/vendedores"
+        `${process.env.REACT_APP_API_URL}/vendedores`
       );
       const vendedores = respVendedores.data || [];
 
       const allResults = [];
       for (const vend of vendedores) {
         const respPagos = await axios.get(
-          "http://localhost:3001/pagosPorVendedor",
+          `${process.env.REACT_APP_API_URL}/pagosPorVendedor`,
           {
             params: {
               vendedor_id: vend.id,

@@ -1,4 +1,5 @@
 const pedidoModel = require('../models/pedidoModel');
+const db = require("../database");
 
 const getAllPedidos = async (req, res) => {
     try {
@@ -22,6 +23,8 @@ const getPedidoById = async (req, res) => {
     }
 }
 const addPedido = async (req, res) => {
+    let connection = null;
+    let inTransaction = false;
     try {
         const { estado, detalles } = req.body; // `detalles` es un array con los productos del pedido
 
@@ -29,17 +32,38 @@ const addPedido = async (req, res) => {
             return res.status(400).json({ error: "Faltan datos o detalles inválidos" });
         }
 
-        // Crear el pedido en la base de datos
-        const pedidoId = await pedidoModel.addPedido(estado);
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+        inTransaction = true;
 
-        // Insertar los detalles del pedido
-        for (const detalle of detalles) {
-            const { articulo_id, cantidad } = detalle;
-            await pedidoModel.addDetallePedido(pedidoId, articulo_id, cantidad);
-        }
+        // Crear el pedido en la base de datos
+        const pedidoId = await pedidoModel.addPedido(estado, connection);
+
+        const detalleRows = detalles.map((detalle) => [
+            pedidoId,
+            detalle.articulo_id,
+            detalle.cantidad,
+        ]);
+
+        await pedidoModel.addDetallePedidoBatch(detalleRows, connection);
+
+        await connection.commit();
+        inTransaction = false;
+        connection.release();
+        connection = null;
 
         res.status(201).json({ message: "Pedido agregado con éxito", pedidoId });
     } catch (error) {
+        if (inTransaction) {
+            try {
+                await connection.rollback();
+            } catch (rollbackError) {
+                console.error("Error al hacer rollback de addPedido:", rollbackError);
+            }
+        }
+        if (connection) {
+            connection.release();
+        }
         console.error("Error al agregar el pedido:", error);
         res.status(500).json({ error: "Error al agregar el pedido" });
     }

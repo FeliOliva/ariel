@@ -70,22 +70,43 @@ const getPedidoById = async (pedidoId) => {
     throw new Error("Error al obtener el pedido: " + error.message);
   }
 };
-const addPedido = async (estado) => {
+const addPedido = async (estado, connection = null) => {
   try {
+    const conn = connection || db;
     const query = "INSERT INTO pedido (estado) VALUES (?)";
-    const [result] = await db.query(query, [estado]);
+    const [result] = await conn.query(query, [estado]);
     return result.insertId;
   } catch (error) {
     throw new Error("Error al agregar el pedido: " + error.message);
   }
 };
 
-const addDetallePedido = async (pedidoId, articulo_id, cantidad) => {
+const addDetallePedido = async (
+  pedidoId,
+  articulo_id,
+  cantidad,
+  connection = null
+) => {
   try {
+    const conn = connection || db;
     const query = `
             INSERT INTO detalle_pedido (pedido_id, articulo_id, cantidad)
             VALUES (?, ?, ?)`;
-    await db.query(query, [pedidoId, articulo_id, cantidad]);
+    await conn.query(query, [pedidoId, articulo_id, cantidad]);
+  } catch (error) {
+    throw new Error("Error al agregar detalle de pedido: " + error.message);
+  }
+};
+const addDetallePedidoBatch = async (rows, connection = null) => {
+  if (!rows || rows.length === 0) {
+    return;
+  }
+  try {
+    const conn = connection || db;
+    const query = `
+            INSERT INTO detalle_pedido (pedido_id, articulo_id, cantidad)
+            VALUES ?`;
+    await conn.query(query, [rows]);
   } catch (error) {
     throw new Error("Error al agregar detalle de pedido: " + error.message);
   }
@@ -151,6 +172,7 @@ module.exports = {
   getPedidoById,
   addPedido,
   addDetallePedido,
+  addDetallePedidoBatch,
   updateCantidadDetalle,
   dropPedido,
   upPedido,
