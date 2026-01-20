@@ -68,6 +68,18 @@ const ArticulosDetalles = () => {
     }, {});
   };
 
+  // Agrupar los artículos por sublínea dentro de una línea
+  const groupBySublinea = (data) => {
+    return data.reduce((acc, item) => {
+      const sublinea = item.sublinea_nombre || "Sin sublínea";
+      if (!acc[sublinea]) {
+        acc[sublinea] = [];
+      }
+      acc[sublinea].push(item);
+      return acc;
+    }, {});
+  };
+
   const handleGeneratePDF = () => {
     const pdf = new jsPDF("p", "mm", "a4");
     const pageHeight = pdf.internal.pageSize.height;
@@ -106,6 +118,7 @@ const ArticulosDetalles = () => {
 
       const groupedData = groupByLine(filteredData);
 
+      // Ordenar artículos dentro de cada línea
       Object.keys(groupedData).forEach((line) => {
         groupedData[line].sort((a, b) =>
           a.articulo_nombre.localeCompare(b.articulo_nombre)
@@ -116,33 +129,28 @@ const ArticulosDetalles = () => {
 
       Object.keys(groupedData).forEach((line) => {
         const lineTitle = `LÍNEA ${line}`;
-        const tableData = groupedData[line].map((row) => {
-          const medicion =
-            row.articulo_medicion === "-" ? "" : row.articulo_medicion;
-
-          return {
-            codigo: row.codigo_producto,
-            nombre: row.articulo_nombre + " " + medicion,
-            sublinea: row.sublinea_nombre,
-            precio:
-              "$" +
-              Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              }),
-          };
-        });
+        
+        // Agrupar por sublínea dentro de esta línea
+        const sublineasData = groupBySublinea(groupedData[line]);
+        
+        // Ordenar sublíneas alfabéticamente
+        const sortedSublineas = Object.keys(sublineasData).sort();
 
         if (pdf.internal.getNumberOfPages() === 1 && currentY === marginTop) {
           currentY += 20;
         }
 
-        if (currentY + titleHeight + rowHeight * minRowsOnPage > pageHeight) {
+        // Evitar que quede el título al final de página sin tabla
+        // (título + espacio + header tabla + banda sublínea + 1 producto aprox.)
+        const minAfterTitle =
+          titleHeight + 5 + rowHeight * 4; // ~ tabla mínima visible
+        if (currentY + minAfterTitle > pageHeight) {
           pdf.addPage();
           addHeader(pdf, false);
           currentY = marginTop;
         }
 
+        // Título de la línea
         pdf.setFontSize(16);
         pdf.setTextColor(0);
         pdf.setFillColor(255, 255, 255);
@@ -151,15 +159,55 @@ const ArticulosDetalles = () => {
         pdf.text(lineTitle, titleX, currentY);
         currentY += titleHeight + 5;
 
+        // Armar una sola tabla por línea e insertar la sublínea como "fila separadora" dentro de la tabla
+        const bodyRows = [];
+        sortedSublineas.forEach((sublinea) => {
+          const sublineaItems = sublineasData[sublinea];
+          sublineaItems.sort((a, b) =>
+            a.articulo_nombre.localeCompare(b.articulo_nombre)
+          );
+
+          const subRow = [
+            {
+              content: sublinea,
+              colSpan: 4,
+              styles: {
+                fillColor: [230, 230, 230],
+                textColor: 0,
+                fontStyle: "bold",
+                halign: "center",
+                fontSize: 9,
+              },
+            },
+          ];
+          // marcador para hooks
+          subRow.__isSublineaHeader = true;
+          bodyRows.push(subRow);
+
+          sublineaItems.forEach((row) => {
+            const medicion =
+              row.articulo_medicion === "-" ? "" : row.articulo_medicion;
+            bodyRows.push([
+              row.codigo_producto,
+              row.articulo_nombre + " " + medicion,
+              "$" +
+                Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }),
+              "$" +
+                Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString(
+                  "es-ES",
+                  { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                ),
+            ]);
+          });
+        });
+
         pdf.autoTable({
           startY: currentY,
-          head: [["Código", "Artículo", "Sublínea", "Precio"]],
-          body: tableData.map((row) => [
-            row.codigo,
-            row.nombre,
-            row.sublinea,
-            row.precio,
-          ]),
+          head: [["Código", "Artículo", "Costo", "Precio"]],
+          body: bodyRows,
           theme: "grid",
           styles: { fontSize: 8, cellPadding: 1 },
           headStyles: {
@@ -167,30 +215,34 @@ const ArticulosDetalles = () => {
             textColor: 0,
             fontStyle: "bold",
           },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          // IMPORTANTE: deja margen superior en páginas siguientes para no chocar con el header/logo
           margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
           tableWidth: pageWidth - 10,
           columnStyles: {
             0: { cellWidth: 20 },
             1: { cellWidth: "auto" },
-            2: { cellWidth: 35 },
+            2: { cellWidth: 25 },
             3: { cellWidth: 25 },
           },
-          didDrawPage: (data) => {
+          didDrawPage: () => {
             addHeader(pdf, false);
           },
-          willDrawCell: (data) => {
-            const { row, section } = data;
-            if (section === "body") {
-              if (row.index % 2 === 0) {
-                pdf.setFillColor(240, 240, 240);
-              } else {
-                pdf.setFillColor(255, 255, 255);
-              }
+          didParseCell: (data) => {
+            if (data.row?.raw?.__isSublineaHeader) {
+              data.cell.styles.fillColor = [230, 230, 230];
+              data.cell.styles.textColor = 0;
+              data.cell.styles.fontStyle = "bold";
+              data.cell.styles.halign = "center";
+              data.cell.styles.fontSize = 9;
             }
           },
         });
 
         currentY = pdf.lastAutoTable.finalY + 10;
+
+        // Espacio adicional después de cada línea
+        currentY += 5;
       });
 
       pdf.save("articulos.pdf");
@@ -244,9 +296,11 @@ const ArticulosDetalles = () => {
   };
   const handleGeneratePDFlinea = (data, lineaId, imageUrl) => {
     const pdf = new jsPDF("p", "mm", "a4");
+    const pageHeight = pdf.internal.pageSize.height;
     const pageWidth = pdf.internal.pageSize.width;
     const marginTop = 40;
     const titleHeight = 10;
+    const rowHeight = 7;
     const logoWidth = 30;
     const logoHeight = 30;
     const phone = "Teléfono: +54 9 3518 16-8151";
@@ -280,30 +334,58 @@ const ArticulosDetalles = () => {
 
     let currentY = marginTop + titleHeight + 5;
 
-    // Ordenar los artículos por nombre
-    const sortedData = [...data].sort((a, b) =>
-      a.articulo_nombre.localeCompare(b.articulo_nombre)
-    );
+    // Agrupar por sublínea
+    const sublineasData = groupBySublinea(data);
+    const sortedSublineas = Object.keys(sublineasData).sort();
 
-    const tableData = sortedData.map((row) => {
-      const medicion =
-        row.articulo_medicion === "-" ? "" : row.articulo_medicion;
-      return [
-        row.codigo_producto,
-        row.articulo_nombre + " " + medicion,
-        row.sublinea_nombre,
-        "$" +
-          Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          }),
+    // Una sola tabla: la sublínea como fila dentro de la grilla
+    const bodyRows = [];
+    sortedSublineas.forEach((sublinea) => {
+      const sublineaItems = sublineasData[sublinea];
+      sublineaItems.sort((a, b) =>
+        a.articulo_nombre.localeCompare(b.articulo_nombre)
+      );
+
+      const subRow = [
+        {
+          content: sublinea,
+          colSpan: 4,
+          styles: {
+            fillColor: [230, 230, 230],
+            textColor: 0,
+            fontStyle: "bold",
+            halign: "center",
+            fontSize: 9,
+          },
+        },
       ];
+      subRow.__isSublineaHeader = true;
+      bodyRows.push(subRow);
+
+      sublineaItems.forEach((row) => {
+        const medicion =
+          row.articulo_medicion === "-" ? "" : row.articulo_medicion;
+        bodyRows.push([
+          row.codigo_producto,
+          row.articulo_nombre + " " + medicion,
+          "$" +
+            Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }),
+          "$" +
+            Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString(
+              "es-ES",
+              { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+            ),
+        ]);
+      });
     });
 
     pdf.autoTable({
       startY: currentY,
-      head: [["Código", "Artículo", "Sublínea", "Precio"]],
-      body: tableData,
+      head: [["Código", "Artículo", "Costo", "Precio"]],
+      body: bodyRows,
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1 },
       headStyles: {
@@ -311,16 +393,27 @@ const ArticulosDetalles = () => {
         textColor: 0,
         fontStyle: "bold",
       },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      // IMPORTANTE: deja margen superior en páginas siguientes para no chocar con el header/logo
       margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
       tableWidth: pageWidth - 10,
       columnStyles: {
         0: { cellWidth: 20 },
         1: { cellWidth: "auto" },
-        2: { cellWidth: 35 },
+        2: { cellWidth: 25 },
         3: { cellWidth: 25 },
       },
-      didDrawPage: (data) => {
+      didDrawPage: () => {
         addHeader(pdf, false);
+      },
+      didParseCell: (data) => {
+        if (data.row?.raw?.__isSublineaHeader) {
+          data.cell.styles.fillColor = [230, 230, 230];
+          data.cell.styles.textColor = 0;
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.halign = "center";
+          data.cell.styles.fontSize = 9;
+        }
       },
     });
 
@@ -341,6 +434,7 @@ const ArticulosDetalles = () => {
 
   const handleGeneratePDFMedicamentos = (data, lineaId) => {
     const pdf = new jsPDF("p", "mm", "a4");
+    const pageHeight = pdf.internal.pageSize.height;
     const pageWidth = pdf.internal.pageSize.width;
 
     if (!data || data.length === 0 || !lineaId) {
@@ -357,32 +451,57 @@ const ArticulosDetalles = () => {
 
     let currentY = 30; // Espacio antes de la tabla
 
-    // Ordenar los artículos por nombre
-    const sortedData = [...data].sort((a, b) =>
-      a.articulo_nombre.localeCompare(b.articulo_nombre)
-    );
+    // Agrupar por sublínea
+    const sublineasData = groupBySublinea(data);
+    const sortedSublineas = Object.keys(sublineasData).sort();
 
-    // Convertir los datos en formato de tabla
-    const tableData = sortedData.map((row) => {
-      const medicion =
-        row.articulo_medicion === "-" ? "" : row.articulo_medicion;
-      return [
-        row.codigo_producto,
-        row.articulo_nombre + " " + medicion,
-        row.sublinea_nombre,
-        "$" +
-          Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          }),
+    const bodyRows = [];
+    sortedSublineas.forEach((sublinea) => {
+      const sublineaItems = sublineasData[sublinea];
+      sublineaItems.sort((a, b) =>
+        a.articulo_nombre.localeCompare(b.articulo_nombre)
+      );
+
+      const subRow = [
+        {
+          content: sublinea,
+          colSpan: 4,
+          styles: {
+            fillColor: [230, 230, 230],
+            textColor: 0,
+            fontStyle: "bold",
+            halign: "center",
+            fontSize: 9,
+          },
+        },
       ];
+      subRow.__isSublineaHeader = true;
+      bodyRows.push(subRow);
+
+      sublineaItems.forEach((row) => {
+        const medicion =
+          row.articulo_medicion === "-" ? "" : row.articulo_medicion;
+        bodyRows.push([
+          row.codigo_producto,
+          row.articulo_nombre + " " + medicion,
+          "$" +
+            Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }),
+          "$" +
+            Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString(
+              "es-ES",
+              { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+            ),
+        ]);
+      });
     });
 
-    // Generar tabla sin header ni logo
     pdf.autoTable({
       startY: currentY,
-      head: [["Código", "Artículo", "Sublínea", "Precio"]],
-      body: tableData,
+      head: [["Código", "Artículo", "Costo", "Precio"]],
+      body: bodyRows,
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1 },
       headStyles: {
@@ -390,13 +509,24 @@ const ArticulosDetalles = () => {
         textColor: 0,
         fontStyle: "bold",
       },
-      margin: { top: 10, right: 5, bottom: 5, left: 5 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      // En Medicamentos no hay logo, pero dejamos margen para que no pegue al borde
+      margin: { top: 20, right: 5, bottom: 5, left: 5 },
       tableWidth: pageWidth - 10,
       columnStyles: {
         0: { cellWidth: 20 },
         1: { cellWidth: "auto" },
-        2: { cellWidth: 35 },
+        2: { cellWidth: 25 },
         3: { cellWidth: 25 },
+      },
+      didParseCell: (data) => {
+        if (data.row?.raw?.__isSublineaHeader) {
+          data.cell.styles.fillColor = [230, 230, 230];
+          data.cell.styles.textColor = 0;
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.halign = "center";
+          data.cell.styles.fontSize = 9;
+        }
       },
     });
 
