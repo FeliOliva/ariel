@@ -54,9 +54,8 @@ const upSubLinea = async (req, res) => {
 const updateSubLinea = async (req, res) => {
   try {
     const { nombre, ID } = req.body;
-    const subLinea = await subLineaModels.updateSubLinea(nombre, ID);
+    await subLineaModels.updateSubLinea(nombre, ID);
     res.status(200).json({ message: "SubLinea actualizada" });
-    res.json(subLinea);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

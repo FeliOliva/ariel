@@ -1,10 +1,12 @@
-version: '3.8'
-
 services:
   frontend:
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Build-time env for CRA (queda embebido en el bundle)
+        # Si no lo seteás, el front termina llamando a "undefined/..." y rompe con .map/.reduce/.sort
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3001}
     ports:
       - "3000:80"

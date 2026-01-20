@@ -486,7 +486,7 @@ DELIMITER ;;
     DECLARE last_nroNC INT;
     
     -- Obtener el último nroNC registrado
-    SELECT MAX(CAST(nroNC AS UNSIGNED)) INTO last_nroNC FROM notasCredito;
+    SELECT MAX(CAST(nroNC AS UNSIGNED)) INTO last_nroNC FROM notascredito;
     
     -- Si es el primer registro, setear nroNC en 00001
     IF last_nroNC IS NULL THEN

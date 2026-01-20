@@ -61,15 +61,20 @@ const Clientes = () => {
     setLoading(true);
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/clientes`);
-      setData(response.data);
-      setClientes(response.data);
+      const clientesData = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+      setData(clientesData);
+      setClientes(clientesData);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
       setLoading(false);
     }
   };
-  const filteredData = data.filter((cliente) => {
+  const filteredData = (Array.isArray(data) ? data : []).filter((cliente) => {
     const fullName = `${cliente.nombre} ${cliente.apellido}`.toLowerCase();
     return (
       fullName.includes(searchTerm.toLowerCase()) ||

@@ -11,6 +11,8 @@ import {
   message,
   Modal,
   notification,
+  Radio,
+  Space,
 } from "antd";
 import {
   ExclamationCircleOutlined,
@@ -32,11 +34,15 @@ const Linea = () => {
   const [loading, setLoading] = useState(true);
   const [openLineaDrawer, setOpenLineaDrawer] = useState(false);
   const [linea, setLinea] = useState({ nombre: "" });
-  const [subLinea, setSubLinea] = useState([]);
+  const [subLinea, setSubLinea] = useState({});
   const [openSubLineaDrawer, setOpenSubLineaDrawer] = useState(false);
   const [currentLinea, setCurrentLinea] = useState({});
   const [OpenEditDrawer, setOpenEditDrawer] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [subLineaMode, setSubLineaMode] = useState("single"); // single | bulk
+  const [bulkSubLineasText, setBulkSubLineasText] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [currentLineaForSub, setCurrentLineaForSub] = useState(null);
   const filteredLineas = lineas.filter((linea) =>
     linea.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -88,7 +94,7 @@ const Linea = () => {
           });
           fetchData();
           setOpenLineaDrawer(false); // Cierra el drawer
-          setLinea(""); // Resetea el estado del input
+          setLinea({ nombre: "" }); // Resetea el estado del input
         } catch (error) {
           console.error("Error al guardar la linea:", error);
           message.error("Hubo un error al añadir la linea.");
@@ -101,11 +107,15 @@ const Linea = () => {
   };
 
   const handleOpenSubLineaDrawer = async (id) => {
-    setSubLinea({ linea_id: id });
+    const lineaObj = (Array.isArray(lineas) ? lineas : []).find((l) => l.id === id);
+    setCurrentLineaForSub(lineaObj || { id });
+    setSubLinea({ linea_id: id, nombre: "" });
+    setSubLineaMode("single");
+    setBulkSubLineasText("");
     setOpenSubLineaDrawer(true);
   };
   const handleAddSubLinea = async () => {
-    if (subLinea.nombre === undefined) {
+    if (!subLinea?.nombre || !String(subLinea.nombre).trim()) {
       Modal.warning({
         title: "Error",
         content: "El campo de nombre es obligatorio",
@@ -122,7 +132,7 @@ const Linea = () => {
       onOk: async () => {
         try {
           await axios.post(`${process.env.REACT_APP_API_URL}/addSubLinea`, {
-            nombre: subLinea.nombre,
+            nombre: String(subLinea.nombre).trim(),
             linea_id: subLinea.linea_id,
           });
           fetchData();
@@ -134,6 +144,108 @@ const Linea = () => {
           });
         } catch (error) {
           console.error("Error adding the linea or sublinea:", error);
+        }
+      },
+    });
+  };
+
+  const normalize = (s) =>
+    String(s || "")
+      .trim()
+      .toLowerCase();
+
+  const parseBulkNames = (text) => {
+    const raw = String(text || "")
+      .split(/\r?\n|,|;|\t/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const seen = new Set();
+    const out = [];
+    for (const n of raw) {
+      const key = normalize(n);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(n);
+    }
+    return out;
+  };
+
+  const runInBatches = async (items, batchSize, fn, onProgress) => {
+    let done = 0;
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      await Promise.all(batch.map(fn));
+      done += batch.length;
+      onProgress?.(done);
+    }
+  };
+
+  const handleAddSubLineasBulk = async () => {
+    const lineaId = subLinea?.linea_id;
+    const names = parseBulkNames(bulkSubLineasText);
+    if (!lineaId || names.length === 0) {
+      notification.warning({
+        message: "Faltan datos",
+        description: "Pegá una lista de sublíneas (una por línea)",
+        duration: 2,
+      });
+      return;
+    }
+
+    confirm({
+      title: "Agregar sublíneas (por lote)",
+      icon: <ExclamationCircleOutlined />,
+      content: `Se van a agregar ${names.length} sublíneas a esta línea.`,
+      okText: "Confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        const key = "bulk-add-sublineas-linea";
+        setBulkSaving(true);
+        try {
+          notification.open({
+            key,
+            message: "Agregando sublíneas...",
+            description: `0 / ${names.length}`,
+            duration: 0,
+          });
+
+          await runInBatches(
+            names,
+            5,
+            (nombreSub) =>
+              axios.post(`${process.env.REACT_APP_API_URL}/addSubLinea`, {
+                nombre: nombreSub,
+                linea_id: lineaId,
+              }),
+            (done) => {
+              notification.open({
+                key,
+                message: "Agregando sublíneas...",
+                description: `${done} / ${names.length}`,
+                duration: 0,
+              });
+            }
+          );
+
+          notification.success({
+            key,
+            message: "Listo",
+            description: `Se agregaron ${names.length} sublíneas.`,
+            duration: 2,
+          });
+          setBulkSubLineasText("");
+          setOpenSubLineaDrawer(false);
+          fetchData();
+        } catch (error) {
+          console.error("Error bulk add sublineas:", error);
+          notification.error({
+            key,
+            message: "Error",
+            description: "No se pudieron agregar todas las sublíneas.",
+            duration: 3,
+          });
+        } finally {
+          setBulkSaving(false);
         }
       },
     });
@@ -374,28 +486,60 @@ const Linea = () => {
       <Drawer
         open={openSubLineaDrawer}
         onClose={() => setOpenSubLineaDrawer(false)}
-        title="Añadir Nueva Sublínea"
+        title={`Añadir Sublíneas ${currentLineaForSub?.nombre ? `a "${currentLineaForSub.nombre}"` : ""}`}
       >
-        <div>
-          <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
-            <strong>Añadir una nueva SubLinea</strong>
-          </div>
-          <Input
-            placeholder="Nombre de la SubLínea"
-            value={subLinea.nombre}
-            onChange={handleSubLineaChange}
-            style={{ padding: 0 }}
-          />
-        </div>
-        <div>
-          <Button
-            type="primary"
-            onClick={handleAddSubLinea}
-            style={{ marginTop: 20 }}
+        <Space direction="vertical" style={{ width: "100%" }} size={12}>
+          <Radio.Group
+            value={subLineaMode}
+            onChange={(e) => setSubLineaMode(e.target.value)}
           >
-            Guardar
-          </Button>
-        </div>
+            <Radio.Button value="single">Una por vez</Radio.Button>
+            <Radio.Button value="bulk">Por lote</Radio.Button>
+          </Radio.Group>
+
+          {subLineaMode === "single" ? (
+            <>
+              <div style={{ display: "flex", marginTop: 10, marginBottom: 10 }}>
+                <strong>Añadir una nueva SubLínea</strong>
+              </div>
+              <Input
+                placeholder="Nombre de la SubLínea"
+                value={subLinea?.nombre}
+                onChange={handleSubLineaChange}
+              />
+              <Button type="primary" onClick={handleAddSubLinea}>
+                Guardar
+              </Button>
+            </>
+          ) : (
+            <>
+              <div>
+                <strong>Agregar por lote</strong>
+                <div style={{ color: "#666", marginTop: 4 }}>
+                  Pegá una lista (una sublínea por línea). También podés separar por coma.
+                </div>
+              </div>
+              <Input.TextArea
+                rows={10}
+                value={bulkSubLineasText}
+                onChange={(e) => setBulkSubLineasText(e.target.value)}
+                placeholder={"Ej:\nANALGÉSICOS\nANTIBIÓTICOS\nDERMOCOSMÉTICA"}
+              />
+              <Space>
+                <Button onClick={() => setBulkSubLineasText("")} disabled={bulkSaving}>
+                  Limpiar
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={handleAddSubLineasBulk}
+                  loading={bulkSaving}
+                >
+                  Agregar
+                </Button>
+              </Space>
+            </>
+          )}
+        </Space>
       </Drawer>
       <Drawer
         open={OpenEditDrawer}
