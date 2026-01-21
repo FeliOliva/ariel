@@ -14,7 +14,6 @@ import {
   ShoppingOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, theme } from "antd";
-import logoRenacer from "../logoRenacer.png";
 
 const { Sider, Content } = Layout;
 
@@ -181,19 +180,6 @@ const MenuLayout = ({ children }) => {
             borderRadius: borderRadiusLG,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: 16,
-            }}
-          >
-            <img
-              src={logoRenacer}
-              alt="Distribuidora Renacer"
-              style={{ maxHeight: 70, objectFit: "contain" }}
-            />
-          </div>
           {children}
         </Content>
       </Layout>
