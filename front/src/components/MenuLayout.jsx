@@ -102,21 +102,6 @@ const MenuLayout = ({ children }) => {
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider trigger={null}>
-        <div
-          style={{
-            height: 72,
-            margin: 16,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img
-            src={logoRenacer}
-            alt="Distribuidora Renacer"
-            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-          />
-        </div>
         <Menu
           theme="dark"
           mode="inline"
@@ -196,6 +181,19 @@ const MenuLayout = ({ children }) => {
             borderRadius: borderRadiusLG,
           }}
         >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <img
+              src={logoRenacer}
+              alt="Distribuidora Renacer"
+              style={{ maxHeight: 70, objectFit: "contain" }}
+            />
+          </div>
           {children}
         </Content>
       </Layout>
