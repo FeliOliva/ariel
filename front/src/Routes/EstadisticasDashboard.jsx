@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   DatePicker,
   Button,
@@ -38,6 +38,33 @@ export default function EstadisticasDashboard() {
   const [evolucionData, setEvolucionData] = useState([]);
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadLogo = async () => {
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        if (isMounted) {
+          setLogoDataUrl(dataUrl);
+        }
+      } catch (error) {
+        console.error("Error loading logo:", error);
+      }
+    };
+
+    loadLogo();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleChangeLinea = (linea) => {
     setSelectedLinea(linea);
@@ -118,7 +145,7 @@ export default function EstadisticasDashboard() {
     };
   };
 
-  const handleGeneratePDF = () => {
+  const handleGeneratePDF = async () => {
     if (!estadisticas || estadisticas.length === 0 || !selectedLinea) {
       message.warning("No hay datos para generar el PDF");
       return;
@@ -132,8 +159,28 @@ export default function EstadisticasDashboard() {
     const phone = "Teléfono: +54 9 3518 16-8151";
     const instagram = "Instagram: @distribuidoraRenacer";
 
+    const logoForPdf =
+      logoDataUrl ||
+      (await (async () => {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error loading logo for PDF:", error);
+          return null;
+        }
+      })());
+
     const addHeader = (doc, isFirstPage = false) => {
-      doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
+      if (logoForPdf) {
+        doc.addImage(logoForPdf, "PNG", 5, 5, logoWidth, logoHeight);
+      }
       if (isFirstPage) {
         doc.setFontSize(20);
         doc.text("Distribuidora Renacer", logoWidth + 10, 20);

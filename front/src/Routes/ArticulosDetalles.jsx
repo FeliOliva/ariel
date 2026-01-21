@@ -14,6 +14,7 @@ const ArticulosDetalles = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [lineaId, setLineaId] = useState(null);
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,6 +58,32 @@ const ArticulosDetalles = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadLogo = async () => {
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        if (isMounted) {
+          setLogoDataUrl(dataUrl);
+        }
+      } catch (error) {
+        console.error("Error loading logo:", error);
+      }
+    };
+
+    loadLogo();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Agrupar los artículos por línea
   const groupByLine = (data) => {
     return data.reduce((acc, item) => {
@@ -80,7 +107,7 @@ const ArticulosDetalles = () => {
     }, {});
   };
 
-  const handleGeneratePDF = () => {
+  const handleGeneratePDF = async () => {
     const pdf = new jsPDF("p", "mm", "a4");
     const pageHeight = pdf.internal.pageSize.height;
     const pageWidth = pdf.internal.pageSize.width;
@@ -97,8 +124,28 @@ const ArticulosDetalles = () => {
     // Lista de IDs a excluir
     const excludedLineIds = [69]; // IDs de línea a excluir
 
+    const logoForPdf =
+      logoDataUrl ||
+      (await (async () => {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error loading logo for PDF:", error);
+          return null;
+        }
+      })());
+
     const addHeader = (doc, isFirstPage = false) => {
-      doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
+      if (logoForPdf) {
+        doc.addImage(logoForPdf, "PNG", 5, 5, logoWidth, logoHeight);
+      }
       if (isFirstPage) {
         doc.setFontSize(20);
         doc.text("Distribuidora Renacer", logoWidth + 10, 20);
@@ -289,12 +336,12 @@ const ArticulosDetalles = () => {
         `${process.env.REACT_APP_API_URL}/getArticulosByLineaID/${linea_id}`
       );
       const data = response.data;
-      handleGeneratePDFlinea(data, lineaId, imageUrl);
+      await handleGeneratePDFlinea(data, lineaId);
     } catch (error) {
       console.error("Error fetching the data:", error);
     }
   };
-  const handleGeneratePDFlinea = (data, lineaId, imageUrl) => {
+  const handleGeneratePDFlinea = async (data, lineaId) => {
     const pdf = new jsPDF("p", "mm", "a4");
     const pageHeight = pdf.internal.pageSize.height;
     const pageWidth = pdf.internal.pageSize.width;
@@ -306,8 +353,28 @@ const ArticulosDetalles = () => {
     const phone = "Teléfono: +54 9 3518 16-8151";
     const instagram = "Instagram: @distribuidoraRenacer";
 
+    const logoForPdf =
+      logoDataUrl ||
+      (await (async () => {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error loading logo for PDF:", error);
+          return null;
+        }
+      })());
+
     const addHeader = (doc, isFirstPage = false) => {
-      doc.addImage(imageUrl, "PNG", 5, 5, logoWidth, logoHeight);
+      if (logoForPdf) {
+        doc.addImage(logoForPdf, "PNG", 5, 5, logoWidth, logoHeight);
+      }
       if (isFirstPage) {
         doc.setFontSize(20);
         doc.text("Distribuidora Renacer", logoWidth + 10, 20);
