@@ -146,6 +146,7 @@ WHERE dv.venta_id = ?;
 FROM venta v
 WHERE v.cliente_id = ?
 AND v.fecha_venta BETWEEN ? AND ?
+AND v.estado = 1
 
 UNION ALL
 
@@ -165,6 +166,7 @@ FROM pagos p
 LEFT JOIN vendedores vend ON p.vendedor_id = vend.id
 WHERE p.cliente_id = ?
 AND p.fecha_pago BETWEEN ? AND ?
+AND p.estado = 1
 
 UNION ALL
 
@@ -184,6 +186,7 @@ FROM notascredito nc
 JOIN detallenotacredito dnc ON nc.id = dnc.notaCredito_id
 WHERE nc.cliente_id = ? 
 AND nc.fecha BETWEEN ? AND ?
+AND nc.estado = 1
 GROUP BY nc.id, nc.estado, nc.cliente_id, nc.nroNC, nc.fecha
 
 ORDER BY fecha;
