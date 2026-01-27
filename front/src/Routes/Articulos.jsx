@@ -157,6 +157,20 @@ function Articulos() {
       },
     },
     {
+      name: "Costo",
+      selector: (row) => (
+        <span className={row.estado === 0 ? "strikethrough" : ""}>
+          {row.costo != null ? Math.ceil(parseFloat(row.costo) || 0) : "-"}
+        </span>
+      ),
+      sortable: true,
+      sortFunction: (rowA, rowB) => {
+        const a = parseFloat(rowA.costo) || 0;
+        const b = parseFloat(rowB.costo) || 0;
+        return b - a;
+      },
+    },
+    {
       name: "Precio Oferta",
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
