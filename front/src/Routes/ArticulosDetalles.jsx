@@ -217,7 +217,7 @@ const ArticulosDetalles = () => {
           const subRow = [
             {
               content: sublinea,
-              colSpan: 4,
+              colSpan: 3,
               styles: {
                 fillColor: [230, 230, 230],
                 textColor: 0,
@@ -238,11 +238,6 @@ const ArticulosDetalles = () => {
               row.codigo_producto,
               row.articulo_nombre + " " + medicion,
               "$" +
-                Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                }),
-              "$" +
                 Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString(
                   "es-ES",
                   { minimumFractionDigits: 0, maximumFractionDigits: 0 }
@@ -253,7 +248,7 @@ const ArticulosDetalles = () => {
 
         pdf.autoTable({
           startY: currentY,
-          head: [["Código", "Artículo", "Costo", "Precio"]],
+          head: [["Código", "Artículo", "Precio"]],
           body: bodyRows,
           theme: "grid",
           styles: { fontSize: 8, cellPadding: 1 },
@@ -270,7 +265,6 @@ const ArticulosDetalles = () => {
             0: { cellWidth: 20 },
             1: { cellWidth: "auto" },
             2: { cellWidth: 25 },
-            3: { cellWidth: 25 },
           },
           didDrawPage: () => {
             addHeader(pdf, false);
@@ -416,7 +410,7 @@ const ArticulosDetalles = () => {
       const subRow = [
         {
           content: sublinea,
-          colSpan: 4,
+          colSpan: 3,
           styles: {
             fillColor: [230, 230, 230],
             textColor: 0,
@@ -436,11 +430,6 @@ const ArticulosDetalles = () => {
           row.codigo_producto,
           row.articulo_nombre + " " + medicion,
           "$" +
-            Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }),
-          "$" +
             Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString(
               "es-ES",
               { minimumFractionDigits: 0, maximumFractionDigits: 0 }
@@ -451,7 +440,7 @@ const ArticulosDetalles = () => {
 
     pdf.autoTable({
       startY: currentY,
-      head: [["Código", "Artículo", "Costo", "Precio"]],
+      head: [["Código", "Artículo", "Precio"]],
       body: bodyRows,
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1 },
@@ -468,7 +457,6 @@ const ArticulosDetalles = () => {
         0: { cellWidth: 20 },
         1: { cellWidth: "auto" },
         2: { cellWidth: 25 },
-        3: { cellWidth: 25 },
       },
       didDrawPage: () => {
         addHeader(pdf, false);
@@ -532,7 +520,7 @@ const ArticulosDetalles = () => {
       const subRow = [
         {
           content: sublinea,
-          colSpan: 4,
+          colSpan: 3,
           styles: {
             fillColor: [230, 230, 230],
             textColor: 0,
@@ -552,11 +540,6 @@ const ArticulosDetalles = () => {
           row.codigo_producto,
           row.articulo_nombre + " " + medicion,
           "$" +
-            Math.ceil(parseFloat(row.costo) || 0).toLocaleString("es-ES", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }),
-          "$" +
             Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString(
               "es-ES",
               { minimumFractionDigits: 0, maximumFractionDigits: 0 }
@@ -567,7 +550,7 @@ const ArticulosDetalles = () => {
 
     pdf.autoTable({
       startY: currentY,
-      head: [["Código", "Artículo", "Costo", "Precio"]],
+      head: [["Código", "Artículo", "Precio"]],
       body: bodyRows,
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1 },
@@ -584,7 +567,6 @@ const ArticulosDetalles = () => {
         0: { cellWidth: 20 },
         1: { cellWidth: "auto" },
         2: { cellWidth: 25 },
-        3: { cellWidth: 25 },
       },
       didParseCell: (data) => {
         if (data.row?.raw?.__isSublineaHeader) {

@@ -144,19 +144,6 @@ function Articulos() {
       },
     },
     {
-      name: "Costo",
-      selector: (row) => (
-        <span className={row.estado === 0 ? "strikethrough" : ""}>
-          {Math.ceil(parseFloat(row.costo) || 0)}
-        </span>
-      ),
-      sortable: true,
-      // Orden numérico de mayor a menor (si costo es un número)
-      sortFunction: (rowA, rowB) => {
-        return rowB.costo - rowA.costo; // Orden descendente por costo
-      },
-    },
-    {
       name: "Precio monotributista",
       selector: (row) => (
         <span className={row.estado === 0 ? "strikethrough" : ""}>
