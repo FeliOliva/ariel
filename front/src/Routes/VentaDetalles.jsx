@@ -72,7 +72,7 @@ const VentaDetalles = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/getVentaByID/${id}`
+          `${process.env.REACT_APP_API_URL}/getVentaByID/${id}`,
         );
         const {
           detalles,
@@ -288,13 +288,13 @@ const VentaDetalles = () => {
 
     // Calcular descuentos
     const totalImporte = parseFloat(
-      ventaInfo.total_importe.replace(".", "").replace(",", ".")
+      ventaInfo.total_importe.replace(".", "").replace(",", "."),
     );
     const descuentoMonto = (totalImporte * ventaInfo.descuento) / 100;
     const descuentoMontoRedondeado = Math.round(descuentoMonto);
     const descuentoMontoFormateado = descuentoMontoRedondeado.toLocaleString(
       "es-AR",
-      { minimumFractionDigits: 0 }
+      { minimumFractionDigits: 0 },
     );
 
     // Agregar totales con espacio extra
@@ -304,101 +304,105 @@ const VentaDetalles = () => {
     pdf.text(
       `Descuento (${ventaInfo.descuento}%): $${descuentoMontoFormateado}`,
       10,
-      finalY + 5
+      finalY + 5,
     );
     pdf.text(
       `Total con Descuento: $${ventaInfo.total_con_descuento}`,
       10,
-      finalY + 10
+      finalY + 10,
     );
 
     // Guardar PDF
     pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
   };
 
-  const handleGeneratePDF2 = () => {
-    const pdf = new jsPDF("p", "mm", "a4");
-
-    // Encabezado
-    pdf.setFontSize(14);
-    pdf.text("FACTURA", 105, 20, { align: "center" });
-    pdf.setFontSize(12);
-    pdf.text("DOCUMENTO NO VÁLIDO COMO FACTURA", 105, 26, { align: "center" });
-
-    pdf.setFontSize(10);
-    pdf.text(`Farmacia: ${ventaInfo.farmacia}`, 10, 40);
-    pdf.text(`Cliente: ${ventaInfo.nombre_cliente}`, 10, 45);
-    pdf.text(`Dirección: ${ventaInfo.direccion}`, 10, 50);
-    pdf.text(`Localidad: ${ventaInfo.localidad}`, 10, 55);
-
-    const fecha = new Date(ventaInfo.fecha);
-    const dia = fecha.getDate().toString().padStart(2, "0");
-    const mes = (fecha.getMonth() + 1).toString().padStart(2, "0");
-    const año = fecha.getFullYear();
-
-    pdf.text(`Fecha: ${dia}/${mes}/${año}`, 150, 40);
-    pdf.text(`Nro. Venta: ${ventaInfo.nroVenta}`, 150, 45);
-
-    // Línea divisoria
-    pdf.line(10, 60, 200, 60);
-
-    // Datos de la tabla
-    const tableData = data.map((row) => {
-      const precio = cleanNumber(row.precio_monotributista);
-      return {
-        cantidad: row.cantidad,
-        nombre: row.nombre,
-        cod_articulo: row.cod_articulo,
-        precio_unitario: `$${Math.ceil(precio).toLocaleString("es-ES", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })}`,
-      };
-    });
-
-    // Renderizar la tabla con margen inferior extra
-    pdf.autoTable({
-      startY: 65,
-      head: [["Cant", "Descripción", "Código", "Precio Unitario"]],
-      body: tableData.map((row) => [
-        row.cantidad,
-        row.nombre,
-        row.cod_articulo,
-        row.precio_unitario,
-      ]),
-      theme: "grid",
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-      },
-      columnStyles: {
-        0: { cellWidth: 10 }, // Cantidad
-        1: { cellWidth: 110 }, // Descripción
-        2: { cellWidth: 30 }, // Código
-        3: { cellWidth: 35 }, // Precio Unitario
-      },
-      pageBreak: "auto",
-      margin: { top: 30, right: 15, bottom: 15 }, // Añadir margen inferior
-    });
-
-    // Posición final después de la tabla
-    let finalY = pdf.lastAutoTable.finalY + 10;
-
-    // Verificar si los totales entran en la página actual
-    if (finalY > 270) {
-      pdf.addPage();
-      finalY = 20; // Reiniciar la posición en la nueva página
-    }
-
-    pdf.text("Firma", 10, finalY);
-    // Guardar PDF
-    pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
-  };
+  // handleGeneratePDF2 generaba una factura simplificada de reparto:
+  // mismo encabezado que handleGeneratePDF, pero con una tabla sin totales
+  // y solo con columnas Cantidad, Descripción, Código y Precio Unitario,
+  // dejando espacio al final para la firma.
+  // const handleGeneratePDF2 = () => {
+  //   const pdf = new jsPDF("p", "mm", "a4");
+  //
+  //   // Encabezado
+  //   pdf.setFontSize(14);
+  //   pdf.text("FACTURA", 105, 20, { align: "center" });
+  //   pdf.setFontSize(12);
+  //   pdf.text("DOCUMENTO NO VÁLIDO COMO FACTURA", 105, 26, { align: "center" });
+  //
+  //   pdf.setFontSize(10);
+  //   pdf.text(`Farmacia: ${ventaInfo.farmacia}`, 10, 40);
+  //   pdf.text(`Cliente: ${ventaInfo.nombre_cliente}`, 10, 45);
+  //   pdf.text(`Dirección: ${ventaInfo.direccion}`, 10, 50);
+  //   pdf.text(`Localidad: ${ventaInfo.localidad}`, 10, 55);
+  //
+  //   const fecha = new Date(ventaInfo.fecha);
+  //   const dia = fecha.getDate().toString().padStart(2, "0");
+  //   const mes = (fecha.getMonth() + 1).toString().padStart(2, "0");
+  //   const año = fecha.getFullYear();
+  //
+  //   pdf.text(`Fecha: ${dia}/${mes}/${año}`, 150, 40);
+  //   pdf.text(`Nro. Venta: ${ventaInfo.nroVenta}`, 150, 45);
+  //
+  //   // Línea divisoria
+  //   pdf.line(10, 60, 200, 60);
+  //
+  //   // Datos de la tabla
+  //   const tableData = data.map((row) => {
+  //     const precio = cleanNumber(row.precio_monotributista);
+  //     return {
+  //       cantidad: row.cantidad,
+  //       nombre: row.nombre,
+  //       cod_articulo: row.cod_articulo,
+  //       precio_unitario: `$${Math.ceil(precio).toLocaleString("es-ES", {
+  //         minimumFractionDigits: 0,
+  //         maximumFractionDigits: 0,
+  //       })}`,
+  //     };
+  //   });
+  //
+  //   // Renderizar la tabla con margen inferior extra
+  //   pdf.autoTable({
+  //     startY: 65,
+  //     head: [["Cant", "Descripción", "Código", "Precio Unitario"]],
+  //     body: tableData.map((row) => [
+  //       row.cantidad,
+  //       row.nombre,
+  //       row.cod_articulo,
+  //       row.precio_unitario,
+  //     ]),
+  //     theme: "grid",
+  //     styles: {
+  //       fontSize: 8,
+  //       cellPadding: 2,
+  //     },
+  //     columnStyles: {
+  //       0: { cellWidth: 10 }, // Cantidad
+  //       1: { cellWidth: 110 }, // Descripción
+  //       2: { cellWidth: 30 }, // Código
+  //       3: { cellWidth: 35 }, // Precio Unitario
+  //     },
+  //     pageBreak: "auto",
+  //     margin: { top: 30, right: 15, bottom: 15 }, // Añadir margen inferior
+  //   });
+  //
+  //   // Posición final después de la tabla
+  //   let finalY = pdf.lastAutoTable.finalY + 10;
+  //
+  //   // Verificar si los totales entran en la página actual
+  //   if (finalY > 270) {
+  //     pdf.addPage();
+  //     finalY = 20; // Reiniciar la posición en la nueva página
+  //   }
+  //
+  //   pdf.text("Firma", 10, finalY);
+  //   // Guardar PDF
+  //   pdf.save(`Factura_${ventaInfo.nroVenta}.pdf`);
+  // };
 
   const handleEditPrice = async (detalleId) => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/detalleVenta/${detalleId}`
+        `${process.env.REACT_APP_API_URL}/detalleVenta/${detalleId}`,
       );
 
       setDetalleVenta(response.data);
@@ -422,7 +426,7 @@ const VentaDetalles = () => {
         try {
           const response = await axios.delete(
             `${process.env.REACT_APP_API_URL}/eliminarDetalleVenta`,
-            { data: { detalle_venta_id: detalleId } }
+            { data: { detalle_venta_id: detalleId } },
           );
           if (response.status === 200) {
             message.success("Detalle eliminado correctamente");
@@ -456,7 +460,10 @@ const VentaDetalles = () => {
             venta_id: ventaInfo.venta_id,
           };
 
-          await axios.put(`${process.env.REACT_APP_API_URL}/updateDetalleVenta`, payload);
+          await axios.put(
+            `${process.env.REACT_APP_API_URL}/updateDetalleVenta`,
+            payload,
+          );
 
           message.success("Detalle actualizado correctamente");
           setTimeout(() => window.location.reload(), 800);
@@ -566,7 +573,7 @@ const VentaDetalles = () => {
     const updatedArticulos = venta.articulos.map((item) =>
       item.uniqueId === uniqueId
         ? { ...item, precio_monotributista: newPrice, price: newPrice }
-        : item
+        : item,
     );
     setVenta((prevVenta) => ({ ...prevVenta, articulos: updatedArticulos }));
   };
@@ -574,7 +581,7 @@ const VentaDetalles = () => {
     setVenta((prev) => ({
       ...prev,
       articulos: prev.articulos.filter(
-        (articulo) => articulo.uniqueId !== uniqueId
+        (articulo) => articulo.uniqueId !== uniqueId,
       ),
     }));
   };
@@ -587,7 +594,7 @@ const VentaDetalles = () => {
               ...articulo,
               isGift, // Actualiza simplemente el estado de "isGift"
             }
-          : articulo
+          : articulo,
       ),
     }));
   };
@@ -605,6 +612,10 @@ const VentaDetalles = () => {
       >
         Generar Factura
       </Button>
+
+      {/* Botón original para generar la factura simplificada de reparto (handleGeneratePDF2).
+          Se comentó a pedido para dejar solo la generación de factura principal. */}
+      {/*
       <Button
         onClick={handleGeneratePDF2}
         type="primary"
@@ -612,6 +623,8 @@ const VentaDetalles = () => {
       >
         Generar Factura Reparto
       </Button>
+      */}
+
       <Button
         onClick={() => setOpen(true)}
         type="primary"
@@ -715,7 +728,6 @@ const VentaDetalles = () => {
           Confirmar artículos
         </Button>
       </Drawer>
-
       {/* Drawer para AJUSTE PORCENTUAL de precio */}
       <Drawer
         title="Ajustar Precio y Cantidad"
