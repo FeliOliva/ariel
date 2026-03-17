@@ -25,16 +25,16 @@ const OfertasDetalles = () => {
         // Actualizamos la información de la oferta y los productos
         setOfertaInfo({
           nombre_oferta: nombre,
-          total: productos
-            .reduce(
+          total: Math.ceil(
+            productos.reduce(
               (acc, producto) =>
                 acc + parseFloat(producto.precio) * producto.cantidad,
               0
             )
-            .toLocaleString("es-ES", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }),
+          ).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }),
         });
         setData(productos); // Guardamos los productos en el estado 'data'
         setLoading(false);
@@ -71,9 +71,9 @@ const OfertasDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "16px" }}>
-          {parseFloat(row.precio).toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+          {Math.ceil(parseFloat(row.precio) || 0).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
           })}
         </div>
       ),
@@ -84,9 +84,9 @@ const OfertasDetalles = () => {
       sortable: true,
       cell: (row) => (
         <div style={{ padding: "5px", fontSize: "16px" }}>
-          {(parseFloat(row.precio) * row.cantidad).toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+          {Math.ceil((parseFloat(row.precio) || 0) * row.cantidad).toLocaleString("es-ES", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
           })}
         </div>
       ),

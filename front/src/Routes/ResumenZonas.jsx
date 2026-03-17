@@ -81,19 +81,19 @@ export default function ResumenZonas() {
       title: "Total Ventas",
       dataIndex: "total_ventas",
       key: "total_ventas",
-      render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
+      render: (text) => `$${Math.ceil(text).toLocaleString("es-ES")}`,
     },
     {
       title: "Total Pagos",
       dataIndex: "total_pagos",
       key: "total_pagos",
-      render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
+      render: (text) => `$${Math.ceil(text).toLocaleString("es-ES")}`,
     },
     {
       title: "Total Notas de Crédito",
       dataIndex: "total_notas_credito",
       key: "total_notas_credito",
-      render: (text) => `$${Math.round(text).toLocaleString("es-ES")}`,
+      render: (text) => `$${Math.ceil(text).toLocaleString("es-ES")}`,
     },
     {
       title: "Saldo Inicial",
@@ -101,7 +101,7 @@ export default function ResumenZonas() {
       key: "saldo_inicial",
       render: (text) => {
         const saldoInicialZona = parseFloat(text || 0);
-        return usarSaldoInicial ? `$${Math.round(saldoInicialZona).toLocaleString("es-ES")}` : "$0";
+        return usarSaldoInicial ? `$${Math.ceil(saldoInicialZona).toLocaleString("es-ES")}` : "$0";
       },
     },
     {
@@ -110,7 +110,7 @@ export default function ResumenZonas() {
       render: (_, record) => {
         const saldoInicialZona = parseFloat(record.saldo_inicial || 0);
         const saldo = parseFloat(record.total_ventas) - parseFloat(record.total_pagos) - parseFloat(record.total_notas_credito) + (usarSaldoInicial ? saldoInicialZona : 0);
-        return `$${Math.round(saldo).toLocaleString("es-ES")}`;
+        return `$${Math.ceil(saldo).toLocaleString("es-ES")}`;
       },
     },
   ];
@@ -134,11 +134,11 @@ export default function ResumenZonas() {
       const saldo = parseFloat(d.total_ventas) - parseFloat(d.total_pagos) - parseFloat(d.total_notas_credito) + (usarSaldoInicial ? saldoInicialZona : 0);
       return [
         d.nombre_zona,
-        `$${Math.round(d.total_ventas).toLocaleString("es-ES")}`,
-        `$${Math.round(d.total_pagos).toLocaleString("es-ES")}`,
-        `$${Math.round(d.total_notas_credito).toLocaleString("es-ES")}`,
-        usarSaldoInicial ? `$${Math.round(saldoInicialZona).toLocaleString("es-ES")}` : "$0",
-        `$${Math.round(saldo).toLocaleString("es-ES")}`,
+        `$${Math.ceil(d.total_ventas).toLocaleString("es-ES")}`,
+        `$${Math.ceil(d.total_pagos).toLocaleString("es-ES")}`,
+        `$${Math.ceil(d.total_notas_credito).toLocaleString("es-ES")}`,
+        usarSaldoInicial ? `$${Math.ceil(saldoInicialZona).toLocaleString("es-ES")}` : "$0",
+        `$${Math.ceil(saldo).toLocaleString("es-ES")}`,
       ];
     });
 
@@ -151,17 +151,17 @@ export default function ResumenZonas() {
     const finalY = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.text(
-      `Total Ventas: $${Math.round(totalVentas).toLocaleString("es-ES")}`,
+      `Total Ventas: $${Math.ceil(totalVentas).toLocaleString("es-ES")}`,
       14,
       finalY
     );
     doc.text(
-      `Total Pagos: $${Math.round(totalPagos).toLocaleString("es-ES")}`,
+      `Total Pagos: $${Math.ceil(totalPagos).toLocaleString("es-ES")}`,
       14,
       finalY + 7
     );
     doc.text(
-      `Total Notas de Crédito: $${Math.round(totalNotasCredito).toLocaleString(
+      `Total Notas de Crédito: $${Math.ceil(totalNotasCredito).toLocaleString(
         "es-ES"
       )}`,
       14,
@@ -169,18 +169,18 @@ export default function ResumenZonas() {
     );
     if (usarSaldoInicial) {
       doc.text(
-        `Total Saldo Inicial: $${Math.round(totalSaldoInicialPorZona).toLocaleString("es-ES")}`,
+        `Total Saldo Inicial: $${Math.ceil(totalSaldoInicialPorZona).toLocaleString("es-ES")}`,
         14,
         finalY + 21
       );
       doc.text(
-        `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
+        `Saldo Global: $${Math.ceil(saldoGlobal).toLocaleString("es-ES")}`,
         14,
         finalY + 28
       );
     } else {
       doc.text(
-        `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
+        `Saldo Global: $${Math.ceil(saldoGlobal).toLocaleString("es-ES")}`,
         14,
         finalY + 21
       );
@@ -217,20 +217,20 @@ export default function ResumenZonas() {
         />
         <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
           <p>
-            Total Ventas: ${Math.round(totalVentas).toLocaleString("es-ES")}
+            Total Ventas: ${Math.ceil(totalVentas).toLocaleString("es-ES")}
           </p>
-          <p>Total Pagos: ${Math.round(totalPagos).toLocaleString("es-ES")}</p>
+          <p>Total Pagos: ${Math.ceil(totalPagos).toLocaleString("es-ES")}</p>
           <p>
             Total Notas de Crédito: $
-            {Math.round(totalNotasCredito).toLocaleString("es-ES")}
+            {Math.ceil(totalNotasCredito).toLocaleString("es-ES")}
           </p>
           {usarSaldoInicial && (
             <p>
-              Total Saldo Inicial: ${Math.round(totalSaldoInicialPorZona).toLocaleString("es-ES")}
+              Total Saldo Inicial: ${Math.ceil(totalSaldoInicialPorZona).toLocaleString("es-ES")}
             </p>
           )}
           <p>
-            Saldo Global: ${Math.round(saldoGlobal).toLocaleString("es-ES")}
+            Saldo Global: ${Math.ceil(saldoGlobal).toLocaleString("es-ES")}
           </p>
         </div>
       </div>

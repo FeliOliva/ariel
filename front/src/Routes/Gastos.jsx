@@ -79,7 +79,7 @@ function Gastos() {
     }
     const gastoEditado = {
       nombre: currentGasto.nombre.toUpperCase().trim(),
-      monto: currentGasto.monto,
+      monto: Math.ceil(Number(currentGasto.monto) || 0),
       ID: currentGasto.id,
     };
     confirm({
@@ -124,6 +124,7 @@ function Gastos() {
           const gastoToSend = {
             ...newGasto,
             nombre: newGasto.nombre.toUpperCase().trim(),
+            monto: Math.ceil(Number(newGasto.monto) || 0),
           };
           await axios.post(`${process.env.REACT_APP_API_URL}/addGasto`, gastoToSend);
           setOpen(false);
@@ -195,12 +196,13 @@ function Gastos() {
     {
       name: "Monto",
       selector: (row) => {
+        const montoNumerico = Math.ceil(parseFloat(row.monto) || 0);
         const montoFormateado = row.monto 
-          ? `$ ${parseFloat(row.monto).toLocaleString("es-AR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
+          ? `$ ${montoNumerico.toLocaleString("es-AR", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
             })}`
-          : "$ 0.00";
+          : "$ 0";
         return (
           <Tooltip
             className={row.estado === 0 ? "strikethrough" : ""}
@@ -288,7 +290,7 @@ function Gastos() {
           placeholder="Ingrese el monto"
           formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
           parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-          precision={2}
+          precision={0}
         />
         <Button
           type="primary"
@@ -331,7 +333,7 @@ function Gastos() {
           placeholder="Ingrese el monto"
           formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
           parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-          precision={2}
+          precision={0}
         />
         <Button
           type="primary"

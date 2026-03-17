@@ -16,7 +16,8 @@ const DynamicList = ({ items, onDelete, onGiftChange, onEdit }) => {
   const handleSaveClick = (uniqueId) => {
     const parsedPrice = parseFloat(editedPrice);
     if (!isNaN(parsedPrice)) {
-      onEdit(uniqueId, parsedPrice);
+      const precioRedondeado = Math.ceil(parsedPrice);
+      onEdit(uniqueId, precioRedondeado);
     }
     setEditingItemId(null);
   };

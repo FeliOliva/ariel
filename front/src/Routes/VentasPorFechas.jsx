@@ -34,11 +34,12 @@ export default function ResumenVentasPorFecha() {
   const formatMonto = (valor) => {
     const numero = parseMonto(valor);
     if (isNaN(numero)) return "";
+    const redondeado = Math.ceil(numero);
 
     return new Intl.NumberFormat("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(numero);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(redondeado);
   };
 
   const fetchData = async () => {

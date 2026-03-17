@@ -43,10 +43,11 @@ const AgregarPagoDrawer = ({
         ...rest
       } = values;
 
-      // 👇 Convertimos el monto a número (stringMode devuelve string)
-      const montoNumero = Number(rest.monto);
+      // 👇 Convertimos el monto a número y redondeamos SIEMPRE para arriba
+      const montoBruto = Number(rest.monto);
+      const montoRedondeado = Math.ceil(montoBruto || 0);
 
-      if (Number.isNaN(montoNumero) || montoNumero <= 0) {
+      if (Number.isNaN(montoRedondeado) || montoRedondeado <= 0) {
         message.error("Ingrese un monto válido.");
         return;
       }
@@ -77,7 +78,7 @@ const AgregarPagoDrawer = ({
           await axios.post(`${process.env.REACT_APP_API_URL}/addPago`, {
             cliente_id: clienteId,
             metodo_pago,
-            monto: rest.monto,
+            monto: montoRedondeado,
             vendedor_id: values.vendedor_id,
             cheque:
               metodo_pago === "cheque"
@@ -121,9 +122,9 @@ const AgregarPagoDrawer = ({
         <p>
           <strong>Saldo restante del cliente:</strong>{" "}
           {saldoRestante != null
-            ? `$ ${saldoRestante.toLocaleString("es-AR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+            ? `$ ${Math.ceil(saldoRestante || 0).toLocaleString("es-AR", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
               })}`
             : "N/D"}
         </p>
@@ -138,8 +139,7 @@ const AgregarPagoDrawer = ({
               formatter={(value) =>
                 `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
-              precision={2} // <-- fuerza 2 decimales
-              stringMode // <-- ¡la clave! evita redondeos y floats raros
+              precision={0}
               parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
             />
           </Form.Item>

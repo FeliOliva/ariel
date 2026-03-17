@@ -84,15 +84,15 @@ const CompraDetalles = () => {
     const porcentajeCosto = parseFloat(response.data.porcentaje_aumento_costo) || 0;
     const porcentajePrecio = parseFloat(response.data.porcentaje_aumento_precio) || 0;
     
-    setNewCosto(costo);
-    setNewPrecioMonotributista(precio);
+    setNewCosto(Math.ceil(costo));
+    setNewPrecioMonotributista(Math.ceil(precio));
     setCantidad(response.data.cantidad);
     setPorcentajeAumentoCosto(porcentajeCosto);
     setPorcentajeAumentoPrecio(porcentajePrecio);
     
     // Guardar valores iniciales para detectar cambios manuales
-    setCostoInicial(costo);
-    setPrecioInicial(precio);
+    setCostoInicial(Math.ceil(costo));
+    setPrecioInicial(Math.ceil(precio));
     
     // Calcular valores originales (antes del aumento)
     // Usamos una aproximación ya que el redondeo hacia arriba hace que la inversa no sea exacta
@@ -133,22 +133,22 @@ const CompraDetalles = () => {
     
     if (porcentajeAumentoCosto > 0 && costoOriginal > 0) {
       const factorCosto = 1 + porcentajeAumentoCosto / 100;
-      costoEsperadoConPorcentaje = Math.ceil(costoOriginal * factorCosto * 100) / 100;
+      costoEsperadoConPorcentaje = Math.ceil(costoOriginal * factorCosto);
     }
     
     if (porcentajeAumentoPrecio > 0 && precioOriginal > 0) {
       const factorPrecio = 1 + porcentajeAumentoPrecio / 100;
-      precioEsperadoConPorcentaje = Math.ceil(precioOriginal * factorPrecio * 100) / 100;
+      precioEsperadoConPorcentaje = Math.ceil(precioOriginal * factorPrecio);
     }
     
     // Si fue modificado manualmente, usar el valor manual directamente
     // Si no fue modificado manualmente y hay porcentaje, aplicar el porcentaje
-    const costoAGuardar = costoFueModificadoManual || porcentajeAumentoCosto === 0 
-      ? newCosto 
+    const costoAGuardar = costoFueModificadoManual || porcentajeAumentoCosto === 0
+      ? Math.ceil(Number(newCosto) || 0)
       : costoEsperadoConPorcentaje;
     
     const precioAGuardar = precioFueModificadoManual || porcentajeAumentoPrecio === 0
-      ? newPrecioMonotributista
+      ? Math.ceil(Number(newPrecioMonotributista) || 0)
       : precioEsperadoConPorcentaje;
     
     // Determinar qué porcentajes guardar
@@ -298,12 +298,12 @@ const CompraDetalles = () => {
     },
   ];
 
-  const totalImporte = data
-    .reduce((acc, item) => acc + parseFloat(item.subtotal), 0)
-    .toLocaleString("es-ES", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const totalImporte = Math.ceil(
+    data.reduce((acc, item) => acc + parseFloat(item.subtotal), 0)
+  ).toLocaleString("es-ES", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
 
   return (
     <MenuLayout>
@@ -363,8 +363,9 @@ const CompraDetalles = () => {
           <div style={{ marginTop: "8px" }}>
             <InputNumber
               value={cantidad}
-              onChange={(value) => setCantidad(value)}
+              onChange={(value) => setCantidad(Math.ceil(Number(value) || 0))}
               min={0}
+              precision={0}
               style={{ width: "100%" }}
             />
           </div>
@@ -413,12 +414,12 @@ const CompraDetalles = () => {
           <div style={{ marginTop: "8px" }}>
             <InputNumber
               value={newCosto}
-              onChange={(value) => setNewCosto(value)}
+              onChange={(value) => setNewCosto(Math.ceil(Number(value) || 0))}
               min={0}
               style={{ width: "100%" }}
               formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
               parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-              precision={2}
+              precision={0}
             />
           </div>
         </div>
@@ -428,12 +429,14 @@ const CompraDetalles = () => {
           <div style={{ marginTop: "8px" }}>
             <InputNumber
               value={newPrecioMonotributista}
-              onChange={(value) => setNewPrecioMonotributista(value)}
+              onChange={(value) =>
+                setNewPrecioMonotributista(Math.ceil(Number(value) || 0))
+              }
               min={0}
               style={{ width: "100%" }}
               formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
               parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-              precision={2}
+              precision={0}
             />
           </div>
         </div>
@@ -441,7 +444,7 @@ const CompraDetalles = () => {
         <div style={{ marginTop: "20px", padding: "12px", backgroundColor: "#e6f7ff", borderRadius: "4px" }}>
           <strong>Subtotal: </strong>
           <span style={{ fontSize: "16px", fontWeight: "bold" }}>
-            ${(newCosto * cantidad).toLocaleString("es-ES", {
+            ${Math.ceil((newCosto || 0) * (cantidad || 0)).toLocaleString("es-ES", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}

@@ -29,11 +29,13 @@ const parseToNumber = (str) => {
 };
 
 const formatNumber = (num) => {
+  const rounded = Math.ceil(Number(num) || 0);
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(num);
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(rounded);
 };
 
 const Inicio = () => {

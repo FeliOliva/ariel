@@ -88,7 +88,7 @@ export default function ResumenCuentaXZona() {
       dataIndex: "totalVentas",
       key: "totalVentas",
       render: (text) =>
-        `$${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
+        `$${Math.ceil(Number(text) || 0).toLocaleString("es-ES", { minimumFractionDigits: 0 })}`,
     },
     {
       title: "Total Pagos",
@@ -96,7 +96,7 @@ export default function ResumenCuentaXZona() {
       key: "totalPagos",
       render: (text) =>
         typeof text === "number"
-          ? `$${Math.round(text).toLocaleString("es-ES", {
+          ? `$${Math.ceil(text).toLocaleString("es-ES", {
               minimumFractionDigits: 0,
             })}`
           : text,
@@ -107,7 +107,7 @@ export default function ResumenCuentaXZona() {
       key: "totalNotasCredito",
       render: (text) =>
         typeof text === "number"
-          ? `$${Math.round(text).toLocaleString("es-ES", {
+          ? `$${Math.ceil(text).toLocaleString("es-ES", {
               minimumFractionDigits: 0,
             })}`
           : text,
@@ -121,7 +121,7 @@ export default function ResumenCuentaXZona() {
         if (!usarSaldoInicial) {
           return "$0";
         }
-        return `$${Math.round(saldoInicialCliente).toLocaleString("es-ES", { minimumFractionDigits: 0 })}`;
+        return `$${Math.ceil(saldoInicialCliente).toLocaleString("es-ES", { minimumFractionDigits: 0 })}`;
       },
     },
     {
@@ -130,7 +130,7 @@ export default function ResumenCuentaXZona() {
       key: "saldo",
       render: (text) =>
         typeof text === "number"
-          ? `$${text.toLocaleString("es-ES", { minimumFractionDigits: 0 })}`
+          ? `$${Math.ceil(Number(text) || 0).toLocaleString("es-ES", { minimumFractionDigits: 0 })}`
           : text,
     },
   ];
@@ -176,11 +176,11 @@ export default function ResumenCuentaXZona() {
       return [
         d.nombre,
         d.localidad, // <- localidad agregada aquí
-        `$${Math.round(d.totalVentas).toLocaleString("es-ES")}`,
-        `$${Math.round(d.totalPagos).toLocaleString("es-ES")}`,
-        `$${Math.round(d.totalNotasCredito).toLocaleString("es-ES")}`,
-        usarSaldoInicial ? `$${Math.round(saldoInicialCliente).toLocaleString("es-ES")}` : "$0",
-        `$${Math.round(d.saldo || 0).toLocaleString("es-ES")}`,
+        `$${Math.ceil(d.totalVentas).toLocaleString("es-ES")}`,
+        `$${Math.ceil(d.totalPagos).toLocaleString("es-ES")}`,
+        `$${Math.ceil(d.totalNotasCredito).toLocaleString("es-ES")}`,
+        usarSaldoInicial ? `$${Math.ceil(saldoInicialCliente).toLocaleString("es-ES")}` : "$0",
+        `$${Math.ceil(d.saldo || 0).toLocaleString("es-ES")}`,
       ];
     });
 
@@ -210,17 +210,17 @@ export default function ResumenCuentaXZona() {
     }
     doc.setFontSize(12);
     doc.text(
-      `Total Ventas: $${Math.round(totalVentasGlobal).toLocaleString("es-ES")}`,
+      `Total Ventas: $${Math.ceil(totalVentasGlobal).toLocaleString("es-ES")}`,
       14,
       finalY
     );
     doc.text(
-      `Total Pagos: $${Math.round(totalPagosGlobal).toLocaleString("es-ES")}`,
+      `Total Pagos: $${Math.ceil(totalPagosGlobal).toLocaleString("es-ES")}`,
       14,
       finalY + 7
     );
     doc.text(
-      `Total Notas de Crédito: $${Math.round(
+      `Total Notas de Crédito: $${Math.ceil(
         totalNotasCreditoGlobal
       ).toLocaleString("es-ES")}`,
       14,
@@ -228,18 +228,18 @@ export default function ResumenCuentaXZona() {
     );
     if (usarSaldoInicial) {
       doc.text(
-        `Total Saldo Inicial: $${Math.round(totalSaldoInicialGlobal).toLocaleString("es-ES")}`,
+        `Total Saldo Inicial: $${Math.ceil(totalSaldoInicialGlobal).toLocaleString("es-ES")}`,
         14,
         finalY + 21
       );
       doc.text(
-        `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
+        `Saldo Global: $${Math.ceil(saldoGlobal).toLocaleString("es-ES")}`,
         14,
         finalY + 28
       );
     } else {
       doc.text(
-        `Saldo Global: $${Math.round(saldoGlobal).toLocaleString("es-ES")}`,
+        `Saldo Global: $${Math.ceil(saldoGlobal).toLocaleString("es-ES")}`,
         14,
         finalY + 21
       );
@@ -283,20 +283,20 @@ export default function ResumenCuentaXZona() {
         />
         <div style={{ marginTop: 20, fontSize: "16px", fontWeight: "bold" }}>
           <p>
-            Total Ventas: ${Math.round(totalVentas).toLocaleString("es-ES")}
+            Total Ventas: ${Math.ceil(totalVentas).toLocaleString("es-ES")}
           </p>
-          <p>Total Pagos: ${Math.round(totalPagos).toLocaleString("es-ES")}</p>
+          <p>Total Pagos: ${Math.ceil(totalPagos).toLocaleString("es-ES")}</p>
           <p>
             Total Notas de Crédito: $
-            {Math.round(totalNotasCredito).toLocaleString("es-ES")}
+            {Math.ceil(totalNotasCredito).toLocaleString("es-ES")}
           </p>
           {usarSaldoInicial && (
             <p>
-              Total Saldo Inicial: ${Math.round(totalSaldoInicialPorCliente).toLocaleString("es-ES")}
+              Total Saldo Inicial: ${Math.ceil(totalSaldoInicialPorCliente).toLocaleString("es-ES")}
             </p>
           )}
           <p>
-            Saldo Global: ${Math.round(saldoGlobal).toLocaleString("es-ES")}
+            Saldo Global: ${Math.ceil(saldoGlobal).toLocaleString("es-ES")}
           </p>
         </div>
       </div>

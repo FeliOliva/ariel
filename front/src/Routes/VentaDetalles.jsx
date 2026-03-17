@@ -287,11 +287,9 @@ const VentaDetalles = () => {
     }
 
     // Calcular descuentos
-    const totalImporte = parseFloat(
-      ventaInfo.total_importe.replace(".", "").replace(",", "."),
-    );
+    const totalImporte = Math.ceil(cleanNumber(ventaInfo.total_importe));
     const descuentoMonto = (totalImporte * ventaInfo.descuento) / 100;
-    const descuentoMontoRedondeado = Math.round(descuentoMonto);
+    const descuentoMontoRedondeado = Math.ceil(descuentoMonto);
     const descuentoMontoFormateado = descuentoMontoRedondeado.toLocaleString(
       "es-AR",
       { minimumFractionDigits: 0 },
@@ -300,14 +298,14 @@ const VentaDetalles = () => {
     // Agregar totales con espacio extra
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
-    pdf.text(`Total: $${ventaInfo.total_importe}`, 10, finalY);
+    pdf.text(`Total: $${Math.ceil(cleanNumber(ventaInfo.total_importe)).toLocaleString("es-ES")}`, 10, finalY);
     pdf.text(
       `Descuento (${ventaInfo.descuento}%): $${descuentoMontoFormateado}`,
       10,
       finalY + 5,
     );
     pdf.text(
-      `Total con Descuento: $${ventaInfo.total_con_descuento}`,
+      `Total con Descuento: $${Math.ceil(cleanNumber(ventaInfo.total_con_descuento)).toLocaleString("es-ES")}`,
       10,
       finalY + 10,
     );
@@ -455,7 +453,7 @@ const VentaDetalles = () => {
         try {
           const payload = {
             ID: detalleVenta.id,
-            new_precio_monotributista: precio, // precio ya ajustado
+            new_precio_monotributista: Math.ceil(precio || 0),
             cantidad,
             venta_id: ventaInfo.venta_id,
           };
@@ -654,7 +652,7 @@ const VentaDetalles = () => {
           }}
         >
           <strong style={{ marginRight: "8px" }}>Total:</strong>
-          <span>${ventaInfo.total_importe}</span>
+          <span>${Math.ceil(cleanNumber(ventaInfo.total_importe)).toLocaleString("es-ES")}</span>
         </div>
         <div
           style={{
@@ -673,7 +671,7 @@ const VentaDetalles = () => {
           }}
         >
           <strong style={{ marginRight: "8px" }}>Total con Descuento:</strong>
-          <span>${ventaInfo.total_con_descuento}</span>
+          <span>${Math.ceil(cleanNumber(ventaInfo.total_con_descuento)).toLocaleString("es-ES")}</span>
         </div>
       </div>
       <Drawer
@@ -759,10 +757,10 @@ const VentaDetalles = () => {
 
               if (nuevoModo === "subir") {
                 const nuevo = base * (1 + porcentaje / 100);
-                setPrecio(Number(nuevo.toFixed(2)));
+                setPrecio(Math.ceil(nuevo));
               } else {
                 const nuevo = base * (1 - porcentaje / 100);
-                setPrecio(Number(nuevo.toFixed(2)));
+                setPrecio(Math.ceil(nuevo));
               }
             }}
           />
@@ -786,10 +784,10 @@ const VentaDetalles = () => {
 
               if (modoAjuste === "subir") {
                 const nuevo = base * (1 + porc / 100);
-                setPrecio(Number(nuevo.toFixed(2)));
+                setPrecio(Math.ceil(nuevo));
               } else {
                 const nuevo = base * (1 - porc / 100);
-                setPrecio(Number(nuevo.toFixed(2)));
+                setPrecio(Math.ceil(nuevo));
               }
             }}
           />

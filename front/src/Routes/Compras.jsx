@@ -193,8 +193,8 @@ function Compras() {
       item.uniqueId === uniqueId
         ? {
             ...item,
-            costo: newCosto,
-            precio_monotributista: newPrecioMonotributista,
+            costo: Math.ceil(Number(newCosto) || 0),
+            precio_monotributista: Math.ceil(Number(newPrecioMonotributista) || 0),
           }
         : item
     );
@@ -233,30 +233,30 @@ function Compras() {
     // Convertir a número por si viene como string
     const number =
       typeof num === "string" ? parseFloat(num.replace(",", ".")) : num;
+    const rounded = Math.ceil(Number(number) || 0);
     // Formatear con separadores de miles y sin decimales
     return new Intl.NumberFormat("es-AR", {
       maximumFractionDigits: 0,
       minimumFractionDigits: 0,
-    }).format(number);
+    }).format(rounded);
   };
 
   const formatNumberWithDecimals = (num) => {
-    if (num === null || num === undefined || isNaN(num)) return "0,00";
-    // Convertir a número por si viene como string
+    if (num === null || num === undefined || isNaN(num)) return "0";
     const number =
       typeof num === "string" ? parseFloat(num.replace(",", ".")) : num;
-    // Formatear con separadores de miles y 2 decimales
+    const rounded = Math.ceil(Number(number) || 0);
     return new Intl.NumberFormat("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(number);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(rounded);
   };
 
   const calcularTotal = () => {
-    return compra.articulos.reduce(
+    return Math.ceil(compra.articulos.reduce(
       (acc, articulo) => acc + articulo.cantidad * articulo.costo,
       0
-    );
+    ));
   };
 
   const handleRegistrarCompra = async () => {
@@ -308,12 +308,12 @@ function Compras() {
       
       if (porcentajeCostoAplicar > 0) {
         const factorCosto = 1 + porcentajeCostoAplicar / 100;
-        nuevoCosto = Math.ceil(item.costo * factorCosto * 100) / 100;
+        nuevoCosto = Math.ceil(item.costo * factorCosto);
       }
       
       if (porcentajePrecioAplicar > 0) {
         const factorPrecio = 1 + porcentajePrecioAplicar / 100;
-        nuevoPrecioMonotributista = Math.ceil(item.precio_monotributista * factorPrecio * 100) / 100;
+        nuevoPrecioMonotributista = Math.ceil(item.precio_monotributista * factorPrecio);
       }
       
       // Determinar qué porcentajes guardar en detalle_compra
@@ -335,8 +335,8 @@ function Compras() {
       
       return {
         ...item,
-        costo: nuevoCosto,
-        precio_monotributista: nuevoPrecioMonotributista,
+        costo: Math.ceil(Number(nuevoCosto) || 0),
+        precio_monotributista: Math.ceil(Number(nuevoPrecioMonotributista) || 0),
         // Guardar los porcentajes para el detalle (solo si es individual)
         porcentajeAplicadoCosto: porcentajeCostoParaGuardar,
         porcentajeAplicadoPrecio: porcentajePrecioParaGuardar,
@@ -348,10 +348,10 @@ function Compras() {
     });
 
     // Calcular el total con los precios finales
-    const totalFinal = articulosFinales.reduce(
+    const totalFinal = Math.ceil(articulosFinales.reduce(
       (acc, articulo) => acc + articulo.cantidad * articulo.costo,
       0
-    );
+    ));
 
     // Determinar qué porcentajes globales guardar
     // Si hay porcentajes separados, guardarlos. Si no, usar el único (compatibilidad)

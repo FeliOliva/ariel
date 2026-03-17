@@ -84,13 +84,13 @@ function Ventas() {
       } else {
         // AUMENTO → redondeo normal
         const aumento = totalBase * (porcentaje / 100);
-        const aumentoRed = Math.round(aumento);
+        const aumentoRed = Math.ceil(aumento);
         totalCalculado = totalBase + aumentoRed;
       }
     }
 
     // 3) Redondeo final correcto
-    setTotalVenta(Math.round(totalCalculado));
+    setTotalVenta(Math.ceil(totalCalculado));
   }, [venta.articulos, venta.descuento, modoDescuento]);
 
   const fetchData = async (skipUpdate = false) => {
@@ -230,7 +230,7 @@ function Ventas() {
     const porcentaje = Number(venta.descuento || 0);
     if (!porcentaje) {
       // sin descuento / aumento → redondeo normal
-      return Math.round(subtotal);
+      return Math.ceil(subtotal);
     }
 
     let totalCalculado = subtotal;
@@ -243,12 +243,12 @@ function Ventas() {
     } else {
       // 🔴 MODO AUMENTO: sumar porcentaje, redondeo normal
       const aumento = subtotal * (porcentaje / 100);
-      const aumentoRedondeado = Math.round(aumento);
+      const aumentoRedondeado = Math.ceil(aumento);
       totalCalculado = subtotal + aumentoRedondeado;
     }
 
     // Redondeo final del total
-    return Math.round(totalCalculado);
+    return Math.ceil(totalCalculado);
   };
 
   useEffect(() => {
@@ -656,11 +656,12 @@ function Ventas() {
     // Convertir a número por si viene como string
     const number =
       typeof num === "string" ? parseFloat(num.replace(",", ".")) : num;
+    const rounded = Math.ceil(Number(number) || 0);
     // Formatear con separadores de miles y sin decimales
     return new Intl.NumberFormat("es-AR", {
       maximumFractionDigits: 0,
       minimumFractionDigits: 0,
-    }).format(number);
+    }).format(rounded);
   };
   const formatDiscount = (value) => {
     const num =

@@ -94,12 +94,14 @@ const ResumenCuenta = () => {
     return parseFloat(valor);
   };
   const formatMonto = (numero) => {
-    if (numero === null || numero === undefined || isNaN(numero)) return "0,00";
+    if (numero === null || numero === undefined || isNaN(numero)) return "0";
+
+    const valor = Math.ceil(Number(numero) || 0);
 
     return new Intl.NumberFormat("de-DE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(numero);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(valor);
   };
 
   // Función para verificar si la fecha es posterior o igual al 1 de enero de 2026
@@ -798,13 +800,13 @@ const ResumenCuenta = () => {
       const tableData = nota.detalles.map((detalle) => [
         detalle.articulo_nombre,
         detalle.cantidad,
-        `$${detalle.precio.toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+        `$${Math.ceil(detalle.precio || 0).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         })}`,
-        `$${detalle.subTotal.toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+        `$${Math.ceil(detalle.subTotal || 0).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         })}`,
       ]);
 
@@ -819,9 +821,9 @@ const ResumenCuenta = () => {
       yPos = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(14);
       doc.text(
-        `Total: $${nota.total.toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+        `Total: $${Math.ceil(nota.total || 0).toLocaleString("es-ES", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         })}`,
         14,
         yPos
@@ -1197,11 +1199,12 @@ const ResumenCuenta = () => {
               }}
             >
               {(() => {
-                const mostrado =
-                  Math.abs(saldoRestante) < 1 ? 0 : saldoRestante;
+                const base =
+                  Math.abs(saldoRestante) < 1 ? 0 : saldoRestante || 0;
+                const mostrado = Math.ceil(base);
                 return `Saldo Restante: $${mostrado.toLocaleString("es-AR", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
                 })}`;
               })()}
             </h2>
@@ -1235,8 +1238,12 @@ const ResumenCuenta = () => {
                   style={{ marginTop: "10px", width: "100%" }}
                   value={pagoData?.monto}
                   onChange={(value) =>
-                    setPagoData({ ...pagoData, monto: value })
+                    setPagoData({
+                      ...pagoData,
+                      monto: Math.ceil(Number(value) || 0),
+                    })
                   }
+                  precision={0}
                 />
               </Tooltip>
               <Tooltip title="Fecha de pago">

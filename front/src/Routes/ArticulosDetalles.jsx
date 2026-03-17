@@ -310,8 +310,8 @@ const ArticulosDetalles = () => {
       name: "Precio",
       selector: (row) =>
         Math.ceil(parseFloat(row.precio_monotributista) || 0).toLocaleString("es-ES", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         }), // Aplicar formato de precio redondeado hacia arriba
       sortable: true,
     },

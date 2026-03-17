@@ -4,14 +4,14 @@ import { DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined } from "@ant-
 
 const { Text } = Typography;
 
-// Función para formatear números con 2 decimales (formato es-AR) redondeando hacia arriba
+// Formato sin centavos, redondeando siempre hacia arriba
 const formatNumberWithDecimals = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return "0,00";
+  if (num === null || num === undefined || isNaN(num)) return "0";
   const number = typeof num === "string" ? parseFloat(num.replace(",", ".")) : num;
   const roundedNumber = Math.ceil(number);
   return new Intl.NumberFormat("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(roundedNumber);
 };
 
@@ -41,7 +41,11 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
   // Función para guardar los precios editados automáticamente
   const handleSaveClick = (uniqueId) => {
     if (!isNaN(editedCosto) && !isNaN(editedPrecioMonotributista)) {
-      onEdit(uniqueId, editedCosto, editedPrecioMonotributista);
+      onEdit(
+        uniqueId,
+        Math.ceil(Number(editedCosto) || 0),
+        Math.ceil(Number(editedPrecioMonotributista) || 0)
+      );
     }
     // Si hay función para editar cantidad y la cantidad cambió, actualizarla
     if (onEditCantidad && !isNaN(editedCantidad) && editedCantidad > 0) {
@@ -53,7 +57,11 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
   // Función para guardar automáticamente cuando cambian los valores
   const handleAutoSave = (uniqueId) => {
     if (!isNaN(editedCosto) && !isNaN(editedPrecioMonotributista)) {
-      onEdit(uniqueId, editedCosto, editedPrecioMonotributista);
+      onEdit(
+        uniqueId,
+        Math.ceil(Number(editedCosto) || 0),
+        Math.ceil(Number(editedPrecioMonotributista) || 0)
+      );
     }
     if (onEditCantidad && !isNaN(editedCantidad) && editedCantidad > 0) {
       onEditCantidad(uniqueId, editedCantidad);
@@ -131,14 +139,18 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
                         onChange={(value) => {
                           setEditedCosto(value || 0);
                           if (!isNaN(value) && !isNaN(editedPrecioMonotributista)) {
-                            onEdit(item.uniqueId, value || 0, editedPrecioMonotributista);
+                            onEdit(
+                              item.uniqueId,
+                              Math.ceil(Number(value) || 0),
+                              Math.ceil(Number(editedPrecioMonotributista) || 0)
+                            );
                           }
                         }}
                         min={0}
                         style={{ width: 100 }}
                         formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                        precision={2}
+                        precision={0}
                       />
                     </div>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -148,14 +160,18 @@ const DynamicListCompras = ({ items, onDelete, onEdit, onAumentoPorcentaje, onEd
                         onChange={(value) => {
                           setEditedPrecioMonotributista(value || 0);
                           if (!isNaN(value) && !isNaN(editedCosto)) {
-                            onEdit(item.uniqueId, editedCosto, value || 0);
+                            onEdit(
+                              item.uniqueId,
+                              Math.ceil(Number(editedCosto) || 0),
+                              Math.ceil(Number(value) || 0)
+                            );
                           }
                         }}
                         min={0}
                         style={{ width: 100 }}
                         formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                        precision={2}
+                        precision={0}
                       />
                     </div>
                   </div>
