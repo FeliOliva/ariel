@@ -355,6 +355,43 @@ const getVentasConGananciaFiltradas = async (req, res) => {
   }
 };
 
+const getRankingProductosVendidosGeneral = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin, limit } = req.query;
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Faltan parámetros: fecha_inicio y fecha_fin son requeridos",
+      });
+    }
+
+    const parsedLimit = Number(limit) || 100;
+
+    const productos = await articuloModel.getRankingProductosVendidosGeneral({
+      fecha_inicio,
+      fecha_fin,
+      limit: parsedLimit,
+    });
+
+    const totalGeneral = productos.reduce(
+      (acc, prod) => acc + (parseFloat(prod.subtotal) || 0),
+      0
+    );
+    const totalUnidades = productos.reduce(
+      (acc, prod) => acc + (parseFloat(prod.cantidad_vendida) || 0),
+      0
+    );
+
+    res.json({
+      productos,
+      totalGeneral: totalGeneral.toFixed(2),
+      totalUnidades,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -376,4 +413,5 @@ module.exports = {
   decreasePrice,
   getEvolucionGananciaPorLinea,
   getVentasConGananciaFiltradas,
+  getRankingProductosVendidosGeneral,
 };

@@ -253,4 +253,22 @@ WHERE v.estado = 1
 GROUP BY DATE(v.fecha_venta)
 ORDER BY fecha ASC;
 `,
+  getRankingProductosVendidosGeneral: `
+SELECT 
+  a.id AS articulo_id,
+  a.codigo_producto,
+  CONCAT(a.nombre, ' - ', a.mediciones) AS nombre_completo,
+  COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida,
+  ROUND(COALESCE(AVG(dv.precio_monotributista), 0), 2) AS precio_promedio,
+  ROUND(COALESCE(SUM(dv.precio_monotributista * dv.cantidad), 0), 2) AS subtotal
+FROM detalle_venta dv
+INNER JOIN venta v ON dv.venta_id = v.id
+INNER JOIN articulo a ON dv.articulo_id = a.id
+WHERE v.estado = 1
+  AND v.fecha_venta >= ?
+  AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
+GROUP BY a.id, a.codigo_producto, a.nombre, a.mediciones
+ORDER BY cantidad_vendida DESC, subtotal DESC
+LIMIT ?;
+`,
 };

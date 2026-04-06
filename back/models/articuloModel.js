@@ -296,6 +296,22 @@ const getVentasConGananciaFiltradas = async ({
   }
 };
 
+const getRankingProductosVendidosGeneral = async ({
+  fecha_inicio,
+  fecha_fin,
+  limit = 100,
+}) => {
+  try {
+    const query = queriesArticulos.getRankingProductosVendidosGeneral;
+    const [results] = await db.query(query, [fecha_inicio, fecha_fin, limit]);
+    return results;
+  } catch (error) {
+    throw new Error(
+      "Error al obtener ranking general de productos vendidos: " + error.message
+    );
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -317,4 +333,5 @@ module.exports = {
   decreasePrice,
   getEvolucionGananciaPorLinea,
   getVentasConGananciaFiltradas,
+  getRankingProductosVendidosGeneral,
 };

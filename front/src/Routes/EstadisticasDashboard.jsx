@@ -13,6 +13,7 @@ import {
 } from "antd";
 import { FilePdfOutlined, BarChartOutlined } from "@ant-design/icons";
 import axios from "axios";
+import dayjs from "dayjs";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import {
@@ -39,6 +40,18 @@ export default function EstadisticasDashboard() {
   const [selectedArticulo, setSelectedArticulo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
+  const [rankingGeneral, setRankingGeneral] = useState([]);
+  const [rankingGeneralLoading, setRankingGeneralLoading] = useState(false);
+  const [rankingPeriodo, setRankingPeriodo] = useState("mensual");
+  const [rankingDateRange, setRankingDateRange] = useState([
+    dayjs().startOf("month"),
+    dayjs(),
+  ]);
+  const [rankingTotales, setRankingTotales] = useState({
+    totalProductos: 0,
+    totalUnidades: 0,
+    totalSubtotal: 0,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -74,6 +87,68 @@ export default function EstadisticasDashboard() {
     setDateRange(dates);
   };
 
+  const getPresetRange = (periodo) => {
+    const hoy = dayjs();
+    switch (periodo) {
+      case "diario":
+        return [hoy.startOf("day"), hoy.endOf("day")];
+      case "semanal":
+        return [hoy.subtract(6, "day").startOf("day"), hoy.endOf("day")];
+      case "mensual":
+        return [hoy.startOf("month"), hoy.endOf("day")];
+      case "cuatrimestral":
+        return [hoy.subtract(3, "month").startOf("month"), hoy.endOf("day")];
+      default:
+        return [hoy.startOf("month"), hoy.endOf("day")];
+    }
+  };
+
+  const fetchRankingGeneral = async (rangeOverride = null) => {
+    const sourceRange = Array.isArray(rangeOverride)
+      ? rangeOverride
+      : Array.isArray(rankingDateRange)
+      ? rankingDateRange
+      : [];
+    const [fechaInicioRaw, fechaFinRaw] = sourceRange;
+    if (!fechaInicioRaw || !fechaFinRaw) return;
+
+    setRankingGeneralLoading(true);
+    try {
+      const fecha_inicio = fechaInicioRaw.format("YYYY-MM-DD");
+      const fecha_fin = fechaFinRaw.format("YYYY-MM-DD");
+
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/getRankingProductosVendidosGeneral`,
+        {
+          params: { fecha_inicio, fecha_fin, limit: 200 },
+        }
+      );
+
+      const productos = response.data?.productos || [];
+      setRankingGeneral(productos);
+
+      const totalUnidades = productos.reduce(
+        (acc, item) => acc + (parseFloat(item.cantidad_vendida) || 0),
+        0
+      );
+      const totalSubtotal = productos.reduce(
+        (acc, item) => acc + (parseFloat(item.subtotal) || 0),
+        0
+      );
+
+      setRankingTotales({
+        totalProductos: productos.length,
+        totalUnidades: Math.ceil(totalUnidades),
+        totalSubtotal: Math.ceil(totalSubtotal),
+      });
+    } catch (error) {
+      console.error("Error fetching productos vendidos general:", error);
+      message.error("Error al cargar productos vendidos");
+    } finally {
+      setRankingGeneralLoading(false);
+    }
+  };
+
   const fetchEstadisticas = async () => {
     if (!selectedLinea || !dateRange || dateRange.length !== 2) {
       message.warning("Por favor selecciona una línea y un rango de fechas");
@@ -107,6 +182,24 @@ export default function EstadisticasDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchRankingGeneral();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleRankingPeriodoChange = (value) => {
+    setRankingPeriodo(value);
+    if (value !== "personalizado") {
+      const nextRange = getPresetRange(value);
+      setRankingDateRange(nextRange);
+      fetchRankingGeneral(nextRange);
+    }
+  };
+
+  const handleRankingRangeChange = (dates) => {
+    setRankingDateRange(Array.isArray(dates) ? dates : []);
   };
 
   const calculateTotals = () => {
@@ -388,6 +481,160 @@ export default function EstadisticasDashboard() {
     },
   ];
 
+  const rankingGeneralColumns = [
+    {
+      title: "#",
+      key: "ranking",
+      width: 90,
+      align: "center",
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: "Producto",
+      dataIndex: "nombre_completo",
+      key: "nombre_completo",
+      ellipsis: true,
+      render: (_, record) =>
+        `${record.codigo_producto || "-"} - ${record.nombre_completo || "-"}`,
+    },
+    {
+      title: "Cantidad",
+      dataIndex: "cantidad_vendida",
+      key: "cantidad_vendida",
+      width: 120,
+      align: "right",
+      render: (value) => Math.ceil(parseFloat(value || 0)).toLocaleString("es-ES"),
+    },
+    {
+      title: "Precio Promedio",
+      dataIndex: "precio_promedio",
+      key: "precio_promedio",
+      width: 140,
+      align: "right",
+      render: (value) =>
+        "$" + Math.ceil(parseFloat(value || 0)).toLocaleString("es-ES"),
+    },
+    {
+      title: "Subtotal",
+      dataIndex: "subtotal",
+      key: "subtotal",
+      width: 140,
+      align: "right",
+      render: (value) =>
+        "$" + Math.ceil(parseFloat(value || 0)).toLocaleString("es-ES"),
+    },
+  ];
+
+  const handleGeneratePDFGeneral = async () => {
+    if (!rankingGeneral || rankingGeneral.length === 0) {
+      message.warning("No hay datos para generar el PDF");
+      return;
+    }
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.width;
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const phone = "Teléfono: +54 9 3518 16-8151";
+    const instagram = "Instagram: @distribuidoraRenacer";
+
+    const logoForPdf =
+      logoDataUrl ||
+      (await (async () => {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error loading logo for PDF:", error);
+          return null;
+        }
+      })());
+
+    const addHeader = (doc, isFirstPage = false) => {
+      if (logoForPdf) {
+        doc.addImage(logoForPdf, "PNG", 5, 5, logoWidth, logoHeight);
+      }
+      if (isFirstPage) {
+        doc.setFontSize(20);
+        doc.text("Distribuidora Renacer", logoWidth + 10, 20);
+        doc.setFontSize(12);
+        doc.text(phone, logoWidth + 10, 30);
+        doc.text(instagram, logoWidth + 10, 37);
+      }
+    };
+
+    addHeader(pdf, true);
+
+    const [inicio, fin] = rankingDateRange || [];
+    const fechaInicio = inicio ? inicio.format("DD/MM/YYYY") : "-";
+    const fechaFin = fin ? fin.format("DD/MM/YYYY") : "-";
+
+    pdf.setFontSize(16);
+    const title = "PRODUCTOS MAS VENDIDOS - GENERAL";
+    const titleX = (pageWidth - pdf.getTextWidth(title)) / 2;
+    pdf.text(title, titleX, 50);
+    pdf.setFontSize(12);
+    const subtitle = `Periodo: ${fechaInicio} - ${fechaFin}`;
+    const subtitleX = (pageWidth - pdf.getTextWidth(subtitle)) / 2;
+    pdf.text(subtitle, subtitleX, 58);
+
+    const body = rankingGeneral.map((item, index) => [
+      index + 1,
+      `${item.codigo_producto || "-"} - ${item.nombre_completo || "-"}`,
+      Math.ceil(parseFloat(item.cantidad_vendida || 0)).toLocaleString("es-ES"),
+      "$" + Math.ceil(parseFloat(item.precio_promedio || 0)).toLocaleString("es-ES"),
+      "$" + Math.ceil(parseFloat(item.subtotal || 0)).toLocaleString("es-ES"),
+    ]);
+
+    pdf.autoTable({
+      startY: 68,
+      head: [["#", "Producto", "Cantidad", "Precio Promedio", "Subtotal"]],
+      body,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1.5 },
+      headStyles: {
+        fillColor: [200, 200, 200],
+        textColor: 0,
+        fontStyle: "bold",
+      },
+      margin: { top: 40, left: 5, right: 5, bottom: 5 },
+      didDrawPage: () => addHeader(pdf, false),
+      columnStyles: {
+        0: { cellWidth: 10, halign: "center" },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 22, halign: "right" },
+        3: { cellWidth: 32, halign: "right" },
+        4: { cellWidth: 28, halign: "right" },
+      },
+    });
+
+    const finalY = pdf.lastAutoTable.finalY + 10;
+    pdf.setFontSize(11);
+    pdf.text(
+      `Total productos: ${rankingTotales.totalProductos}`,
+      10,
+      finalY
+    );
+    pdf.text(
+      `Total unidades: ${Math.ceil(rankingTotales.totalUnidades || 0).toLocaleString("es-ES")}`,
+      80,
+      finalY
+    );
+    pdf.text(
+      `Subtotal total: $${Math.ceil(rankingTotales.totalSubtotal || 0).toLocaleString("es-ES")}`,
+      140,
+      finalY
+    );
+
+    pdf.save(`Productos_Mas_Vendidos_${fechaInicio.replace(/\//g, "-")}_${fechaFin.replace(/\//g, "-")}.pdf`);
+  };
+
   const totals = calculateTotals();
 
   return (
@@ -413,10 +660,105 @@ export default function EstadisticasDashboard() {
           title={
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <BarChartOutlined />
-              Estadísticas de Ventas por Línea
+              Estadisticas de venta
             </div>
           }
         >
+          <Card
+            title="Productos Más Vendidos (General)"
+            style={{ marginBottom: "20px" }}
+          >
+            <Row gutter={16} style={{ marginBottom: "16px" }}>
+              <Col xs={24} sm={8}>
+                <strong>Seleccionar Período:</strong>
+                <Select
+                  value={rankingPeriodo}
+                  onChange={handleRankingPeriodoChange}
+                  style={{ width: "100%", marginTop: "8px" }}
+                  options={[
+                    { value: "diario", label: "Diario" },
+                    { value: "semanal", label: "Semanal (últimos 7 días)" },
+                    { value: "mensual", label: "Mensual" },
+                    { value: "cuatrimestral", label: "Cuatrimestral" },
+                    { value: "personalizado", label: "Rango personalizado" },
+                  ]}
+                />
+              </Col>
+              <Col xs={24} sm={10}>
+                <strong>Rango:</strong>
+                <RangePicker
+                  style={{ width: "100%", marginTop: "8px" }}
+                  value={rankingDateRange}
+                  onChange={handleRankingRangeChange}
+                  disabled={rankingPeriodo !== "personalizado"}
+                  format="DD/MM/YYYY"
+                />
+              </Col>
+              <Col xs={24} sm={6}>
+                <strong>Acción:</strong>
+                <Button
+                  type="primary"
+                  onClick={() => fetchRankingGeneral()}
+                  loading={rankingGeneralLoading}
+                  style={{ width: "100%", marginTop: "8px" }}
+                >
+                  Consultar
+                </Button>
+                <Button
+                  icon={<FilePdfOutlined />}
+                  onClick={handleGeneratePDFGeneral}
+                  disabled={!rankingGeneral || rankingGeneral.length === 0}
+                  style={{ width: "100%", marginTop: "8px" }}
+                >
+                  Generar PDF
+                </Button>
+              </Col>
+            </Row>
+
+            <Row gutter={[16, 16]} style={{ marginBottom: "16px" }}>
+              <Col xs={24} sm={8}>
+                <Card size="small">
+                  <Statistic
+                    title="Productos"
+                    value={rankingTotales.totalProductos}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Card size="small">
+                  <Statistic
+                    title="Unidades vendidas"
+                    value={rankingTotales.totalUnidades}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Card size="small">
+                  <Statistic
+                    title="Subtotal total"
+                    value={rankingTotales.totalSubtotal}
+                    prefix="$"
+                    precision={0}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            <Table
+              columns={rankingGeneralColumns}
+              dataSource={rankingGeneral}
+              rowKey="articulo_id"
+              loading={rankingGeneralLoading}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} de ${total} productos`,
+              }}
+              scroll={{ x: 800 }}
+            />
+          </Card>
+
           {/* Controles */}
           <Row gutter={16} style={{ marginBottom: "20px" }}>
             <Col xs={24} sm={8}>

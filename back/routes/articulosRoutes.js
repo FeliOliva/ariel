@@ -29,6 +29,10 @@ router.get(
   articulosControllers.getVentasConGananciaFiltradas
 );
 router.get(
+  "/getRankingProductosVendidosGeneral",
+  articulosControllers.getRankingProductosVendidosGeneral
+);
+router.get(
   "/getArticulosBySubLineaID/:subLineaID",
   articulosControllers.getArticulosBySubLineaID
 );
