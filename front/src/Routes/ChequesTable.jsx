@@ -30,6 +30,7 @@ const ChequesTable = () => {
         (a, b) => new Date(a.fecha_cobro) - new Date(b.fecha_cobro)
       );
       setCheques(sortedCheques);
+      console.log(sortedCheques);
     } catch (error) {
       console.error("Error fetching the data:", error);
     } finally {
@@ -107,7 +108,12 @@ const ChequesTable = () => {
     },
     {
       name: "Importe",
-      selector: (row) => row.importe,
+      selector: (row) => "$" + Math.round(parseFloat(row.importe || 0)).toLocaleString("es-AR"),
+      sortable: true,
+    },
+    {
+      name: "Nro Pago",
+      selector: (row) => row.nro_pago || "-",
       sortable: true,
     },
     {

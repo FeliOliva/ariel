@@ -127,14 +127,17 @@ const Cheques = () => {
     },
     {
       name: "Importe",
-      selector: (row) => (
-        <Tooltip
-          className={row.estado === 0 ? "strikethrough" : ""}
-          title={row.importe}
-        >
-          <span>{row.importe}</span>
-        </Tooltip>
-      ),
+      selector: (row) => {
+        const importe = "$" + Math.round(parseFloat(row.importe || 0)).toLocaleString("es-AR");
+        return (
+          <Tooltip
+            className={row.estado === 0 ? "strikethrough" : ""}
+            title={importe}
+          >
+            <span>{importe}</span>
+          </Tooltip>
+        );
+      },
       sortable: true,
     },
     {

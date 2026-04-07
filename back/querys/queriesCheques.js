@@ -1,8 +1,10 @@
 module.exports = {
   getAllCheques: `SELECT cheque.*, 
-       CONCAT_WS(' - ', cliente.nombre, cliente.apellido, cliente.farmacia) AS nombre_cliente
+       CONCAT_WS(' - ', cliente.nombre, cliente.apellido, cliente.farmacia) AS nombre_cliente,
+       pagos.nro_pago
 FROM cheque
 JOIN cliente ON cheque.cliente_id = cliente.id
+LEFT JOIN pagos ON cheque.pago_id = pagos.id
 ORDER BY cheque.id DESC;
 `,
   addCheque: `
