@@ -8,3 +8,6 @@ front/.env
 !.env.example
 !back/.env.example
 backup-12-26-vie_08-10.sql
+
+# Carpeta backup (scripts, SQL locales, etc. — no versionar)
+/backup/

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   DatePicker,
   Button,
@@ -10,8 +10,12 @@ import {
   message,
   Spin,
   Select,
+  Tooltip,
+  Checkbox,
+  Space,
+  Typography,
 } from "antd";
-import { FilePdfOutlined, BarChartOutlined } from "@ant-design/icons";
+import { FilePdfOutlined, BarChartOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
 import dayjs from "dayjs";
 import jsPDF from "jspdf";
@@ -22,17 +26,32 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import LineaInput from "../components/LineaInput"; // Ajusta la ruta según tu estructura
+import LineaInput from "../components/LineaInput";
 import MenuLayout from "../components/MenuLayout";
 import imageUrl from "../logoRenacer.png";
 
+const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
-export default function EstadisticasDashboard() {
+function InfoHelp({ text }) {
+  return (
+    <Tooltip
+      title={<div style={{ maxWidth: 380, whiteSpace: "pre-wrap" }}>{text}</div>}
+      placement="topLeft"
+    >
+      <InfoCircleOutlined style={{ marginLeft: 6, color: "#1890ff", cursor: "help" }} />
+    </Tooltip>
+  );
+}
+
+export default function EstadisticasDashboard({
+  embedded = false,
+  sharedDateRange = null,
+}) {
   const [selectedLinea, setSelectedLinea] = useState(null);
   const [dateRange, setDateRange] = useState([]);
   const [estadisticas, setEstadisticas] = useState([]);
@@ -51,6 +70,15 @@ export default function EstadisticasDashboard() {
     totalProductos: 0,
     totalUnidades: 0,
     totalSubtotal: 0,
+  });
+
+  const [evoLineVisibility, setEvoLineVisibility] = useState({
+    ganancia: true,
+    total_vendido: true,
+    diferencia_promedio: false,
+    precio_promedio: false,
+    costo_promedio: false,
+    cantidad_vendida: false,
   });
 
   useEffect(() => {
@@ -188,6 +216,21 @@ export default function EstadisticasDashboard() {
     fetchRankingGeneral();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!embedded || !sharedDateRange || sharedDateRange.length !== 2) return;
+    const [a, b] = sharedDateRange;
+    if (!a || !b) return;
+    setRankingDateRange([a, b]);
+    setRankingPeriodo("personalizado");
+    setDateRange([a, b]);
+    fetchRankingGeneral([a, b]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    embedded,
+    sharedDateRange?.[0]?.format?.("YYYY-MM-DD"),
+    sharedDateRange?.[1]?.format?.("YYYY-MM-DD"),
+  ]);
 
   const handleRankingPeriodoChange = (value) => {
     setRankingPeriodo(value);
@@ -403,19 +446,34 @@ export default function EstadisticasDashboard() {
 
   const columns = [
     {
-      title: "Código",
+      title: (
+        <span>
+          Código
+          <InfoHelp text="Identificador del producto dentro del detalle de la línea." />
+        </span>
+      ),
       dataIndex: "codigo_articulo",
       key: "codigo_articulo",
       width: 100,
     },
     {
-      title: "Artículo",
+      title: (
+        <span>
+          Artículo
+          <InfoHelp text="Nombre completo del artículo para reconocerlo en la lista." />
+        </span>
+      ),
       dataIndex: "nombre_completo",
       key: "nombre_completo",
       ellipsis: true,
     },
     {
-      title: "Stock",
+      title: (
+        <span>
+          Stock
+          <InfoHelp text="Stock actual del artículo en el momento del reporte." />
+        </span>
+      ),
       dataIndex: "stock",
       key: "stock",
       width: 100,
@@ -423,7 +481,12 @@ export default function EstadisticasDashboard() {
       render: (_, record) => parseInt(record.stock) || 0,
     },
     {
-      title: "Cantidad Vendida",
+      title: (
+        <span>
+          Cant. vendida
+          <InfoHelp text="Cuántas unidades se vendieron de ese producto en el período y línea elegidos." />
+        </span>
+      ),
       dataIndex: "unidades_vendidas",
       key: "unidades_vendidas",
       width: 120,
@@ -431,7 +494,12 @@ export default function EstadisticasDashboard() {
       render: (_, record) => parseInt(record.unidades_vendidas) || 0,
     },
     {
-      title: "Total Vendido",
+      title: (
+        <span>
+          Total vendido
+          <InfoHelp text="Monto total vendido de ese artículo en el período (antes de mirar costos)." />
+        </span>
+      ),
       dataIndex: "subtotal",
       key: "subtotal",
       align: "right",
@@ -440,7 +508,12 @@ export default function EstadisticasDashboard() {
         Math.ceil(parseFloat(record.subtotal || 0)).toLocaleString("es-ES"),
     },
     {
-      title: "Costo",
+      title: (
+        <span>
+          Costo
+          <InfoHelp text="Costo de referencia del producto para comparar con el precio y la ganancia." />
+        </span>
+      ),
       dataIndex: "costo",
       key: "costo",
       align: "right",
@@ -449,7 +522,12 @@ export default function EstadisticasDashboard() {
         Math.ceil(parseFloat(record.costo || 0)).toLocaleString("es-ES"),
     },
     {
-      title: "Precio Monotributista",
+      title: (
+        <span>
+          Precio monotributista
+          <InfoHelp text="Precio de venta tipo monotributista del artículo (referencia de lista)." />
+        </span>
+      ),
       dataIndex: "precio_monotributista",
       key: "precio_monotributista",
       align: "right",
@@ -460,7 +538,12 @@ export default function EstadisticasDashboard() {
         ),
     },
     {
-      title: "Diferencia",
+      title: (
+        <span>
+          Diferencia
+          <InfoHelp text="Brecha entre precio de lista y costo: muestra cuánto ‘aire’ hay entre costo y precio de referencia." />
+        </span>
+      ),
       key: "diferencia",
       align: "right",
       render: (_, record) => {
@@ -471,7 +554,12 @@ export default function EstadisticasDashboard() {
       },
     },
     {
-      title: "Ganancia",
+      title: (
+        <span>
+          Ganancia
+          <InfoHelp text="Estimación de ganancia de ese producto en el período según los datos de venta y costos cargados." />
+        </span>
+      ),
       dataIndex: "ganancia",
       key: "ganancia",
       align: "right",
@@ -483,14 +571,24 @@ export default function EstadisticasDashboard() {
 
   const rankingGeneralColumns = [
     {
-      title: "#",
+      title: (
+        <span>
+          #
+          <InfoHelp text="Orden en el ranking (1 = más arriba en la tabla según el criterio del listado)." />
+        </span>
+      ),
       key: "ranking",
       width: 90,
       align: "center",
       render: (_, __, index) => index + 1,
     },
     {
-      title: "Producto",
+      title: (
+        <span>
+          Producto
+          <InfoHelp text="Código y nombre para identificar cada producto del ranking." />
+        </span>
+      ),
       dataIndex: "nombre_completo",
       key: "nombre_completo",
       ellipsis: true,
@@ -498,7 +596,12 @@ export default function EstadisticasDashboard() {
         `${record.codigo_producto || "-"} - ${record.nombre_completo || "-"}`,
     },
     {
-      title: "Cantidad",
+      title: (
+        <span>
+          Cantidad
+          <InfoHelp text="Unidades vendidas de ese producto en el período del ranking." />
+        </span>
+      ),
       dataIndex: "cantidad_vendida",
       key: "cantidad_vendida",
       width: 120,
@@ -506,7 +609,12 @@ export default function EstadisticasDashboard() {
       render: (value) => Math.ceil(parseFloat(value || 0)).toLocaleString("es-ES"),
     },
     {
-      title: "Precio Promedio",
+      title: (
+        <span>
+          Precio promedio
+          <InfoHelp text="Precio medio al que se vendió ese producto en el período (ponderado por las ventas)." />
+        </span>
+      ),
       dataIndex: "precio_promedio",
       key: "precio_promedio",
       width: 140,
@@ -515,7 +623,12 @@ export default function EstadisticasDashboard() {
         "$" + Math.ceil(parseFloat(value || 0)).toLocaleString("es-ES"),
     },
     {
-      title: "Subtotal",
+      title: (
+        <span>
+          Subtotal
+          <InfoHelp text="Facturación total de ese producto en el período del ranking." />
+        </span>
+      ),
       dataIndex: "subtotal",
       key: "subtotal",
       width: 140,
@@ -637,8 +750,48 @@ export default function EstadisticasDashboard() {
 
   const totals = calculateTotals();
 
-  return (
-    <MenuLayout>
+  const rankingDiasIncluidos = useMemo(() => {
+    const rng = rankingDateRange;
+    if (!rng || rng.length !== 2 || !rng[0] || !rng[1]) return 0;
+    return Math.max(1, rng[1].diff(rng[0], "day") + 1);
+  }, [rankingDateRange]);
+
+  const rankingExtra = useMemo(() => {
+    const p = rankingTotales.totalProductos || 0;
+    const u = rankingTotales.totalUnidades || 0;
+    const s = rankingTotales.totalSubtotal || 0;
+    const d = rankingDiasIncluidos || 1;
+    return {
+      ventaPromedioDiaria: Math.ceil(s / d),
+      valorPorUnidad: u > 0 ? Math.ceil(s / u) : 0,
+      facturacionPorProductoRanking: p > 0 ? Math.ceil(s / p) : 0,
+      unidadesPorProducto: p > 0 ? Math.round((u / p) * 10) / 10 : 0,
+    };
+  }, [rankingTotales, rankingDiasIncluidos]);
+
+  const concentracionTop10Pct = useMemo(() => {
+    if (!rankingGeneral?.length || !rankingTotales.totalSubtotal) return null;
+    const sumTop = rankingGeneral
+      .slice(0, 10)
+      .reduce((acc, r) => acc + (parseFloat(r.subtotal) || 0), 0);
+    const t = rankingTotales.totalSubtotal;
+    return t > 0 ? Math.round((sumTop / t) * 10000) / 100 : null;
+  }, [rankingGeneral, rankingTotales.totalSubtotal]);
+
+  const lineaExtra = useMemo(() => {
+    const tv = totals.totalVendido;
+    const tg = totals.totalGanancia;
+    const tc = totals.totalCantidad;
+    if (!tc && !tv) return null;
+    return {
+      margenSobreVentasPct: tv > 0 ? Math.round((tg / tv) * 1000) / 10 : 0,
+      gananciaPorUnidad: tc > 0 ? Math.ceil(tg / tc) : 0,
+      ventaPorUnidad: tc > 0 ? Math.ceil(tv / tc) : 0,
+    };
+  }, [totals.totalVendido, totals.totalGanancia, totals.totalCantidad]);
+
+  const dashboardInner = (
+    <>
       <style>
         {`
           .selected-row {
@@ -655,22 +808,37 @@ export default function EstadisticasDashboard() {
           }
         `}
       </style>
-      <div style={{ padding: "20px" }}>
+      <div style={{ padding: embedded ? 0 : "20px" }}>
         <Card
           title={
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <BarChartOutlined />
-              Estadisticas de venta
+              Estadísticas de venta
+              <InfoHelp
+                text={
+                  embedded
+                    ? "Acá ves qué productos vendieron más en general y podés bajar al detalle de una línea. Si entraste desde Inicio, las fechas del ranking y del detalle arrancan iguales que en el resumen financiero."
+                    : "Ranking de productos más vendidos y, abajo, análisis por línea: elegí línea y fechas y pulsá Consultar para ver tabla, totales y evolución en el tiempo."
+                }
+              />
             </div>
           }
         >
           <Card
-            title="Productos Más Vendidos (General)"
+            title={
+              <span>
+                Productos más vendidos (general)
+                <InfoHelp text="Listado de los productos que más facturaron o movieron unidades en el período que elijas. Sirve para ver concentración, comparar con otras épocas y detectar dependencia de pocos ítems." />
+              </span>
+            }
             style={{ marginBottom: "20px" }}
           >
             <Row gutter={16} style={{ marginBottom: "16px" }}>
               <Col xs={24} sm={8}>
-                <strong>Seleccionar Período:</strong>
+                <strong>
+                  Seleccionar período
+                  <InfoHelp text="Atajos de fecha para el ranking. Si elegís «Rango personalizado», habilita el selector de fechas manual." />
+                </strong>
                 <Select
                   value={rankingPeriodo}
                   onChange={handleRankingPeriodoChange}
@@ -685,7 +853,10 @@ export default function EstadisticasDashboard() {
                 />
               </Col>
               <Col xs={24} sm={10}>
-                <strong>Rango:</strong>
+                <strong>
+                  Rango de fechas
+                  <InfoHelp text="Define el intervalo para el ranking general. Solo editable cuando el período es «Rango personalizado»." />
+                </strong>
                 <RangePicker
                   style={{ width: "100%", marginTop: "8px" }}
                   value={rankingDateRange}
@@ -695,7 +866,10 @@ export default function EstadisticasDashboard() {
                 />
               </Col>
               <Col xs={24} sm={6}>
-                <strong>Acción:</strong>
+                <strong>
+                  Acciones
+                  <InfoHelp text="Consultar actualiza el ranking con el período elegido. Generar PDF descarga el listado actual para archivo o impresión." />
+                </strong>
                 <Button
                   type="primary"
                   onClick={() => fetchRankingGeneral()}
@@ -719,7 +893,12 @@ export default function EstadisticasDashboard() {
               <Col xs={24} sm={8}>
                 <Card size="small">
                   <Statistic
-                    title="Productos"
+                    title={
+                      <span>
+                        Productos distintos
+                        <InfoHelp text="Cuántos productos distintos aparecen en el ranking (hasta un máximo fijo de ítems). Si el número es bajo, pocas referencias concentran la mayor parte de las ventas del listado." />
+                      </span>
+                    }
                     value={rankingTotales.totalProductos}
                   />
                 </Card>
@@ -727,7 +906,12 @@ export default function EstadisticasDashboard() {
               <Col xs={24} sm={8}>
                 <Card size="small">
                   <Statistic
-                    title="Unidades vendidas"
+                    title={
+                      <span>
+                        Unidades vendidas
+                        <InfoHelp text="Unidades vendidas sumando todos los productos que ves en la tabla del ranking (no es necesariamente todo el catálogo, solo los que entraron al ranking)." />
+                      </span>
+                    }
                     value={rankingTotales.totalUnidades}
                   />
                 </Card>
@@ -735,10 +919,108 @@ export default function EstadisticasDashboard() {
               <Col xs={24} sm={8}>
                 <Card size="small">
                   <Statistic
-                    title="Subtotal total"
+                    title={
+                      <span>
+                        Subtotal total
+                        <InfoHelp text="Facturación total asociada a esos productos del ranking en el período. Los importes se muestran redondeados hacia arriba para lectura simple." />
+                      </span>
+                    }
                     value={rankingTotales.totalSubtotal}
                     prefix="$"
                     precision={0}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            <Title level={5} style={{ marginTop: 8, marginBottom: 12 }}>
+              Indicadores derivados del ranking
+              <InfoHelp text="Cálculos hechos en pantalla a partir del período elegido y de los totales del ranking: te ayudan a entender ritmo diario, ticket por unidad y si pocos productos concentran la facturación." />
+            </Title>
+            <Row gutter={[16, 16]} style={{ marginBottom: "16px" }}>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card size="small">
+                  <Statistic
+                    title={
+                      <span>
+                        Días del período
+                        <InfoHelp text="Cantidad de días calendario entre la fecha desde y hasta del ranking (mínimo 1). Sirve de base para el promedio diario." />
+                      </span>
+                    }
+                    value={rankingDiasIncluidos || "—"}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card size="small">
+                  <Statistic
+                    title={
+                      <span>
+                        Venta promedio por día
+                        <InfoHelp text="Subtotal total del ranking dividido los días del período. Indica aproximadamente cuánto facturaron esos productos por día en el intervalo." />
+                      </span>
+                    }
+                    value={rankingExtra.ventaPromedioDiaria}
+                    prefix="$"
+                    precision={0}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card size="small">
+                  <Statistic
+                    title={
+                      <span>
+                        Valor por unidad vendida
+                        <InfoHelp text="Subtotal total dividido unidades vendidas del ranking: precio medio ponderado por unidad en ese conjunto de productos." />
+                      </span>
+                    }
+                    value={rankingExtra.valorPorUnidad}
+                    prefix="$"
+                    precision={0}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card size="small">
+                  <Statistic
+                    title={
+                      <span>
+                        Facturación promedio por producto
+                        <InfoHelp text="Subtotal total dividido la cantidad de productos en el ranking: cuánto aporta en promedio cada ítem listado." />
+                      </span>
+                    }
+                    value={rankingExtra.facturacionPorProductoRanking}
+                    prefix="$"
+                    precision={0}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card size="small">
+                  <Statistic
+                    title={
+                      <span>
+                        Unidades por producto (prom.)
+                        <InfoHelp text="Promedio de unidades vendidas por cada producto del ranking: si es alto, esos ítems se mueven en volumen." />
+                      </span>
+                    }
+                    value={rankingExtra.unidadesPorProducto}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Card size="small">
+                  <Statistic
+                    title={
+                      <span>
+                        Top 10 concentra
+                        <InfoHelp text="Porcentaje del subtotal total del ranking que suman los diez primeros productos de la tabla. Un porcentaje muy alto indica fuerte dependencia de pocos artículos." />
+                      </span>
+                    }
+                    value={concentracionTop10Pct != null ? concentracionTop10Pct : "—"}
+                    suffix={concentracionTop10Pct != null ? "%" : ""}
+                    precision={1}
                   />
                 </Card>
               </Col>
@@ -763,16 +1045,23 @@ export default function EstadisticasDashboard() {
           <Row gutter={16} style={{ marginBottom: "20px" }}>
             <Col xs={24} sm={8}>
               <div style={{ marginBottom: "8px" }}>
-                <strong>Seleccionar Línea:</strong>
+                <strong>
+                  Línea de productos
+                  <InfoHelp text="Elegí la línea de negocio que querés analizar. Sin línea no se puede consultar: acá se arma el detalle por producto y el gráfico de evolución para esa línea y las fechas de abajo." />
+                </strong>
               </div>
               <LineaInput onChangeLinea={handleChangeLinea} />
             </Col>
             <Col xs={24} sm={10}>
               <div style={{ marginBottom: "8px" }}>
-                <strong>Rango de Fechas:</strong>
+                <strong>
+                  Rango de fechas (detalle por línea)
+                  <InfoHelp text="Período para el detalle y la curva de la línea. Si abriste desde Inicio, suele arrancar alineado al calendario del resumen; podés cambiarlo solo para este análisis." />
+                </strong>
               </div>
               <RangePicker
                 style={{ width: "100%" }}
+                value={dateRange.length === 2 ? dateRange : null}
                 onChange={handleDateRangeChange}
                 format="DD/MM/YYYY"
                 placeholder={["Fecha inicio", "Fecha fin"]}
@@ -780,7 +1069,10 @@ export default function EstadisticasDashboard() {
             </Col>
             <Col xs={24} sm={6}>
               <div style={{ marginBottom: "8px" }}>
-                <strong>Acciones:</strong>
+                <strong>
+                  Acciones
+                  <InfoHelp text="Consultar trae la tabla y el gráfico. Generar PDF exporta el detalle actual de la línea en un archivo listo para imprimir o compartir." />
+                </strong>
               </div>
               <Button
                 type="primary"
@@ -804,11 +1096,71 @@ export default function EstadisticasDashboard() {
           {/* Estadísticas Generales */}
           {estadisticas && estadisticas.length > 0 && (
             <>
+              {lineaExtra && (
+                <>
+                  <Title level={5} style={{ marginTop: 8, marginBottom: 12 }}>
+                    Indicadores de la línea seleccionada
+                    <InfoHelp text="Se calculan con los totales del detalle ya cargado: útiles para ver margen y rentabilidad por unidad en esa línea y fechas." />
+                  </Title>
+                  <Row gutter={[16, 16]} style={{ marginBottom: "20px" }}>
+                    <Col xs={24} sm={8}>
+                      <Card size="small">
+                        <Statistic
+                          title={
+                            <span>
+                              Margen sobre ventas
+                              <InfoHelp text="Ganancia total dividida venta total de la línea en el período, en porcentaje. Indica qué parte de lo facturado queda como margen según los datos cargados." />
+                            </span>
+                          }
+                          value={lineaExtra.margenSobreVentasPct}
+                          suffix="%"
+                          precision={1}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                      <Card size="small">
+                        <Statistic
+                          title={
+                            <span>
+                              Ganancia por unidad
+                              <InfoHelp text="Ganancia total dividida cantidad de unidades vendidas en el detalle: cuánto margen aporta cada unidad vendida en promedio." />
+                            </span>
+                          }
+                          value={lineaExtra.gananciaPorUnidad}
+                          prefix="$"
+                          precision={0}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                      <Card size="small">
+                        <Statistic
+                          title={
+                            <span>
+                              Venta por unidad
+                              <InfoHelp text="Total vendido dividido unidades: precio de venta promedio por unidad movida en esa línea y período." />
+                            </span>
+                          }
+                          value={lineaExtra.ventaPorUnidad}
+                          prefix="$"
+                          precision={0}
+                        />
+                      </Card>
+                    </Col>
+                  </Row>
+                </>
+              )}
               <Row gutter={[16, 16]} justify="center" style={{ marginBottom: "20px" }}>
                 <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
-                      title="Total Artículos"
+                      title={
+                        <span>
+                          Total artículos
+                          <InfoHelp text="Cuántos productos de la línea tuvieron venta registrada en el período consultado." />
+                        </span>
+                      }
                       value={totals.totalArticulos}
                       valueStyle={{ color: "#1890ff" }}
                     />
@@ -817,7 +1169,12 @@ export default function EstadisticasDashboard() {
                 <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
-                      title="Cantidad Vendida"
+                      title={
+                        <span>
+                          Cantidad vendida
+                          <InfoHelp text="Unidades vendidas sumando todos los productos del detalle de la línea." />
+                        </span>
+                      }
                       value={totals.totalCantidad}
                       valueStyle={{ color: "#52c41a" }}
                     />
@@ -826,7 +1183,12 @@ export default function EstadisticasDashboard() {
                 <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
-                      title="Total Vendido"
+                      title={
+                        <span>
+                          Total vendido
+                          <InfoHelp text="Suma de lo facturado por esos productos de la línea en el período." />
+                        </span>
+                      }
                       value={totals.totalVendido}
                       precision={0}
                       prefix="$"
@@ -837,7 +1199,12 @@ export default function EstadisticasDashboard() {
                 <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
-                      title="Promedio por Artículo"
+                      title={
+                        <span>
+                          Promedio por artículo
+                          <InfoHelp text="Promedio de facturación por producto: útil para comparar si pocos ítems arrastran el total o si hay muchos con ventas chicas." />
+                        </span>
+                      }
                       value={totals.promedioVenta}
                       precision={0}
                       prefix="$"
@@ -848,7 +1215,12 @@ export default function EstadisticasDashboard() {
                 <Col xs={24} sm={12} md={8} lg={6} xl={4}>
                   <Card>
                     <Statistic
-                      title="Ganancia"
+                      title={
+                        <span>
+                          Ganancia
+                          <InfoHelp text="Suma de la ganancia estimada por producto en esa línea y fechas." />
+                        </span>
+                      }
                       value={totals.totalGanancia}
                       precision={0}
                       prefix="$"
@@ -861,9 +1233,90 @@ export default function EstadisticasDashboard() {
               {/* Gráfico de Evolución Temporal */}
               {evolucionData && evolucionData.length > 0 && (
                 <Card 
-                  title="Evolución de Ganancia y Precios en el Tiempo"
+                  title={
+                    <span>
+                      Evolución en el tiempo
+                      <InfoHelp text="Cómo cambian ventas, ganancia y otros indicadores día a día (o agregados) para la línea que consultaste. Podés aislar un producto desde el desplegable o haciendo clic en la tabla. Mostrá solo las curvas que necesites para no saturar el gráfico." />
+                    </span>
+                  }
                   style={{ marginBottom: "20px" }}
                 >
+                  <Row gutter={16} style={{ marginBottom: "12px" }}>
+                    <Col span={24}>
+                      <div style={{ marginBottom: 8, fontWeight: 600 }}>
+                        Series del gráfico
+                        <InfoHelp text="Por defecto se muestran Total vendido y Ganancia. El resto son promedios o cantidades; combinar muchas a la vez puede dificultar la lectura." />
+                      </div>
+                      <Space wrap>
+                        <Checkbox
+                          checked={evoLineVisibility.total_vendido}
+                          onChange={(e) =>
+                            setEvoLineVisibility((p) => ({
+                              ...p,
+                              total_vendido: e.target.checked,
+                            }))
+                          }
+                        >
+                          Total vendido
+                        </Checkbox>
+                        <Checkbox
+                          checked={evoLineVisibility.ganancia}
+                          onChange={(e) =>
+                            setEvoLineVisibility((p) => ({
+                              ...p,
+                              ganancia: e.target.checked,
+                            }))
+                          }
+                        >
+                          Ganancia
+                        </Checkbox>
+                        <Checkbox
+                          checked={evoLineVisibility.diferencia_promedio}
+                          onChange={(e) =>
+                            setEvoLineVisibility((p) => ({
+                              ...p,
+                              diferencia_promedio: e.target.checked,
+                            }))
+                          }
+                        >
+                          Diferencia promedio
+                        </Checkbox>
+                        <Checkbox
+                          checked={evoLineVisibility.precio_promedio}
+                          onChange={(e) =>
+                            setEvoLineVisibility((p) => ({
+                              ...p,
+                              precio_promedio: e.target.checked,
+                            }))
+                          }
+                        >
+                          Precio promedio
+                        </Checkbox>
+                        <Checkbox
+                          checked={evoLineVisibility.costo_promedio}
+                          onChange={(e) =>
+                            setEvoLineVisibility((p) => ({
+                              ...p,
+                              costo_promedio: e.target.checked,
+                            }))
+                          }
+                        >
+                          Costo promedio
+                        </Checkbox>
+                        <Checkbox
+                          checked={evoLineVisibility.cantidad_vendida}
+                          onChange={(e) =>
+                            setEvoLineVisibility((p) => ({
+                              ...p,
+                              cantidad_vendida: e.target.checked,
+                            }))
+                          }
+                        >
+                          Cantidad vendida (eje derecho)
+                        </Checkbox>
+                      </Space>
+                    </Col>
+                  </Row>
                   <Row gutter={16} style={{ marginBottom: "16px" }}>
                     <Col span={24}>
                       <Select
@@ -983,7 +1436,7 @@ export default function EstadisticasDashboard() {
                         orientation="right"
                         tick={{ fontSize: 12 }}
                       />
-                      <Tooltip 
+                      <RechartsTooltip 
                         formatter={(value, name) => {
                           if (name === 'cantidad_vendida') {
                             return [value, 'Cantidad Vendida'];
@@ -1000,67 +1453,86 @@ export default function EstadisticasDashboard() {
                         }}
                       />
                       <Legend />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="ganancia"
-                        stroke="#fa8c16"
-                        strokeWidth={2}
-                        name="Ganancia"
-                        dot={{ r: 4 }}
-                      />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="total_vendido"
-                        stroke="#f5222d"
-                        strokeWidth={2}
-                        name="Total Vendido"
-                        dot={{ r: 4 }}
-                      />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="diferencia_promedio"
-                        stroke="#52c41a"
-                        strokeWidth={2}
-                        name="Diferencia Promedio (Precio - Costo)"
-                        dot={{ r: 4 }}
-                      />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="precio_promedio"
-                        stroke="#1890ff"
-                        strokeWidth={2}
-                        name="Precio Promedio"
-                        dot={{ r: 4 }}
-                      />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="costo_promedio"
-                        stroke="#722ed1"
-                        strokeWidth={2}
-                        name="Costo Promedio"
-                        dot={{ r: 4 }}
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="cantidad_vendida"
-                        stroke="#13c2c2"
-                        strokeWidth={2}
-                        name="Cantidad Vendida"
-                        dot={{ r: 4 }}
-                      />
+                      {evoLineVisibility.ganancia && (
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="ganancia"
+                          stroke="#fa8c16"
+                          strokeWidth={2}
+                          name="Ganancia"
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {evoLineVisibility.total_vendido && (
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="total_vendido"
+                          stroke="#f5222d"
+                          strokeWidth={2}
+                          name="Total Vendido"
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {evoLineVisibility.diferencia_promedio && (
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="diferencia_promedio"
+                          stroke="#52c41a"
+                          strokeWidth={2}
+                          name="Diferencia Promedio (Precio - Costo)"
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {evoLineVisibility.precio_promedio && (
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="precio_promedio"
+                          stroke="#1890ff"
+                          strokeWidth={2}
+                          name="Precio Promedio"
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {evoLineVisibility.costo_promedio && (
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="costo_promedio"
+                          stroke="#722ed1"
+                          strokeWidth={2}
+                          name="Costo Promedio"
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {evoLineVisibility.cantidad_vendida && (
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="cantidad_vendida"
+                          stroke="#13c2c2"
+                          strokeWidth={2}
+                          name="Cantidad Vendida"
+                          dot={{ r: 4 }}
+                        />
+                      )}
                     </LineChart>
                   </ResponsiveContainer>
                 </Card>
               )}
 
               {/* Tabla de Datos */}
-              <Card title="Detalle de Ventas">
+              <Card
+                title={
+                  <span>
+                    Detalle de ventas
+                    <InfoHelp text="Una fila por producto con venta en la línea y fechas elegidas: stock, cantidades, montos y márgenes. Clic en una fila acota el gráfico de arriba a ese artículo." />
+                  </span>
+                }
+              >
                 <Table
                   columns={columns}
                   dataSource={estadisticas}
@@ -1112,6 +1584,12 @@ export default function EstadisticasDashboard() {
           )}
         </Card>
       </div>
-    </MenuLayout>
+    </>
+  );
+
+  return embedded ? (
+    dashboardInner
+  ) : (
+    <MenuLayout>{dashboardInner}</MenuLayout>
   );
 }
