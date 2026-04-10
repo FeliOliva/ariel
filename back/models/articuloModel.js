@@ -312,6 +312,26 @@ const getRankingProductosVendidosGeneral = async ({
   }
 };
 
+const getVentasDetallePorArticulo = async ({
+  articulo_id,
+  fecha_inicio,
+  fecha_fin,
+}) => {
+  try {
+    const query = queriesArticulos.getVentasDetallePorArticulo;
+    const [results] = await db.query(query, [
+      articulo_id,
+      fecha_inicio,
+      fecha_fin,
+    ]);
+    return results;
+  } catch (error) {
+    throw new Error(
+      "Error al obtener ventas detalle por artículo: " + error.message
+    );
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -334,4 +354,5 @@ module.exports = {
   getEvolucionGananciaPorLinea,
   getVentasConGananciaFiltradas,
   getRankingProductosVendidosGeneral,
+  getVentasDetallePorArticulo,
 };

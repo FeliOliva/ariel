@@ -271,4 +271,24 @@ GROUP BY a.id, a.codigo_producto, a.nombre, a.mediciones
 ORDER BY cantidad_vendida DESC, subtotal DESC
 LIMIT ?;
 `,
+  /** Ventas unitarias de un artículo: cliente, nro venta, cantidad, precio, subtotal por línea de detalle */
+  getVentasDetallePorArticulo: `
+SELECT
+  dv.id AS detalle_venta_id,
+  v.id AS venta_id,
+  v.nroVenta AS nro_venta,
+  DATE(v.fecha_venta) AS fecha_venta,
+  CONCAT_WS(' - ', c.nombre, c.apellido, c.farmacia) AS cliente_nombre,
+  dv.cantidad,
+  ROUND(dv.precio_monotributista, 2) AS precio_monotributista,
+  ROUND(dv.sub_total, 2) AS subtotal
+FROM detalle_venta dv
+INNER JOIN venta v ON dv.venta_id = v.id
+INNER JOIN cliente c ON v.cliente_id = c.id
+WHERE dv.articulo_id = ?
+  AND v.estado = 1
+  AND v.fecha_venta >= ?
+  AND v.fecha_venta < DATE_ADD(?, INTERVAL 1 DAY)
+ORDER BY v.fecha_venta DESC, v.id DESC, dv.id DESC;
+`,
 };

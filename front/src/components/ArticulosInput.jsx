@@ -6,6 +6,7 @@ export default function ArticulosInput({
   value,
   onChangeArticulo,
   onInputChange,
+  style,
 }) {
   const [articulos, setArticulos] = useState([]);
 
@@ -58,7 +59,7 @@ export default function ArticulosInput({
       onChange={handleChangeArticulo}
       onSearch={handleSearchArticulo}
       options={options}
-      style={{ width: "70%" }}
+      style={{ width: "70%", ...style }}
     />
   );
 }

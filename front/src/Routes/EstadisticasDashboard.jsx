@@ -14,6 +14,7 @@ import {
   Checkbox,
   Space,
   Typography,
+  Radio,
 } from "antd";
 import { FilePdfOutlined, BarChartOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -31,6 +32,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import LineaInput from "../components/LineaInput";
+import ArticulosInput from "../components/ArticulosInput";
 import MenuLayout from "../components/MenuLayout";
 import imageUrl from "../logoRenacer.png";
 
@@ -80,6 +82,19 @@ export default function EstadisticasDashboard({
     costo_promedio: false,
     cantidad_vendida: false,
   });
+
+  /** 'linea' = estadísticas agregadas por línea; 'producto' = ventas unitarias de un artículo */
+  const [detalleModo, setDetalleModo] = useState("linea");
+  const [articuloParaDetalle, setArticuloParaDetalle] = useState(null);
+  const [articuloSelectValue, setArticuloSelectValue] = useState(null);
+  const [ventasPorProducto, setVentasPorProducto] = useState([]);
+  const [totalesPorProducto, setTotalesPorProducto] = useState({
+    total_subtotal: 0,
+    total_cantidad: 0,
+    cantidad_registros: 0,
+  });
+  const [loadingProducto, setLoadingProducto] = useState(false);
+  const [consultaProductoHecha, setConsultaProductoHecha] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -177,6 +192,54 @@ export default function EstadisticasDashboard({
     }
   };
 
+  const fmtMoney = (n) =>
+    "$" +
+    Math.ceil(parseFloat(n) || 0).toLocaleString("es-AR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+  const fetchVentasPorProducto = async () => {
+    if (!articuloParaDetalle?.id || !dateRange || dateRange.length !== 2) {
+      message.warning("Seleccioná un producto y un rango de fechas");
+      return;
+    }
+    setLoadingProducto(true);
+    setConsultaProductoHecha(true);
+    try {
+      const fecha_inicio = dateRange[0].format("YYYY-MM-DD");
+      const fecha_fin = dateRange[1].format("YYYY-MM-DD");
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/getVentasDetallePorArticulo`,
+        {
+          params: {
+            articulo_id: articuloParaDetalle.id,
+            fecha_inicio,
+            fecha_fin,
+          },
+        }
+      );
+      setVentasPorProducto(response.data.detalles || []);
+      setTotalesPorProducto({
+        total_subtotal: response.data.total_subtotal || 0,
+        total_cantidad: response.data.total_cantidad || 0,
+        cantidad_registros: response.data.cantidad_registros ?? 0,
+      });
+      message.success("Detalle de ventas del producto cargado");
+    } catch (error) {
+      console.error("Error detalle por producto:", error);
+      message.error("Error al cargar ventas del producto");
+      setVentasPorProducto([]);
+      setTotalesPorProducto({
+        total_subtotal: 0,
+        total_cantidad: 0,
+        cantidad_registros: 0,
+      });
+    } finally {
+      setLoadingProducto(false);
+    }
+  };
+
   const fetchEstadisticas = async () => {
     if (!selectedLinea || !dateRange || dateRange.length !== 2) {
       message.warning("Por favor selecciona una línea y un rango de fechas");
@@ -211,6 +274,85 @@ export default function EstadisticasDashboard({
       setLoading(false);
     }
   };
+
+  const handleConsultarDetalle = () => {
+    if (detalleModo === "linea") {
+      fetchEstadisticas();
+    } else {
+      fetchVentasPorProducto();
+    }
+  };
+
+  const handleCambioModoDetalle = (e) => {
+    const modo = e.target.value;
+    setDetalleModo(modo);
+    if (modo === "linea") {
+      setVentasPorProducto([]);
+      setConsultaProductoHecha(false);
+      setArticuloParaDetalle(null);
+      setArticuloSelectValue(null);
+      setTotalesPorProducto({
+        total_subtotal: 0,
+        total_cantidad: 0,
+        cantidad_registros: 0,
+      });
+    } else {
+      setEstadisticas([]);
+      setEvolucionData([]);
+      setSelectedArticulo(null);
+      setSelectedLinea(null);
+    }
+  };
+
+  const columnasVentasProducto = useMemo(
+    () => [
+      {
+        title: "Fecha",
+        dataIndex: "fecha_venta",
+        key: "fecha_venta",
+        width: 110,
+        render: (v) => (v ? dayjs(v).format("DD/MM/YYYY") : "—"),
+      },
+      {
+        title: "Cliente",
+        dataIndex: "cliente_nombre",
+        key: "cliente_nombre",
+        ellipsis: true,
+      },
+      {
+        title: "Nº venta",
+        dataIndex: "nro_venta",
+        key: "nro_venta",
+        width: 100,
+        align: "center",
+      },
+      {
+        title: "Cantidad",
+        dataIndex: "cantidad",
+        key: "cantidad",
+        width: 90,
+        align: "center",
+        render: (v) => parseInt(v, 10) || 0,
+      },
+      {
+        title: "Precio",
+        dataIndex: "precio_monotributista",
+        key: "precio_monotributista",
+        width: 120,
+        align: "right",
+        render: (v) => fmtMoney(v),
+      },
+      {
+        title: "Subtotal",
+        dataIndex: "subtotal",
+        key: "subtotal",
+        width: 120,
+        align: "right",
+        render: (v) => fmtMoney(v),
+      },
+    ],
+    []
+  );
 
   useEffect(() => {
     fetchRankingGeneral();
@@ -442,6 +584,154 @@ export default function EstadisticasDashboard({
     }_${fechaInicio.replace(/\//g, "-")}_${fechaFin.replace(/\//g, "-")}.pdf`;
     pdf.save(fileName);
     message.success("PDF generado correctamente");
+  };
+
+  const handleGeneratePDFProducto = async () => {
+    if (!ventasPorProducto || ventasPorProducto.length === 0) {
+      message.warning("No hay datos para imprimir");
+      return;
+    }
+    if (!articuloParaDetalle || !dateRange || dateRange.length !== 2) {
+      message.warning("Falta el producto o el rango de fechas");
+      return;
+    }
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.width;
+    const marginTop = 40;
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const phone = "Teléfono: +54 9 3518 16-8151";
+    const instagram = "Instagram: @distribuidoraRenacer";
+
+    const logoForPdf =
+      logoDataUrl ||
+      (await (async () => {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error loading logo for PDF:", error);
+          return null;
+        }
+      })());
+
+    const addHeader = (doc, isFirstPage = false) => {
+      if (logoForPdf) {
+        doc.addImage(logoForPdf, "PNG", 5, 5, logoWidth, logoHeight);
+      }
+      if (isFirstPage) {
+        doc.setFontSize(20);
+        doc.text("Distribuidora Renacer", logoWidth + 10, 20);
+        doc.setFontSize(12);
+        doc.text(phone, logoWidth + 10, 30);
+        doc.text(instagram, logoWidth + 10, 37);
+      }
+    };
+
+    addHeader(pdf, true);
+
+    const fechaInicio = dateRange[0].format("DD/MM/YYYY");
+    const fechaFin = dateRange[1].format("DD/MM/YYYY");
+    const codigo = articuloParaDetalle.codigo_producto || "";
+    const nombreProd = [
+      codigo,
+      articuloParaDetalle.nombre,
+      articuloParaDetalle.mediciones,
+    ]
+      .filter(Boolean)
+      .join(" — ");
+
+    pdf.setFontSize(16);
+    const reportTitle = "VENTAS POR PRODUCTO (DETALLE)";
+    const titleX = (pageWidth - pdf.getTextWidth(reportTitle)) / 2;
+    pdf.text(reportTitle, titleX, 50);
+
+    pdf.setFontSize(11);
+    let subtitleY = 58;
+    const wrapProduct = pdf.splitTextToSize(`Producto: ${nombreProd}`, pageWidth - 10);
+    wrapProduct.forEach((line, i) => {
+      pdf.text(line, 10, subtitleY + i * 5);
+    });
+    subtitleY += wrapProduct.length * 5 + 2;
+
+    pdf.setFontSize(12);
+    const dateTitle = `Período: ${fechaInicio} - ${fechaFin}`;
+    const dateTitleX = (pageWidth - pdf.getTextWidth(dateTitle)) / 2;
+    pdf.text(dateTitle, dateTitleX, subtitleY);
+
+    const startY = subtitleY + 12;
+
+    const rows = [...ventasPorProducto].sort((a, b) => {
+      const da = new Date(a.fecha_venta);
+      const db = new Date(b.fecha_venta);
+      return da - db;
+    });
+
+    const tableData = rows.map((row) => [
+      row.fecha_venta ? dayjs(row.fecha_venta).format("DD/MM/YYYY") : "—",
+      row.cliente_nombre || "—",
+      String(row.nro_venta ?? "—"),
+      String(parseInt(row.cantidad, 10) || 0),
+      fmtMoney(row.precio_monotributista),
+      fmtMoney(row.subtotal),
+    ]);
+
+    pdf.autoTable({
+      startY,
+      head: [["Fecha", "Cliente", "Nº venta", "Cant.", "Precio", "Subtotal"]],
+      body: tableData,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: {
+        fillColor: [200, 200, 200],
+        textColor: 0,
+        fontStyle: "bold",
+        halign: "center",
+      },
+      margin: { top: marginTop, right: 5, bottom: 5, left: 5 },
+      tableWidth: pageWidth - 10,
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 18, halign: "center" },
+        3: { cellWidth: 14, halign: "center" },
+        4: { cellWidth: 24, halign: "right" },
+        5: { cellWidth: 26, halign: "right" },
+      },
+      didDrawPage: () => {
+        addHeader(pdf, false);
+      },
+    });
+
+    const finalY = pdf.lastAutoTable.finalY + 8;
+    pdf.setFontSize(10);
+    pdf.text(
+      `Total unidades: ${Math.ceil(totalesPorProducto.total_cantidad || 0)}`,
+      10,
+      finalY
+    );
+    pdf.text(
+      `Total vendido (subtotal): ${fmtMoney(totalesPorProducto.total_subtotal)}`,
+      10,
+      finalY + 6
+    );
+    pdf.text(
+      `Líneas de detalle: ${totalesPorProducto.cantidad_registros ?? ventasPorProducto.length}`,
+      10,
+      finalY + 12
+    );
+
+    const safeCodigo = String(codigo || "producto").replace(/[^\w-]/g, "_");
+    const fileName = `Ventas_producto_${safeCodigo}_${fechaInicio.replace(/\//g, "-")}_${fechaFin.replace(/\//g, "-")}.pdf`;
+    pdf.save(fileName);
+    message.success("PDF listo para imprimir o guardar");
   };
 
   const columns = [
@@ -1041,22 +1331,47 @@ export default function EstadisticasDashboard({
             />
           </Card>
 
-          {/* Controles */}
-          <Row gutter={16} style={{ marginBottom: "20px" }}>
-            <Col xs={24} sm={8}>
-              <div style={{ marginBottom: "8px" }}>
-                <strong>
-                  Línea de productos
-                  <InfoHelp text="Elegí la línea de negocio que querés analizar. Sin línea no se puede consultar: acá se arma el detalle por producto y el gráfico de evolución para esa línea y las fechas de abajo." />
-                </strong>
-              </div>
-              <LineaInput onChangeLinea={handleChangeLinea} />
+          {/* Controles: por línea o por producto unitario */}
+          <Row style={{ marginBottom: 12 }}>
+            <Col span={24}>
+              <Radio.Group value={detalleModo} onChange={handleCambioModoDetalle}>
+                <Radio.Button value="linea">Por línea</Radio.Button>
+                <Radio.Button value="producto">Por producto</Radio.Button>
+              </Radio.Group>
             </Col>
+          </Row>
+          <Row gutter={16} style={{ marginBottom: "20px" }}>
+            {detalleModo === "linea" ? (
+              <Col xs={24} sm={8}>
+                <div style={{ marginBottom: "8px" }}>
+                  <strong>
+                    Línea de productos
+                    <InfoHelp text="Elegí la línea de negocio que querés analizar. Sin línea no se puede consultar: acá se arma el detalle por producto y el gráfico de evolución para esa línea y las fechas de abajo." />
+                  </strong>
+                </div>
+                <LineaInput onChangeLinea={handleChangeLinea} />
+              </Col>
+            ) : (
+              <Col xs={24} sm={8}>
+                <div style={{ marginBottom: "8px" }}>
+                  <strong>
+                    Producto
+                    <InfoHelp text="Elegí un artículo para listar cada venta en el período: cliente, número de venta, cantidad, precio unitario y subtotal." />
+                  </strong>
+                </div>
+                <ArticulosInput
+                  value={articuloSelectValue}
+                  onChangeArticulo={setArticuloParaDetalle}
+                  onInputChange={setArticuloSelectValue}
+                  style={{ width: "100%" }}
+                />
+              </Col>
+            )}
             <Col xs={24} sm={10}>
               <div style={{ marginBottom: "8px" }}>
                 <strong>
-                  Rango de fechas (detalle por línea)
-                  <InfoHelp text="Período para el detalle y la curva de la línea. Si abriste desde Inicio, suele arrancar alineado al calendario del resumen; podés cambiarlo solo para este análisis." />
+                  Rango de fechas
+                  <InfoHelp text="Período que aplica al detalle (por línea o por producto). Si abriste desde Inicio, suele arrancar alineado al calendario del resumen." />
                 </strong>
               </div>
               <RangePicker
@@ -1071,30 +1386,98 @@ export default function EstadisticasDashboard({
               <div style={{ marginBottom: "8px" }}>
                 <strong>
                   Acciones
-                  <InfoHelp text="Consultar trae la tabla y el gráfico. Generar PDF exporta el detalle actual de la línea en un archivo listo para imprimir o compartir." />
+                  <InfoHelp text={
+                    detalleModo === "linea"
+                      ? "Consultar trae la tabla y el gráfico. Generar PDF exporta el detalle actual de la línea."
+                      : "Consultar carga el listado. Imprimir PDF descarga el detalle del producto para imprimir o archivar."
+                  } />
                 </strong>
               </div>
               <Button
                 type="primary"
-                onClick={fetchEstadisticas}
-                loading={loading}
+                onClick={handleConsultarDetalle}
+                loading={detalleModo === "linea" ? loading : loadingProducto}
                 style={{ width: "100%", marginBottom: "8px" }}
               >
                 Consultar
               </Button>
               <Button
                 icon={<FilePdfOutlined />}
-                onClick={handleGeneratePDF}
-                disabled={!estadisticas || estadisticas.length === 0}
+                onClick={
+                  detalleModo === "linea"
+                    ? handleGeneratePDF
+                    : handleGeneratePDFProducto
+                }
+                disabled={
+                  detalleModo === "linea"
+                    ? !estadisticas || estadisticas.length === 0
+                    : !ventasPorProducto || ventasPorProducto.length === 0
+                }
                 style={{ width: "100%" }}
               >
-                Generar PDF
+                {detalleModo === "linea" ? "Generar PDF" : "Imprimir PDF"}
               </Button>
             </Col>
           </Row>
 
+          {detalleModo === "producto" && consultaProductoHecha && (
+            <Card
+              title={
+                <span>
+                  Ventas del producto en el período
+                  <InfoHelp text="Cada fila es un renglón de venta: a quién, comprobante, unidades, precio y subtotal. Los totales de abajo suman todo el rango de fechas." />
+                </span>
+              }
+              style={{ marginBottom: 20 }}
+            >
+              <Table
+                columns={columnasVentasProducto}
+                dataSource={ventasPorProducto}
+                rowKey={(row) =>
+                  row.detalle_venta_id != null
+                    ? String(row.detalle_venta_id)
+                    : `${row.venta_id}-${row.nro_venta}-${row.fecha_venta}`
+                }
+                loading={loadingProducto}
+                pagination={{
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} de ${total} movimientos`,
+                }}
+                scroll={{ x: 900 }}
+                locale={{
+                  emptyText:
+                    "No hay ventas de este producto en el rango de fechas elegido.",
+                }}
+              />
+              <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="Total unidades vendidas"
+                    value={totalesPorProducto.total_cantidad}
+                  />
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="Total vendido (subtotal)"
+                    value={Math.ceil(totalesPorProducto.total_subtotal || 0)}
+                    prefix="$"
+                    precision={0}
+                  />
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="Líneas de detalle"
+                    value={totalesPorProducto.cantidad_registros}
+                  />
+                </Col>
+              </Row>
+            </Card>
+          )}
+
           {/* Estadísticas Generales */}
-          {estadisticas && estadisticas.length > 0 && (
+          {detalleModo === "linea" && estadisticas && estadisticas.length > 0 && (
             <>
               {lineaExtra && (
                 <>
@@ -1561,16 +1944,18 @@ export default function EstadisticasDashboard({
             </>
           )}
 
-          {/* Loading */}
-          {loading && (
+          {/* Loading (por producto el indicador va en la tabla) */}
+          {detalleModo === "linea" && loading && (
             <div style={{ textAlign: "center", padding: "50px" }}>
               <Spin size="large" />
               <div style={{ marginTop: "16px" }}>Cargando estadísticas...</div>
             </div>
           )}
 
-          {/* Sin datos */}
-          {!loading && (!estadisticas || estadisticas.length === 0) && (
+          {/* Sin datos (por línea) */}
+          {detalleModo === "linea" &&
+            !loading &&
+            (!estadisticas || estadisticas.length === 0) && (
             <div
               style={{ textAlign: "center", padding: "50px", color: "#999" }}
             >
@@ -1582,6 +1967,7 @@ export default function EstadisticasDashboard({
               </div>
             </div>
           )}
+
         </Card>
       </div>
     </>

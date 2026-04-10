@@ -392,6 +392,42 @@ const getRankingProductosVendidosGeneral = async (req, res) => {
   }
 };
 
+const getVentasDetallePorArticulo = async (req, res) => {
+  try {
+    const { articulo_id, fecha_inicio, fecha_fin } = req.query;
+
+    if (!articulo_id || !fecha_inicio || !fecha_fin) {
+      return res.status(400).json({
+        error: "Faltan parámetros: articulo_id, fecha_inicio y fecha_fin",
+      });
+    }
+
+    const detalles = await articuloModel.getVentasDetallePorArticulo({
+      articulo_id,
+      fecha_inicio,
+      fecha_fin,
+    });
+
+    const totalSubtotal = detalles.reduce(
+      (acc, row) => acc + (parseFloat(row.subtotal) || 0),
+      0
+    );
+    const totalCantidad = detalles.reduce(
+      (acc, row) => acc + (parseFloat(row.cantidad) || 0),
+      0
+    );
+
+    res.json({
+      detalles,
+      total_subtotal: Math.round(totalSubtotal * 100) / 100,
+      total_cantidad: totalCantidad,
+      cantidad_registros: detalles.length,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllArticulos,
   addArticulo,
@@ -414,4 +450,5 @@ module.exports = {
   getEvolucionGananciaPorLinea,
   getVentasConGananciaFiltradas,
   getRankingProductosVendidosGeneral,
+  getVentasDetallePorArticulo,
 };
