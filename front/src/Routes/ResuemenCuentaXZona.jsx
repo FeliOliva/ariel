@@ -170,8 +170,14 @@ export default function ResumenCuentaXZona() {
     const totalSaldoInicialGlobal = totalesZona.totalSaldoInicial || 0;
     const saldoGlobal = totalesZona.saldoGlobal || 0;
 
+    const datosOrdenados = [...datos].sort((a, b) =>
+      String(a.localidad ?? "").localeCompare(String(b.localidad ?? ""), "es", {
+        sensitivity: "base",
+      })
+    );
+
     // Construcción de la tabla: agregué localidad COMO SEGUNDO CAMPO después del nombre
-    const tableData = datos.map((d) => {
+    const tableData = datosOrdenados.map((d) => {
       const saldoInicialCliente = d.saldoInicial || 0;
       return [
         d.nombre,
@@ -186,6 +192,7 @@ export default function ResumenCuentaXZona() {
 
     doc.autoTable({
       startY: 45,
+      rowPageBreak: "avoid",
       head: [
         [
           "Cliente",
